@@ -5,4 +5,27 @@
   <version>0.0.1-SNAPSHOT</version>
   <name>AptaSUITE</name>
   <description>A full-featured software collection for the comprehensive analysis of HT-SELEX experiments with both graphical and command line based user interfaces.</description>
+  <build>
+  	<plugins>
+		<!-- BEGIN Make this jar runnable/executable -->
+		<plugin>
+		  <groupId>org.apache.maven.plugins</groupId>
+		  <artifactId>maven-jar-plugin</artifactId>
+		  <configuration>
+		  <!-- custom output directory -->
+		  <outputDirectory>${project.build.directory}/jarDir</outputDirectory>
+		  <!-- custom Name of the generated JAR (default: ${project.build.finalName} e.g. de.oveits.provisioningengine_recent-0.5.2.21_stable). Note, that .jar is always appended -->
+		  <finalName>MapDBBenchmark</finalName>
+		   <archive>
+		    <manifest>
+		     <addClasspath>true</addClasspath>
+		     <mainClass>benchmarks.MapDB</mainClass>
+		     <classpathPrefix>lib/</classpathPrefix>
+		    </manifest>
+		   </archive>
+		  </configuration>
+		</plugin>
+		<!-- END Make this jar runnable/executable -->
+  	</plugins>
+  </build>
 </project>
