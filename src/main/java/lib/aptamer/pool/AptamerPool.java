@@ -1,7 +1,7 @@
 /**
  * 
  */
-package aptamer.pool;
+package lib.aptamer.pool;
 
 import exceptions.InvalidAlphabetException;
 
@@ -26,13 +26,13 @@ public interface AptamerPool {
 	 * If the aptamer already exists in the pool, it will not be inserted again, but 
 	 * the existing identifier will be returned. 
 	 * 
-	 * If the <code>a<code> contains any other characters than A C G or T, a <code>InvalidAlphabetException<code> 
-	 * must be thrown. The final aptamer sequence must all be captial letters.
+	 * It is assumed that the parent class performing the registration takes care of
+	 * the alphabet validation, i.e. only A C G and T are allowed in all capital letters
 	 * 
 	 * @param a The aptamer sequence to be added to the pool
 	 * @return A unique integer for that sequence
 	 */
-	public int registerAptamer(String a) throws InvalidAlphabetException;	
+	public int registerAptamer(String a);	
 	
 	
 	
@@ -50,4 +50,11 @@ public interface AptamerPool {
 	 * @return
 	 */
 	public Boolean hasAptamer(String a);
+	
+	
+	/**
+	 * Returns the total number of unique aptamers in the pool
+	 * @return
+	 */
+	public int size();
 }
