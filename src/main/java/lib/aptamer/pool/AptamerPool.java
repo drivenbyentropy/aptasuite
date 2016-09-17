@@ -3,6 +3,10 @@
  */
 package lib.aptamer.pool;
 
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import exceptions.InvalidAlphabetException;
 
 /**
@@ -15,7 +19,7 @@ import exceptions.InvalidAlphabetException;
  * This API provides efficient and transparent methods for aptamer 
  * storage, retrieval, and manipulation.
  */
-public interface AptamerPool {
+public interface AptamerPool extends Iterable<Entry<byte[], Integer>>{
 
 
 	/**
@@ -32,8 +36,12 @@ public interface AptamerPool {
 	 * @param a The aptamer sequence to be added to the pool
 	 * @return A unique integer for that sequence
 	 */
-	public int registerAptamer(String a);	
+	public int registerAptamer(byte[] a);
 	
+	/**
+	 * @see AptamerPool#registerAptamer(byte[] a)
+	 */
+	public int registerAptamer(String a);
 	
 	
 	/**
@@ -41,7 +49,13 @@ public interface AptamerPool {
 	 * @param a The aptamer sequence 
 	 * @return an integer >= 0. If the aptamer does not exist in the pool, -1 is returned.
 	 */
+	public int getIdentifier(byte[] a);
+	
+	/**
+	 * @see AptamerPool#getIdentifier(byte[] a)
+	 */
 	public int getIdentifier(String a);
+
 	
 	
 	/**
@@ -49,7 +63,12 @@ public interface AptamerPool {
 	 * @param a The aptamer sequence 
 	 * @return
 	 */
-	public Boolean hasAptamer(String a);
+	public Boolean containsAptamer(byte[] a);
+	
+	/**
+	 * @see AptamerPool#containsAptamer(byte[] a)
+	 */	
+	public Boolean containsAptamer(String a);	
 	
 	
 	/**
@@ -57,4 +76,11 @@ public interface AptamerPool {
 	 * @return
 	 */
 	public int size();
+	
+	
+	/**
+	 * Removes all items from the current pool and resets the bloom filter.
+	 * Note this physically deletes all files in the project data folder.
+	 */
+	public void clear();
 }

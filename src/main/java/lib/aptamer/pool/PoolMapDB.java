@@ -10,8 +10,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import org.mapdb.DB;
@@ -20,6 +24,8 @@ import org.mapdb.HTreeMap;
 import org.mapdb.Serializer;
 
 import logger.AptaLogger;
+import orestes.bloomfilter.BloomFilter;
+import orestes.bloomfilter.FilterBuilder;
 
 /**
  * Implements the AptamerPool interface using a non-volatile based storage solution in order
@@ -45,6 +51,25 @@ public class PoolMapDB implements AptamerPool {
 	 */
 	private Path poolDataPath = null;
 	
+
+	/**
+	 * The total number of expected items in the bloom filter.
+	 */
+	private int bloomFilterCapacity = 1000000000;
+	
+	
+	/**
+	 * The expected false positive rate
+	 */
+	private double bloomFilterCollisionProbability = 0.001;
+	
+	
+	/**
+	 * The bloom filter is used in order to provide atomic and space efficient checks on 
+	 * whether a sequence is already contained in the pool.
+	 */
+	private BloomFilter<String> bloomFilter = new FilterBuilder(bloomFilterCapacity, bloomFilterCollisionProbability).buildBloomFilter(); //TODO: make parameters class vars and implement getters and setters
+	
 	
 	/**
 	 * Collection of HashMaps backed by MapDB which stores aptamer data on disk for
@@ -55,10 +80,10 @@ public class PoolMapDB implements AptamerPool {
 	
 	/**
 	 * The maximal number of unique aptamers to store in one TreeMap. The performance of TreeMap decreases
-	 * noticable with large volumes of data. As a workaround, we split the data into buckets of TreeMaps
+	 * noticeable with large volumes of data. As a workaround, we split the data into buckets of TreeMaps
 	 * of size <code>maxItemsPerTreeMap</code>. 
 	 */
-	private int maxTreeMapCapacity = 1000000; //TODO: Implement getter and setter
+	private int maxTreeMapCapacity = 1000000;
 	
 	
 	/**
@@ -122,8 +147,17 @@ public class PoolMapDB implements AptamerPool {
     				        .open();
     				
     				poolData.add(dbmap);
-    				poolSize += dbmap.size();
-    				currentTreeMapSize = dbmap.size();
+    				
+    				// Update values
+    				int currentDBmapSize = dbmap.size();
+    				poolSize += currentDBmapSize;
+    				currentTreeMapSize = currentDBmapSize;
+    				
+    				// Update bloom filter content
+    				Iterator<byte[]> dbmapIterator = dbmap.getKeys().iterator();
+    				while (dbmapIterator.hasNext()){
+    					bloomFilter.add(dbmapIterator.next());
+    				}
     				
     				LOGGER.info(
     						"Found and loaded file " + file.toString() + "\n" +
@@ -140,7 +174,7 @@ public class PoolMapDB implements AptamerPool {
 		if (poolData.isEmpty()){
 
 			DB db = DBMaker
-				    .fileDB(Paths.get(poolDataPath.toString(), "data" + Integer.toString(poolData.size()) + ".mapdb").toFile())
+				    .fileDB(Paths.get(poolDataPath.toString(), "data" + String.format("%04d", poolData.size()) + ".mapdb").toFile())
 				    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
 				    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
 				    .executorEnable()
@@ -155,15 +189,15 @@ public class PoolMapDB implements AptamerPool {
 			poolData.add(dbmap);
 			currentTreeMapSize = 0;
 			
-			LOGGER.info("No data found on disk. Created new file Found and loaded file " + Paths.get(poolDataPath.toString(), "data" + Integer.toString(poolData.size()) + ".mapdb").toString());
+			LOGGER.info("No data found on disk. Created new file Found and loaded file " + Paths.get(poolDataPath.toString(), "data" + String.format("%04d", poolData.size()) + ".mapdb").toString());
 		}
 		
 	}
 	
 	/* (non-Javadoc)
-	 * @see aptamer.pool.AptamerPool#registerAptamer(java.lang.String)
+	 * @see aptamer.pool.AptamerPool#registerAptamer(byte[] a)
 	 */
-	public int registerAptamer(String a){
+	public int registerAptamer(byte[] a){
 		
 		// Check if the item is already registered, and if so, return its identifier
 		int identifier = this.getIdentifier(a);
@@ -175,7 +209,7 @@ public class PoolMapDB implements AptamerPool {
 		if (currentTreeMapSize == maxTreeMapCapacity){
 			
 			DB db = DBMaker
-				    .fileDB(Paths.get(poolDataPath.toString(), "data" + Integer.toString(poolData.size()) + ".mapdb").toFile())
+				    .fileDB(Paths.get(poolDataPath.toString(), "data" + String.format("%04d", poolData.size()) + ".mapdb").toFile())
 				    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
 				    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
 				    .executorEnable()
@@ -190,23 +224,39 @@ public class PoolMapDB implements AptamerPool {
 			currentTreeMapSize = 0;
 		
 			LOGGER.info(
-					"Current Map is at max capacity creating new file " + Paths.get(poolDataPath.toString(), "data" + Integer.toString(poolData.size()) + ".mapdb").toString() + "\n" +
+					"Current Map is at max capacity creating new file " + Paths.get(poolDataPath.toString(), "data" + String.format("%04d", poolData.size()) + ".mapdb").toString() + "\n" +
 					"Total number of aptamers: " + poolSize 
 					);
 			
 		}
 
 		// Now insert the sequence
-		poolData.get(poolData.size()-1).put(a.getBytes(), ++poolSize);
+		poolData.get(poolData.size()-1).put(a, ++poolSize);
 		currentTreeMapSize++;
+		bloomFilter.add(a);
 		
 		return poolSize;
 	}
+	
+	/* (non-Javadoc)
+	 * @see aptamer.pool.AptamerPool#registerAptamer(byte[] a)
+	 */
+	public int registerAptamer(String a){
+		
+		return registerAptamer(a.getBytes());
+	
+	}
 
 	/* (non-Javadoc)
-	 * @see aptamer.pool.AptamerPool#getIdentifier(java.lang.String)
+	 * @see aptamer.pool.AptamerPool#getIdentifier(byte[] a)
 	 */
-	public int getIdentifier(String a) {
+	public int getIdentifier(byte[] a) {
+		
+		// Check for existence using bloom filter. 
+		// Note, that the result might be a false negative...
+		if (!containsAptamer(a)){
+			return -1;
+		}
 		
 		Integer identifier = null;
 		
@@ -216,36 +266,49 @@ public class PoolMapDB implements AptamerPool {
 		// Iterate in reverse
 		while(li.hasPrevious() && identifier == null) {
 			
-			identifier = li.previous().get(a.getBytes());
+			identifier = li.previous().get(a);
 
 		}
 		
-		// Conform to interface definition
+		// ...so we need to catch the false negatives here.
 		if (identifier == null){ identifier = -1;}
 		
 		return identifier;
 	}
 
+	
+	/* (non-Javadoc)
+	 * @see aptamer.pool.AptamerPool#getIdentifier(byte[] a)
+	 */
+	public int getIdentifier(String a) {
+		
+		return getIdentifier(a.getBytes());
+		
+	}
+	
+	/* (non-Javadoc)
+	 * @see aptamer.pool.AptamerPool#hasAptamer(byte[])
+	 */
+	public Boolean containsAptamer(byte[] a) {
+		
+		// Use bloom filter for efficiency. This way we do not have to go to 
+		// disk I/O for each contains call.
+		return bloomFilter.contains(a);
+
+	}
+
+	
 	/* (non-Javadoc)
 	 * @see aptamer.pool.AptamerPool#hasAptamer(java.lang.String)
 	 */
-	public Boolean hasAptamer(String a) {
-
-		Boolean found = false;
+	public Boolean containsAptamer(String a) {
 		
-		// Iterate over all treeMaps
-		ListIterator<HTreeMap<byte[], Integer>> li = poolData.listIterator(poolData.size());
+		// Use bloom filter for efficiency. This way we do not have to go to 
+		// disk I/O for each contains call.
+		return bloomFilter.contains(a);
 
-		// Iterate in reverse
-		while(li.hasPrevious() && !found) {
-			
-			found = li.previous().containsKey(a.getBytes());
-
-		}
-		
-		return found;
-	}
-
+	}	
+	
 	@Override
 	public int size() {
 		return poolSize;
@@ -271,5 +334,151 @@ public class PoolMapDB implements AptamerPool {
 		}
 		
 	}
+	
+	
+	/* (non-Javadoc)
+	 * @see lib.aptamer.pool.AptamerPool#clear()
+	 */
+	public void clear(){
+		
+		// Make sure all file handles are closed before deleting the files.
+		this.close();
+		
+		// Now delete all the content in the project folder
+		LOGGER.info("Deleting all content in " + poolDataPath.toString());
+		try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(Paths.get(poolDataPath.toString()))) {
+			
+			for (Path file : directoryStream) {
+				
+				Files.delete(file);
+			}
+			
+        } catch (IOException ex) {}
+		
+		// Reset the pool data
+		this.poolData.clear();
+		
+		// Reset the bloom filter
+		bloomFilter.clear();
+		
+		// Reset the counts
+		this.poolSize = 0;
+		this.currentTreeMapSize = 0;
+		
+	}
+	
+	
+	/**
+	 * Sets the maximal number of items per TreeMap. This operation is only valid
+	 * for new data sets and an exception is thrown if this function is called on 
+	 * existing data sets.
+	 */
+	public void setMaxTreeMapCapacity(int maxCapacity){
+		
+		if (poolSize != 0){
+			throw new UnsupportedOperationException("Cannot change the maximal capacity for existing projects.");
+		}
+		
+		this.maxTreeMapCapacity = maxCapacity;
+	}
+	
+	
+	/**
+	 * Set the new number of expected elements to be inserted into the bloom filter.
+	 * Note, this function can only be called before the first aptamer is registered 
+	 * using <code>registerAptamer(String)</code>. Otherwise an exception is thrown
+	 * @param capacity
+	 */
+	public void setBloomFilterCapacity(int capacity) throws UnsupportedOperationException{
+		
+		// Make sure no aptamer has been registered
+		if (this.size() != 0)
+		{
+			throw new UnsupportedOperationException("Cannot change bloom filter capacity. The pool is not empty.");
+		}
+		
+		this.bloomFilterCapacity = capacity;
+		bloomFilter = new FilterBuilder(bloomFilterCapacity, bloomFilterCollisionProbability).buildBloomFilter();
+		
+	}
+	
+	
+	/**
+	 * Returns the current bloom filter capacity
+	 * @return
+	 */
+	public int getBloomFilterCapacity(){
+		
+		return this.bloomFilterCapacity;
+	
+	}
+	
+
+	/**
+	 * Set the new collision probability for the bloom filter.
+	 * Note, this function can only be called before the first aptamer is registered 
+	 * using <code>registerAptamer(String)</code>. Otherwise an exception is thrown
+	 * @param capacity
+	 */
+	public void setBloomFilterCollisionProbability(double prob) throws UnsupportedOperationException{
+		
+		// Make sure no aptamer has been registered
+		if (this.size() != 0)
+		{
+			throw new UnsupportedOperationException("Cannot change bloom filter capacity. The pool is not empty.");
+		}
+		
+		this.bloomFilterCollisionProbability = prob;
+		bloomFilter = new FilterBuilder(bloomFilterCapacity, bloomFilterCollisionProbability).buildBloomFilter();
+		
+	}
+	
+	
+	/**
+	 * Returns the current bloom filter capacity
+	 * @return
+	 */
+	public double getBloomFilterCollisionProbability(){
+		
+		return this.bloomFilterCollisionProbability;
+	
+	}	
+	
+	
+    /* (non-Javadoc)
+     * @see java.lang.Iterable#iterator()
+     */
+    @Override
+    public Iterator<Entry<byte[], Integer>> iterator() {
+        Iterator<Map.Entry<byte[], Integer>> it = new Iterator<Map.Entry<byte[], Integer>>() {
+
+            private int currentTreeMapIndex = 0;
+            private Iterator<Entry<byte[], Integer>> currentTreeMapIterator= poolData.get(currentTreeMapIndex).getEntries().iterator();
+            
+            @Override
+            public boolean hasNext() {
+                return currentTreeMapIterator.hasNext() || currentTreeMapIndex < poolData.size()-1;
+            }
+
+            @Override
+            public Entry<byte[], Integer> next() {
+            	
+            	// Move on to the next map if all items from the previous have been iterated over
+                if (!currentTreeMapIterator.hasNext() && currentTreeMapIndex < poolData.size()-1)
+                {
+                	currentTreeMapIndex++;
+                	currentTreeMapIterator= poolData.get(currentTreeMapIndex).getEntries().iterator();
+                }
+                	
+                return currentTreeMapIterator.next();
+            }
+
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+        };
+        return it;
+    }
 
 }

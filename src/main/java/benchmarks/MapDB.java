@@ -4,10 +4,13 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map.Entry;
 import java.util.Random;
 import java.util.zip.GZIPOutputStream;
 
 import lib.aptamer.pool.PoolMapDB;
+import orestes.bloomfilter.BloomFilter;
+import orestes.bloomfilter.FilterBuilder;
 
 public class MapDB {
 
@@ -40,12 +43,13 @@ public class MapDB {
 		
 		try {
 			PoolMapDB p = new PoolMapDB(pp);
+//			p.setMaxTreeMapCapacity(100);
 			
 			char[] alphabet = {'A','C','G','T'};
 			char[] sb = {'A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A'};
 	    	Random r = new Random();
 	    	int current = p.size();
-	    	int total = 10000000;
+	    	int total = 100000000;
 	    	long tStart = System.currentTimeMillis();
 	    	long tStartTotal = System.currentTimeMillis();
 	    	
@@ -64,6 +68,16 @@ public class MapDB {
 	    		current++;
 	    	}
 			
+	    	System.out.println("Iterating Dataset");
+	    	tStart = System.currentTimeMillis();
+	    	int count = 0;
+	    	for ( Entry<byte[], Integer> item : p){
+	    		item.getValue();
+	    		item.getKey();
+	    		count ++;
+	    	}
+	    	System.out.printf("Iterated over %s items out of %s in %s seconds" , count, p.size(), ((System.currentTimeMillis()-tStart) / 1000.0));
+	    	
 	    	p.close();
 			
 		} catch (IOException e) {
