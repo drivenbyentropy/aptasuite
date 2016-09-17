@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.logging.Logger;
 
 import org.mapdb.DB;
@@ -253,9 +252,9 @@ public class PoolMapDB implements AptamerPool {
 	public int getIdentifier(byte[] a) {
 		
 		// Check for existence using bloom filter. 
-		// Note, that the result might be a false negative...
-		if (!containsAptamer(a)){
-			return -1;
+		// Note, that the result might be a false positive...
+		if (!bloomFilter.contains(a)){
+			return -1; // This result is always accurate (no false negatives)
 		}
 		
 		Integer identifier = null;
@@ -270,7 +269,7 @@ public class PoolMapDB implements AptamerPool {
 
 		}
 		
-		// ...so we need to catch the false negatives here.
+		// ...so we need to catch the false positive here.
 		if (identifier == null){ identifier = -1;}
 		
 		return identifier;
@@ -291,9 +290,7 @@ public class PoolMapDB implements AptamerPool {
 	 */
 	public Boolean containsAptamer(byte[] a) {
 		
-		// Use bloom filter for efficiency. This way we do not have to go to 
-		// disk I/O for each contains call.
-		return bloomFilter.contains(a);
+		return getIdentifier(a) != -1;
 
 	}
 
@@ -303,9 +300,7 @@ public class PoolMapDB implements AptamerPool {
 	 */
 	public Boolean containsAptamer(String a) {
 		
-		// Use bloom filter for efficiency. This way we do not have to go to 
-		// disk I/O for each contains call.
-		return bloomFilter.contains(a);
+		return getIdentifier(a.getBytes()) != -1;
 
 	}	
 	
