@@ -144,7 +144,7 @@ public class PoolMapDB implements AptamerPool {
     				HTreeMap<byte[], Integer> dbmap = db.hashMap("map")
     						.keySerializer(Serializer.BYTE_ARRAY)
     						.valueSerializer(Serializer.INTEGER)
-    				        .open();
+    						.open();
     				
     				poolData.add(dbmap);
     				
