@@ -1,13 +1,9 @@
 /**
  * 
  */
-package lib.aptamer.pool;
+package lib.aptamer.datastructures;
 
-import java.util.Iterator;
-import java.util.Map;
 import java.util.Map.Entry;
-
-import exceptions.InvalidAlphabetException;
 
 /**
  * @author Jan Hoinka
@@ -38,6 +34,7 @@ public interface AptamerPool extends Iterable<Entry<byte[], Integer>>{
 	 */
 	public int registerAptamer(byte[] a);
 	
+	
 	/**
 	 * @see AptamerPool#registerAptamer(byte[] a)
 	 */
@@ -51,12 +48,12 @@ public interface AptamerPool extends Iterable<Entry<byte[], Integer>>{
 	 */
 	public int getIdentifier(byte[] a);
 	
+
 	/**
 	 * @see AptamerPool#getIdentifier(byte[] a)
 	 */
 	public int getIdentifier(String a);
 
-	
 	
 	/**
 	 * Checks for the existence of a specific aptamer <code>a</code> in the pool.
@@ -83,4 +80,10 @@ public interface AptamerPool extends Iterable<Entry<byte[], Integer>>{
 	 * Note this physically deletes all files in the project data folder.
 	 */
 	public void clear();
+	
+	
+	/**
+	 * Optional. Closes any file handles the implementing class might have.
+	 */
+	public void close();
 }

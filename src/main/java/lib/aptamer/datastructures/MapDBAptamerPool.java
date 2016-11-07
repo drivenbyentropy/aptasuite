@@ -1,7 +1,7 @@
 /**
  * 
  */
-package lib.aptamer.pool;
+package lib.aptamer.datastructures;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -21,10 +21,12 @@ import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.mapdb.HTreeMap;
 import org.mapdb.Serializer;
+import org.mapdb.serializer.SerializerCompressionWrapper;
 
-import logger.AptaLogger;
 import orestes.bloomfilter.BloomFilter;
 import orestes.bloomfilter.FilterBuilder;
+
+import utilities.Configuration;
 
 /**
  * Implements the AptamerPool interface using a non-volatile based storage solution in order
@@ -32,13 +34,14 @@ import orestes.bloomfilter.FilterBuilder;
  * @author Jan Hoinka
  *
  */
-public class PoolMapDB implements AptamerPool {
+public class MapDBAptamerPool implements AptamerPool {
 	
 	/**
 	 * Enable logging for debuging and information
 	 */
 	private final static Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 
+	
 	/**
 	 * Path on file system for the current experiment
 	 */
@@ -54,13 +57,13 @@ public class PoolMapDB implements AptamerPool {
 	/**
 	 * The total number of expected items in the bloom filter.
 	 */
-	private int bloomFilterCapacity = 1000000000;
+	private int bloomFilterCapacity = Configuration.getParameters().getInt("MapDBAptamerPool.bloomFilterCapacity");
 	
 	
 	/**
 	 * The expected false positive rate
 	 */
-	private double bloomFilterCollisionProbability = 0.001;
+	private double bloomFilterCollisionProbability = Configuration.getParameters().getDouble("MapDBAptamerPool.bloomFilterCollisionProbability");
 	
 	
 	/**
@@ -69,6 +72,12 @@ public class PoolMapDB implements AptamerPool {
 	 */
 	private BloomFilter<String> bloomFilter = new FilterBuilder(bloomFilterCapacity, bloomFilterCollisionProbability).buildBloomFilter(); //TODO: make parameters class vars and implement getters and setters
 	
+	
+	/**
+	 * List of bloom filters, one per entry in <code>poolData</code>. This will be used to speed up
+	 * retrieval time of sequences.
+	 */
+	private List<BloomFilter<String>> poolDataBloomFilter = new ArrayList<BloomFilter<String>>();
 	
 	/**
 	 * Collection of HashMaps backed by MapDB which stores aptamer data on disk for
@@ -82,7 +91,7 @@ public class PoolMapDB implements AptamerPool {
 	 * noticeable with large volumes of data. As a workaround, we split the data into buckets of TreeMaps
 	 * of size <code>maxItemsPerTreeMap</code>. 
 	 */
-	private int maxTreeMapCapacity = 1000000;
+	private int maxTreeMapCapacity = Configuration.getParameters().getInt("MapDBAptamerPool.maxTreeMapCapacity");
 	
 	
 	/**
@@ -104,7 +113,7 @@ public class PoolMapDB implements AptamerPool {
 	 * in that path. It must exist and be writable for the user the VM is running from.
 	 * @throws FileNotFoundException if projectPath does not exist on file system.
 	 */
-	public PoolMapDB(Path projectPath) throws IOException{
+	public MapDBAptamerPool(Path projectPath) throws IOException{
 		
 		LOGGER.info("Instantiating PoolMapDB");
 		
@@ -141,11 +150,14 @@ public class PoolMapDB implements AptamerPool {
     					    .make();
 
     				HTreeMap<byte[], Integer> dbmap = db.hashMap("map")
-    						.keySerializer(Serializer.BYTE_ARRAY)
+    						.keySerializer(new SerializerCompressionWrapper(Serializer.BYTE_ARRAY))
     						.valueSerializer(Serializer.INTEGER)
     						.open();
     				
     				poolData.add(dbmap);
+    				
+    				BloomFilter<String> localBloomFilter = new FilterBuilder(maxTreeMapCapacity, bloomFilterCollisionProbability).buildBloomFilter();
+    				poolDataBloomFilter.add(localBloomFilter);
     				
     				// Update values
     				int currentDBmapSize = dbmap.size();
@@ -156,6 +168,7 @@ public class PoolMapDB implements AptamerPool {
     				Iterator<byte[]> dbmapIterator = dbmap.getKeys().iterator();
     				while (dbmapIterator.hasNext()){
     					bloomFilter.add(dbmapIterator.next());
+    					localBloomFilter.add(dbmapIterator.next());
     				}
     				
     				LOGGER.info(
@@ -186,6 +199,9 @@ public class PoolMapDB implements AptamerPool {
 			        .create();
 			
 			poolData.add(dbmap);
+			BloomFilter<String> localBloomFilter = new FilterBuilder(maxTreeMapCapacity, bloomFilterCollisionProbability).buildBloomFilter();
+			poolDataBloomFilter.add(localBloomFilter);
+			
 			currentTreeMapSize = 0;
 			
 			LOGGER.info("No data found on disk. Created new file Found and loaded file " + Paths.get(poolDataPath.toString(), "data" + String.format("%04d", poolData.size()) + ".mapdb").toString());
@@ -204,7 +220,7 @@ public class PoolMapDB implements AptamerPool {
 			return identifier;
 		}
 		
-		// Check that the current map is not at max capacity
+		// Check that the current map is not at max capacity and create a new map if that is the case
 		if (currentTreeMapSize == maxTreeMapCapacity){
 			
 			DB db = DBMaker
@@ -220,6 +236,9 @@ public class PoolMapDB implements AptamerPool {
 			        .create();
 			
 			poolData.add(dbmap);
+			BloomFilter<String> localBloomFilter = new FilterBuilder(maxTreeMapCapacity, bloomFilterCollisionProbability).buildBloomFilter();
+			poolDataBloomFilter.add(localBloomFilter);
+			
 			currentTreeMapSize = 0;
 		
 			LOGGER.info(
@@ -233,6 +252,7 @@ public class PoolMapDB implements AptamerPool {
 		poolData.get(poolData.size()-1).put(a, ++poolSize);
 		currentTreeMapSize++;
 		bloomFilter.add(a);
+		poolDataBloomFilter.get(poolData.size()-1).add(a);
 		
 		return poolSize;
 	}
@@ -252,25 +272,31 @@ public class PoolMapDB implements AptamerPool {
 	public int getIdentifier(byte[] a) {
 		
 		// Check for existence using bloom filter. 
-		// Note, that the result might be a false positive...
 		if (!bloomFilter.contains(a)){
 			return -1; // This result is always accurate (no false negatives)
 		}
 		
 		Integer identifier = null;
 		
-		// Iterate over all treeMaps
-		ListIterator<HTreeMap<byte[], Integer>> li = poolData.listIterator(poolData.size());
-
+		// Iterate over all treeMaps and bloomFilters
+		ListIterator<HTreeMap<byte[], Integer>> lim = poolData.listIterator(poolData.size());
+		ListIterator<BloomFilter<String>> lib = poolDataBloomFilter.listIterator(poolData.size());
+		
 		// Iterate in reverse
-		while(li.hasPrevious() && identifier == null) {
+		while(lim.hasPrevious() && identifier == null) {
 			
-			identifier = li.previous().get(a);
+			// Prevent expensive disk lookups by using the bloom filters...
+			if(! lib.previous().contains(a) ){
+				lim.previous();
+				continue;
+			}
+			
+			// ... and only look it up when we have to
+			identifier = lim.previous().get(a); //note, in case of a false positive, this returns null
 
 		}
 		
-		// ...so we need to catch the false positive here.
-		if (identifier == null){ identifier = -1;}
+		if (identifier == null){identifier = -1;}
 		
 		return identifier;
 	}
@@ -353,8 +379,9 @@ public class PoolMapDB implements AptamerPool {
 		// Reset the pool data
 		this.poolData.clear();
 		
-		// Reset the bloom filter
+		// Reset the bloom filters
 		bloomFilter.clear();
+		poolDataBloomFilter.clear();
 		
 		// Reset the counts
 		this.poolSize = 0;

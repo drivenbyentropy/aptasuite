@@ -14,37 +14,75 @@
 				<version>2.2</version>
 				<!-- nothing here -->
 			</plugin>
+			<!-- Executable Jars BEGIN -->
 			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-assembly-plugin</artifactId>
-				<version>2.2-beta-4</version>
-				<configuration>
-					<finalName>MapDBBenchmark</finalName>
-					<descriptorRefs>
-						<descriptorRef>jar-with-dependencies</descriptorRef>
-					</descriptorRefs>
-					<archive>
-						<manifest>
-							<mainClass>benchmarks.MapDB</mainClass>
-						</manifest>
-					</archive>
-				</configuration>
-				<executions>
-					<execution>
-						<phase>package</phase>
-						<goals>
-							<goal>single</goal>
-						</goals>
+				<artifactId>maven-assembly-plugin</artifactId> 
+				<version>2.6</version>
+					<executions>
+						<execution>
+	          					<id>AptaSuiteMain</id>
+								<configuration>
+									<finalName>AptaSuite</finalName>
+									<descriptorRefs>
+										<descriptorRef>jar-with-dependencies</descriptorRef>
+									</descriptorRefs>
+									<archive>
+										<manifest>
+											<mainClass>aptasuite.Aptasuite</mainClass>
+										</manifest>
+									</archive>
+								</configuration>
+								<phase>package</phase>
+								<goals>
+									<goal>single</goal>
+								</goals>
+						</execution>
+          				<execution>
+          					<id>MapDBBenchmark</id>
+							<configuration>
+								<finalName>MapDBBenchmark</finalName>
+								<descriptorRefs>
+									<descriptorRef>jar-with-dependencies</descriptorRef>
+								</descriptorRefs>
+								<archive>
+									<manifest>
+										<mainClass>benchmarks.MapDB</mainClass>
+									</manifest>
+								</archive>
+							</configuration>
+							<phase>package</phase>
+							<goals>
+								<goal>single</goal>
+							</goals>
 					</execution>
+					<execution>
+							<id>TestExperiment</id>
+							<configuration>
+								<finalName>TestExperiment</finalName>
+								<descriptorRefs>
+									<descriptorRef>jar-with-dependencies</descriptorRef>
+								</descriptorRefs>
+								<archive>
+									<manifest>
+										<mainClass>benchmarks.TestExperiment</mainClass>
+									</manifest>
+								</archive>
+							</configuration>
+							<phase>package</phase>
+							<goals>
+								<goal>single</goal>
+							</goals>
+					</execution>					
 				</executions>
 			</plugin>
+			<!-- Executable Jars END -->
 		</plugins>
 	</build>
 	<dependencies>
 		<dependency>
 			<groupId>org.mapdb</groupId>
 			<artifactId>mapdb</artifactId>
-			<version>3.0.1</version>
+			<version>3.0.2</version>
 		</dependency>
 		<dependency>
 			<groupId>com.googlecode.concurrent-trees</groupId>
@@ -55,6 +93,21 @@
 			<groupId>com.baqend</groupId>
 			<artifactId>bloom-filter</artifactId>
 			<version>1.0.7</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-configuration2</artifactId>
+			<version>2.1</version>
+		</dependency>
+		<dependency>
+			<groupId>commons-beanutils</groupId>
+			<artifactId>commons-beanutils</artifactId>
+			<version>1.9.3</version>
+		</dependency>
+		<dependency>
+			<groupId>net.sf.trove4j</groupId>
+			<artifactId>trove4j</artifactId>
+			<version>3.0.3</version>
 		</dependency>
 	</dependencies>
 	<repositories>
@@ -68,6 +121,7 @@
 		</repository>
 	</repositories>
 	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
 	</properties>

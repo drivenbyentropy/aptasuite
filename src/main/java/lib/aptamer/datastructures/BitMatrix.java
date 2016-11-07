@@ -1,13 +1,8 @@
 /**
  * 
  */
-package lib.aptamer.pool;
+package lib.aptamer.datastructures;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.BitSet;
 
@@ -110,6 +105,24 @@ public class BitMatrix implements Serializable{
 		
 		data.clear();
 	
+	}
+
+
+	/**
+	 * Returns the number of rows
+	 * @return
+	 */
+	public int getRows() {
+		return rows;
+	}
+
+
+	/**
+	 * Returns the number of columns
+	 * @return
+	 */
+	public int getCols() {
+		return cols;
 	}
 	
 }
