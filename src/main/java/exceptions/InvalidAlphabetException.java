@@ -7,7 +7,7 @@ package exceptions;
  * @author Jan Hoinka Exception class handling cases where potential aptamers do
  *         contain letters other that A C T or G.
  */
-public class InvalidAlphabetException extends Exception {
+public class InvalidAlphabetException extends RuntimeException {
 
 	/**
 	 * Auto generated version ID for serialization purposes
