@@ -3,6 +3,7 @@
  */
 package lib.aptamer.datastructures;
 
+import java.io.Serializable;
 import java.util.Map.Entry;
 
 /**
@@ -15,7 +16,7 @@ import java.util.Map.Entry;
  * This API provides efficient and transparent methods for aptamer 
  * storage, retrieval, and manipulation.
  */
-public interface AptamerPool extends Iterable<Entry<byte[], Integer>>{
+public interface AptamerPool extends Serializable, Iterable<Entry<byte[], Integer>>{
 
 
 	/**
@@ -76,8 +77,7 @@ public interface AptamerPool extends Iterable<Entry<byte[], Integer>>{
 	
 	
 	/**
-	 * Removes all items from the current pool and resets the bloom filter.
-	 * Note this physically deletes all files in the project data folder.
+	 * Removes all items from the current pool.
 	 */
 	public void clear();
 	
@@ -86,4 +86,10 @@ public interface AptamerPool extends Iterable<Entry<byte[], Integer>>{
 	 * Optional. Closes any file handles the implementing class might have.
 	 */
 	public void close();
+	
+	
+	/**
+	 * Optional. Sets the underlying data structure of the implementing class to read only mode. 
+	 */
+	public void setReadOnly();
 }

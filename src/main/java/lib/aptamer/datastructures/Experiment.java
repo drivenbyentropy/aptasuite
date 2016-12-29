@@ -5,6 +5,7 @@ package lib.aptamer.datastructures;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -29,7 +30,7 @@ import utilities.Configuration;
  *         constructor and use the provided access methods to retrieve and store
  *         its data.
  */
-public class Experiment {
+public class Experiment implements Serializable{
 	
 	/**
 	 * Enable logging for debugging and information
@@ -77,6 +78,12 @@ public class Experiment {
 	 */
 	private ArrayList<ArrayList<SelectionCycle>> controlSelectionCycles = new ArrayList<ArrayList<SelectionCycle>>();
 	
+	
+	/**
+	 * All selection cycles in the order as they appear in the configuration. This member is used
+	 * to facilitate access to the cycle instances from other classes. 
+	 */
+	private ArrayList<SelectionCycle> allSelectionCycles = new ArrayList<SelectionCycle>();
 	
 	/**
 	 * Constructs a new experiment. If <code>configFile</code> is null, an empty
@@ -301,6 +308,9 @@ public class Experiment {
 			counterSelectionCycles.get(cycle.getRound()).add(cycle);
 		}
 		
+		// finally, add it to the complete list of cyckes
+		allSelectionCycles.add(cycle);
+		
 		return cycle;
 	}
 	
@@ -371,6 +381,15 @@ public class Experiment {
 	}
 	
 	/**
+	 * Provides access to all created instances of selection cycles in order of apperance
+	 * in the configuration
+	 * @return
+	 */
+	public ArrayList<SelectionCycle> getAllSelectionCycles() {
+		return allSelectionCycles;
+	}
+
+	/**
 	 * Produces a string representation of the selection cycle topology as defined in the configuration
 	 * @return
 	 */
@@ -432,5 +451,22 @@ public class Experiment {
 		
 		return sb.toString();
 		
+	}
+	
+	/**
+	 * Get the name of this experiment
+	 * @return
+	 */
+	public String getName(){
+		return this.name;
+	}
+	
+	
+	/**
+	 * Get the description of this experiment
+	 * @return
+	 */
+	public String getDescriptio(){
+		return this.description;
 	}
 }

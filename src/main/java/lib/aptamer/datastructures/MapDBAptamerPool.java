@@ -5,6 +5,8 @@ package lib.aptamer.datastructures;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -70,20 +72,27 @@ public class MapDBAptamerPool implements AptamerPool {
 	 * The bloom filter is used in order to provide atomic and space efficient checks on 
 	 * whether a sequence is already contained in the pool.
 	 */
-	private BloomFilter<String> bloomFilter = new FilterBuilder(bloomFilterCapacity, bloomFilterCollisionProbability).buildBloomFilter(); //TODO: make parameters class vars and implement getters and setters
+	private transient BloomFilter<String> bloomFilter = new FilterBuilder(bloomFilterCapacity, bloomFilterCollisionProbability).buildBloomFilter(); //TODO: make parameters class vars and implement getters and setters
 	
 	
 	/**
 	 * List of bloom filters, one per entry in <code>poolData</code>. This will be used to speed up
 	 * retrieval time of sequences.
 	 */
-	private List<BloomFilter<String>> poolDataBloomFilter = new ArrayList<BloomFilter<String>>();
+	private transient List<BloomFilter<String>> poolDataBloomFilter = new ArrayList<BloomFilter<String>>();
+	
 	
 	/**
 	 * Collection of HashMaps backed by MapDB which stores aptamer data on disk for
 	 * memory efficiency.
 	 */
-	private List<HTreeMap<byte[], Integer>> poolData = new ArrayList<HTreeMap<byte[], Integer>>();
+	private transient List<HTreeMap<byte[], Integer>> poolData = new ArrayList<HTreeMap<byte[], Integer>>();
+
+	
+	/**
+	 * Stores the file locations of the mapdb instance in <code>poolData</code>.
+	 */
+	private List<Path> poolDataPaths = new ArrayList<Path>();
 	
 	
 	/**
@@ -134,85 +143,88 @@ public class MapDBAptamerPool implements AptamerPool {
 		this.poolDataPath = Files.createDirectories(Paths.get(this.projectPath.toString(), "pooldata"));
 		
 		// Iterate over the folder and open the individual MapDB instances
-		LOGGER.info("Searching for existing datasets in " + poolDataPath.toString());
-		try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(Paths.get(poolDataPath.toString()))) {
-			
-			for (Path file : directoryStream) {
-                
-    			// Open and read the TreeMap
-    			if (Files.isRegularFile(file)){
-    				
-    				DB db = DBMaker
-    					    .fileDB(file.toFile())
-    					    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
-    					    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
-    					    .executorEnable()
-    					    .make();
+//		LOGGER.info("Searching for existing datasets in " + poolDataPath.toString());
+//		try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(Paths.get(poolDataPath.toString()))) {
+//			
+//			for (Path file : directoryStream) {
+//                
+//    			// Open and read the TreeMap
+//    			if (Files.isRegularFile(file)){
+//    				
+//    				DB db = DBMaker
+//    					    .fileDB(file.toFile())
+//    					    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
+//    					    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
+//    					    .executorEnable()
+//    					    .make();
+//
+//    				HTreeMap<byte[], Integer> dbmap = db.hashMap("map")
+//    						.keySerializer(new SerializerCompressionWrapper(Serializer.BYTE_ARRAY))
+//    						.valueSerializer(Serializer.INTEGER)
+//    						.open();
+//    				
+//    				poolData.add(dbmap);
+//    				poolDataPaths.add(file);
+//    				
+//    				BloomFilter<String> localBloomFilter = new FilterBuilder(maxTreeMapCapacity, bloomFilterCollisionProbability).buildBloomFilter();
+//    				poolDataBloomFilter.add(localBloomFilter);
+//    				
+//    				// Update values
+//    				int currentDBmapSize = dbmap.size();
+//    				poolSize += currentDBmapSize;
+//    				currentTreeMapSize = currentDBmapSize;
+//    				
+//    				// Update bloom filter content
+//    				Iterator<byte[]> dbmapIterator = dbmap.getKeys().iterator();
+//    				while (dbmapIterator.hasNext()){
+//    					bloomFilter.add(dbmapIterator.next());
+//    					localBloomFilter.add(dbmapIterator.next());
+//    				}
+//    				
+//    				LOGGER.info(
+//    						"Found and loaded file " + file.toString() + "\n" +
+//    						"Total number of aptamers in file: " + currentTreeMapSize + "\n" +
+//    						"Total number of aptamers: " + poolSize
+//    						);
+//    			}
+//                
+//            }
+//        } catch (IOException ex) {}
+		
+		
+		// Create an empty instance of the MapDB Container
+//		if (poolData.isEmpty()){
 
-    				HTreeMap<byte[], Integer> dbmap = db.hashMap("map")
-    						.keySerializer(new SerializerCompressionWrapper(Serializer.BYTE_ARRAY))
-    						.valueSerializer(Serializer.INTEGER)
-    						.open();
-    				
-    				poolData.add(dbmap);
-    				
-    				BloomFilter<String> localBloomFilter = new FilterBuilder(maxTreeMapCapacity, bloomFilterCollisionProbability).buildBloomFilter();
-    				poolDataBloomFilter.add(localBloomFilter);
-    				
-    				// Update values
-    				int currentDBmapSize = dbmap.size();
-    				poolSize += currentDBmapSize;
-    				currentTreeMapSize = currentDBmapSize;
-    				
-    				// Update bloom filter content
-    				Iterator<byte[]> dbmapIterator = dbmap.getKeys().iterator();
-    				while (dbmapIterator.hasNext()){
-    					bloomFilter.add(dbmapIterator.next());
-    					localBloomFilter.add(dbmapIterator.next());
-    				}
-    				
-    				LOGGER.info(
-    						"Found and loaded file " + file.toString() + "\n" +
-    						"Total number of aptamers in file: " + currentTreeMapSize + "\n" +
-    						"Total number of aptamers: " + poolSize
-    						);
-    			}
-                
-            }
-        } catch (IOException ex) {}
-		
-		
-		// If no existing mapped were found, create an empty one
-		if (poolData.isEmpty()){
+		DB db = DBMaker
+			    .fileDB(Paths.get(poolDataPath.toString(), "data" + String.format("%04d", poolData.size()) + ".mapdb").toFile())
+			    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
+			    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
+			    .executorEnable()
+			    .make();
 
-			DB db = DBMaker
-				    .fileDB(Paths.get(poolDataPath.toString(), "data" + String.format("%04d", poolData.size()) + ".mapdb").toFile())
-				    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
-				    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
-				    .executorEnable()
-				    .make();
-	
-			System.out.println(poolData.size());
-			HTreeMap<byte[], Integer> dbmap = db.hashMap("map")
-					.keySerializer(Serializer.BYTE_ARRAY)
-					.valueSerializer(Serializer.INTEGER)
-			        .create();
-			
-			poolData.add(dbmap);
-			BloomFilter<String> localBloomFilter = new FilterBuilder(maxTreeMapCapacity, bloomFilterCollisionProbability).buildBloomFilter();
-			poolDataBloomFilter.add(localBloomFilter);
-			
-			currentTreeMapSize = 0;
-			
-			LOGGER.info("No data found on disk. Created new file Found and loaded file " + Paths.get(poolDataPath.toString(), "data" + String.format("%04d", poolData.size()) + ".mapdb").toString());
-		}
+		System.out.println(poolData.size());
+		HTreeMap<byte[], Integer> dbmap = db.hashMap("map")
+				.keySerializer(Serializer.BYTE_ARRAY)
+				.valueSerializer(Serializer.INTEGER)
+		        .create();
 		
+		poolDataPaths.add(Paths.get(poolDataPath.toString(), "data" + String.format("%04d", poolData.size()) + ".mapdb"));
+		poolData.add(dbmap);
+
+		BloomFilter<String> localBloomFilter = new FilterBuilder(maxTreeMapCapacity, bloomFilterCollisionProbability).buildBloomFilter();
+		poolDataBloomFilter.add(localBloomFilter);
+		
+		currentTreeMapSize = 0;
+		
+		LOGGER.info("Created new file " + Paths.get(poolDataPath.toString(), "data" + String.format("%04d", poolData.size()) + ".mapdb").toString());
 	}
+		
+//	}
 	
 	/* (non-Javadoc)
 	 * @see aptamer.pool.AptamerPool#registerAptamer(byte[] a)
 	 */
-	public int registerAptamer(byte[] a){
+	synchronized public int registerAptamer(byte[] a){
 		
 		// Check if the item is already registered, and if so, return its identifier
 		int identifier = this.getIdentifier(a);
@@ -223,6 +235,11 @@ public class MapDBAptamerPool implements AptamerPool {
 		// Check that the current map is not at max capacity and create a new map if that is the case
 		if (currentTreeMapSize == maxTreeMapCapacity){
 			
+			LOGGER.info(
+					"Current Map is at max capacity creating new file " + Paths.get(poolDataPath.toString(), "data" + String.format("%04d", poolData.size()) + ".mapdb").toString() + "\n" +
+					"Total number of aptamers: " + poolSize 
+					);
+			
 			DB db = DBMaker
 				    .fileDB(Paths.get(poolDataPath.toString(), "data" + String.format("%04d", poolData.size()) + ".mapdb").toFile())
 				    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
@@ -234,17 +251,14 @@ public class MapDBAptamerPool implements AptamerPool {
 					.keySerializer(Serializer.BYTE_ARRAY)
 					.valueSerializer(Serializer.INTEGER)
 			        .create();
-			
+
+			poolDataPaths.add(Paths.get(poolDataPath.toString(), "data" + String.format("%04d", poolData.size()) + ".mapdb"));
 			poolData.add(dbmap);
+			
 			BloomFilter<String> localBloomFilter = new FilterBuilder(maxTreeMapCapacity, bloomFilterCollisionProbability).buildBloomFilter();
 			poolDataBloomFilter.add(localBloomFilter);
 			
 			currentTreeMapSize = 0;
-		
-			LOGGER.info(
-					"Current Map is at max capacity creating new file " + Paths.get(poolDataPath.toString(), "data" + String.format("%04d", poolData.size()) + ".mapdb").toString() + "\n" +
-					"Total number of aptamers: " + poolSize 
-					);
 			
 		}
 
@@ -378,6 +392,7 @@ public class MapDBAptamerPool implements AptamerPool {
 		
 		// Reset the pool data
 		this.poolData.clear();
+		this.poolDataPaths.clear();
 		
 		// Reset the bloom filters
 		bloomFilter.clear();
@@ -466,7 +481,123 @@ public class MapDBAptamerPool implements AptamerPool {
 	
 	}	
 	
+	 @Override
+    public void setReadOnly(){
+    	
+    	// close all the file handles
+    	close();
+    	
+    	// clear references
+    	poolData.clear();
+    	
+    	// reopen as read only
+		for (Path file : poolDataPaths) {
+            
+			// Open and read the TreeMap
+			if (Files.isRegularFile(file)){
+				
+				DB db = DBMaker
+					    .fileDB(file.toFile())
+					    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
+					    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
+					    .executorEnable()
+					    .readOnly()
+					    .make();
+
+				HTreeMap<byte[], Integer> dbmap = db.hashMap("map")
+						.keySerializer(new SerializerCompressionWrapper(Serializer.BYTE_ARRAY))
+						.valueSerializer(Serializer.INTEGER)
+						.open();
+				
+				poolData.add(dbmap);
+				
+				LOGGER.info( "Reopened as read only file " + file.toString() );
+			}
+            
+        }
+    }	
 	
+	 
+	/**
+	 * Since MapDB objects are not serializable in itself, we need to 
+	 * handle storage and retrieval manually so we can use the java
+	 * Serializable interface with the main instance
+	 * 
+	 * Note: Calling this function will set the MapDB into read-only
+	 * mode
+	 * 
+	 * @param oos
+	 * @throws IOException
+	 */
+	private void writeObject(ObjectOutputStream oos) throws IOException {
+		
+		// default serialization 
+	    oos.defaultWriteObject();
+		
+	    // set into read-only mode
+	    this.setReadOnly();
+	}
+	
+	/**
+	 * Since MapDB objects are not serializable in itself, we need to 
+	 * handle storage and retrieval manually so we can use the java
+	 * Serializable interface with the main instance
+	 * 
+	 * Note: Calling this function will road the MapDB in read-only
+	 * mode
+	 * @param ois
+	 * @throws ClassNotFoundException
+	 * @throws IOException
+	 */
+	private void readObject(ObjectInputStream ois) throws ClassNotFoundException, IOException {
+
+		// default deserialization
+	    ois.defaultReadObject();
+
+    	// open as read only
+	    poolData = new ArrayList<HTreeMap<byte[], Integer>>();
+	    
+	    // since we are opening the maps as read-only, we can set the size of the bloom filters to exactly 
+	    // the number of aptamers in the corresponding mapdb contrainers
+		bloomFilter = new FilterBuilder(poolSize, bloomFilterCollisionProbability).buildBloomFilter(); 
+		poolDataBloomFilter = new ArrayList<BloomFilter<String>>();
+		
+	    
+		for (Path file : poolDataPaths) {
+            
+			// Open and read the TreeMap
+			if (Files.isRegularFile(file)){
+				
+				DB db = DBMaker
+					    .fileDB(file.toFile())
+					    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
+					    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
+					    .executorEnable()
+					    .readOnly()
+					    .make();
+
+				HTreeMap<byte[], Integer> dbmap = db.hashMap("map")
+						.keySerializer(new SerializerCompressionWrapper(Serializer.BYTE_ARRAY))
+						.valueSerializer(Serializer.INTEGER)
+						.open();
+				
+				poolData.add(dbmap);
+				
+//				update counts
+				BloomFilter<String> localBloomFilter = new FilterBuilder(maxTreeMapCapacity, bloomFilterCollisionProbability).buildBloomFilter();
+				poolDataBloomFilter.add(localBloomFilter);
+				
+				for ( Entry<byte[], Integer> entry : dbmap.getEntries()){
+					bloomFilter.add(entry.getKey());
+					localBloomFilter.add(entry.getKey());
+				}
+				
+				LOGGER.info( "Reopened as read only file " + file.toString() );
+			}
+        }
+	}
+	 
+	 
     /* (non-Javadoc)
      * @see java.lang.Iterable#iterator()
      */
@@ -503,4 +634,5 @@ public class MapDBAptamerPool implements AptamerPool {
         return it;
     }
 
+   
 }

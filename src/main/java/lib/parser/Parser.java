@@ -3,6 +3,8 @@
  */
 package lib.parser;
 
+import lib.parser.aptaplex.AptaPlexProgress;
+
 /**
  * @author Jan Hoinka
  * This interface defines the type which all classes which implement must
@@ -29,15 +31,8 @@ public interface Parser {
 	
 	
 	/**
-	 * Produces an estimate of the total number of processed reads.
-	 * @return total number of processed reads
+	 * Produces an estimate of the progress of the parser implementation
 	 */
-	public long getTotalProcessed();
+	public AptaPlexProgress getProgress();
 	
-	
-	/**
-	 * Produces an estimate of the total number of acceped reads.
-	 * @return total number of accepted reads
-	 */
-	public long getTotalAccepted();
 }

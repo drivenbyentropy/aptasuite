@@ -109,6 +109,16 @@
 			<artifactId>trove4j</artifactId>
 			<version>3.0.3</version>
 		</dependency>
+		<dependency>
+			<groupId>com.milaboratory</groupId>
+			<artifactId>milib</artifactId>
+			<version>1.4</version>
+		</dependency>
+		<dependency>
+			<groupId>net.byteseek</groupId>
+			<artifactId>byteseek</artifactId>
+			<version>2.0.3</version>
+		</dependency>
 	</dependencies>
 	<repositories>
 		<repository>

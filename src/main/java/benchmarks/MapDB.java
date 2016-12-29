@@ -149,13 +149,14 @@ public class MapDB {
 		
 		try {
 
-			FileOutputStream forwards = new FileOutputStream("/run/media/matrix/a9278623-5051-410b-88db-ae475a62a6ba/5rounds_forward.fasta.gz");
-			FileOutputStream reverses = new FileOutputStream("/run/media/matrix/a9278623-5051-410b-88db-ae475a62a6ba/5rounds_reverse.fasta.gz");
+			FileOutputStream forwards = new FileOutputStream("/run/media/matrix/a9278623-5051-410b-88db-ae475a62a6ba/5rounds_flankingbarcodes_forward.fasta.gz");
+			FileOutputStream reverses = new FileOutputStream("/run/media/matrix/a9278623-5051-410b-88db-ae475a62a6ba/5rounds_flankingbarcodes_reverse.fasta.gz");
 			
 			Writer forward = new OutputStreamWriter(new GZIPOutputStream(forwards), "UTF-8");
 			Writer reverse = new OutputStreamWriter(new GZIPOutputStream(reverses), "UTF-8");
 			
-			String[] barcodes = new String[] {"ATGCGT","GACGAC","GGTACC","TCGTAG","CCATGG"};
+			String[] barcodes5 = new String[] {"ATGCGT","GACGAC","GGTACC","TCGTAG","CCATGG"};
+			String[] barcodes3 = new String[] {"TAGCCA","ATCGAT","AATCAA","ATCGTA","GGTTAA"};
 			String primer5 = "AGTGATGCTAGCTAGCTTGGATCGACTG";
 			String primer3 = "TTAGCATCGGGATCTATACGGATCGGTAGCCGT";
 			
@@ -179,10 +180,25 @@ public class MapDB {
 				
 				//asseble sequence
 				StringBuilder sbs = new StringBuilder();
-				sbs.append(barcodes[r.nextInt(4)]);
+				int bc_index = r.nextInt(5);
+				
+				//random letter before
+				int total_random_letters = 10;
+				int num_letters_befor = r.nextInt(4);
+				for (int x=0; x<num_letters_befor; x++){
+					sbs.append(alphabet[r.nextInt(4)]);
+				}
+				
+				sbs.append(barcodes5[bc_index]);
 				sbs.append(primer5);
 				sbs.append(sb);
 				sbs.append(primer3);
+				sbs.append(barcodes3[bc_index]);
+				
+				//remaining random letters after
+				for (int x=0; x<total_random_letters-num_letters_befor; x++){
+					sbs.append(alphabet[r.nextInt(4)]);
+				}
 				
 				current++;
 				
@@ -243,7 +259,7 @@ public class MapDB {
 				forward.write(qsf.toString() + "\n");
 				
 				reverse.write("@SEQ_" + current + "\n");
-				reverse.write(rr_error.toString() + "\n");
+				reverse.write(rr_error.reverse().toString() + "\n");
 				reverse.write("+" + "\n");
 				reverse.write(qsr.toString() + "\n");
 			}
@@ -294,8 +310,8 @@ public class MapDB {
 
 	public static void main(String[] args) {
 		
-		//generatePairedEndDataset(); 
-		testRandomSequences();
+		generatePairedEndDataset(); 
+//		testRandomSequences();
 		
 //		CountingBloomFilter<String> cbf = new FilterBuilder(1000, 0.01).buildCountingBloomFilter();
 //		

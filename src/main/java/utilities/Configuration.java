@@ -3,13 +3,16 @@
  */
 package utilities;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.logging.Logger;
 
-import lib.aptamer.datastructures.AptamerPool;
+import org.apache.commons.configuration2.PropertiesConfiguration;
+import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder;
+import org.apache.commons.configuration2.builder.fluent.Parameters;
+import org.apache.commons.configuration2.convert.DefaultListDelimiterHandler;
+
 import lib.aptamer.datastructures.Experiment;
 
 /**
@@ -33,13 +36,9 @@ public class Configuration {
 	 */
 	private final static Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 	
-	/**
-	 * Apache commons configuration API.
-	 */
-	private static org.apache.commons.configuration2.builder.fluent.Configurations configs = new org.apache.commons.configuration2.builder.fluent.Configurations();	
 	
 	/**
-	 * The properties instance. See Javas <code>Properties</code> class.
+	 * The properties instance. Apache commons configuration API 2.x
 	 */
 	private static org.apache.commons.configuration2.Configuration parameters;
 	
@@ -49,6 +48,11 @@ public class Configuration {
 	 */
 	private static Experiment experiment = null;
 
+	
+	/**
+	 * A special object used to signal any consumer to finish in producer-consumer schemes
+	 */
+	public static final Object POISON_PILL = new Object();
 
 	/**
 	 * Adds the configuration stored on disk to the current set of parameters. 
@@ -60,7 +64,15 @@ public class Configuration {
 		
 			try {
 				LOGGER.info("Reading configuration from file.");
-				parameters = configs.properties(new File(fileName));
+				
+				FileBasedConfigurationBuilder<org.apache.commons.configuration2.FileBasedConfiguration> builder =
+					    new FileBasedConfigurationBuilder<org.apache.commons.configuration2.FileBasedConfiguration>(PropertiesConfiguration.class)
+					    .configure(new Parameters().properties()
+					        .setFileName(fileName)
+					        .setListDelimiterHandler(new DefaultListDelimiterHandler(',')));
+				
+				parameters = builder.getConfiguration();
+				
 			} catch (Exception e) {
 				
 				LOGGER.info("Error, could not read configuration file. Please check it for correctness");
@@ -76,7 +88,7 @@ public class Configuration {
 				 // PoolMapDB Options
 			     put("MapDBAptamerPool.bloomFilterCapacity", 500000000);
 			     put("MapDBAptamerPool.bloomFilterCollisionProbability", 0.001);
-			     put("MapDBAptamerPool.maxTreeMapCapacity", 7500000);
+			     put("MapDBAptamerPool.maxTreeMapCapacity", 7500000); 
 			     
 			     
 			     // SelectionCycle Backend
@@ -91,6 +103,15 @@ public class Configuration {
 			     
 			     // AptaplexParser Options
 			     put("AptaplexParser.isPerFile", false);
+			     put("AptaplexParser.BlockingQueueSize", 500); // 10
+			     put("AptaplexParser.PairedEndMinOverlap", 15); // Milab option: smallest overlap required when creating contig
+			     put("AptaplexParser.PairedEndMaxMutations", 5); // Maximal number of mutations in the overlapping region for a sequence to be accepted
+			     put("AptaplexParser.PairedEndMaxScoreValue", 55); // Highest score of the current quality score model 55 for phred
+			     put("AptaplexParser.BarcodeTolerance", 1); // Maximal number of mutations allowed in the barcodes
+			     put("AptaplexParser.PrimerTolerance", 3); // Maximal number of mutations allowed in the primers
+			     
+			     // Performance Options
+			     put("Performance.maxNumberOfCores", 10); // if larger than available, min of both is taken
 			     
 			}};
 			
@@ -101,7 +122,8 @@ public class Configuration {
 				}
 			}
 			
-			LOGGER.info("Using the following parameters: " + printParameters());
+			LOGGER.info("Using the following parameters: ");
+			LOGGER.info(printParameters());
 			// TODO: Sanity checks!
 	}
 	

@@ -12,7 +12,7 @@ import java.io.ObjectOutputStream;
  * Helper functions to serialize and deserialize objects from disk.
  * This class is applicable to all classes implementing the Serializable interface.
  */
-public class SaveAndRestore {
+public class Serialization {
 
 	/**
 	 * Serialize the current instance of the object to disk. This is useful for 
@@ -20,7 +20,7 @@ public class SaveAndRestore {
 	 * @param fileName
 	 * @throws IOException
 	 */
-	public void serialize(Object obj, String fileName) throws IOException {
+	public static void serialize(Object obj, String fileName) throws IOException {
 		
 		FileOutputStream fos = new FileOutputStream(fileName);
 		ObjectOutputStream oos = new ObjectOutputStream(fos);
@@ -36,7 +36,7 @@ public class SaveAndRestore {
 	 * @throws IOException
 	 * @throws ClassNotFoundException
 	 */
-	private Object deserialize(String fileName) throws IOException, ClassNotFoundException {
+	public static Object deserialize(String fileName) throws IOException, ClassNotFoundException {
 
 		FileInputStream fis = new FileInputStream(fileName);
 		ObjectInputStream ois = new ObjectInputStream(fis);

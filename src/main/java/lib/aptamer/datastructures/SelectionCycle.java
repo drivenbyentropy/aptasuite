@@ -3,6 +3,7 @@
  */
 package lib.aptamer.datastructures;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
 /**
@@ -26,7 +27,7 @@ import java.util.ArrayList;
  * class can be called with the following parameter:
  * Constructor(String name, int round_id, boolean isControlSelection, boolean isCounterSelection)
  */
-public interface SelectionCycle {
+public interface SelectionCycle extends Serializable{
 
 	/**
 	 * Adds aptamer <code>a</code> to this selection cycle. If the aptamer is already present
@@ -37,6 +38,11 @@ public interface SelectionCycle {
 	public void addToSelectionCycle(String a);
 	
 	/**
+	 * @see SelectionCycle#addToSelectionCycle(String a)
+	 */
+	public void addToSelectionCycle(byte[] a);
+	
+	/**
 	 * Checks whether an aptamer is part of this selection cycle
 	 * @param a the aptamer in question
 	 * @return true if the aptamer is present, false otherwise
@@ -44,11 +50,21 @@ public interface SelectionCycle {
 	public boolean containsAptamer(String a);
 	
 	/**
+	 * @see SelectionCycle#containsAptamer(String a)
+	 */
+	public boolean containsAptamer(byte[] a);
+	
+	/**
 	 * Return the cardinality of a particular aptamer in this pool.
 	 * @param a The aptamer sequence in question
 	 * @return The cardinality of the aptamer. If the aptamer is not part of this selection cycle, 0 is returned.
 	 */
 	public int getAptamerCardinality(String a); 
+
+	/**
+	 * @see SelectionCycle#getAptamerCardinality(String a)
+	 */
+	public int getAptamerCardinality(byte[] a); 
 	
 	/**
 	 * The total number of aptamer molecules in this pool. This is typically defined as 
@@ -122,6 +138,15 @@ public interface SelectionCycle {
 	 * @return true if selection cycle is a counter selection
 	 */
 	public boolean isCounterSelection();
+	
+	
+	/**
+	 * Optional. Performs any additional logic on the selection cycle such as
+	 * optimizing the data structures once it is known no more items will
+	 * be added to it (i.e. upon completing the parsing).
+	 */
+	public void setReadOnly();
+	
 	
 	//TODO: +iteratator for all aptamers in this pool
 	

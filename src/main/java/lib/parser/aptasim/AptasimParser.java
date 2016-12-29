@@ -4,6 +4,7 @@
 package lib.parser.aptasim;
 
 import lib.parser.Parser;
+import lib.parser.aptaplex.AptaPlexProgress;
 
 /**
  * @author Jan Hoinka
@@ -24,15 +25,9 @@ public class AptasimParser implements Parser{
 	}
 
 	@Override
-	public long getTotalProcessed() {
+	public AptaPlexProgress getProgress() {
 		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	@Override
-	public long getTotalAccepted() {
-		// TODO Auto-generated method stub
-		return 0;
+		return null;
 	}
 
 }

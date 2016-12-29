@@ -4,6 +4,8 @@
 package lib.aptamer.datastructures;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -30,22 +32,13 @@ import utilities.Configuration;
  * 
  * This class contains all information regarding a single selection cycle.
  * 
- * USE THIS FOR THE MAP
- * 			DB db = DBMaker
-				    .fileDB(Paths.get("/home/matrix/temp/aptasuite/test.mapdb").toFile())
-				    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
-				    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
-				    .executorEnable()
-				    .make();
-
-			BTreeMap<Integer,byte[]> dbmap = db.treeMap("map")
-					.valuesOutsideNodesEnable()
-					.keySerializer(Serializer.INTEGER)
-					.valueSerializer(new SerializerCompressionWrapper(Serializer.BYTE_ARRAY))
-			        .create();
- * 
  */
 public class MapDBSelectionCycle implements SelectionCycle{
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 5440879993287731191L;
 
 	/**
 	 * Enable logging for debuging and information
@@ -88,7 +81,7 @@ public class MapDBSelectionCycle implements SelectionCycle{
 	 * is present at this location, the value is null.
 	 * 
 	 * Any parser implemented in this project will access this value in order to 
-	 * perform multiplexing.
+	 * perform de-multiplexing.
 	 */
 	private String barcode3 = null;
 	
@@ -116,14 +109,14 @@ public class MapDBSelectionCycle implements SelectionCycle{
 	/**
 	 * Bloom Filter for fast member lookup
 	 */
-	private BloomFilter<Integer> poolContent = new FilterBuilder(Configuration.getParameters().getInt("MapDBAptamerPool.bloomFilterCapacity"), Configuration.getParameters().getDouble("MapDBSelectionCycle.bloomFilterCollisionProbability")).buildBloomFilter();
+	private transient BloomFilter<Integer> poolContent = new FilterBuilder(Configuration.getParameters().getInt("MapDBAptamerPool.bloomFilterCapacity"), Configuration.getParameters().getDouble("MapDBSelectionCycle.bloomFilterCollisionProbability")).buildBloomFilter();
 	
 	
 	/**
 	 * File backed map containing the IDs of each aptamer (as stored in <code>AptamerPool</code>)
 	 * and the number of times they have been sequenced for this particular selection cycle.
 	 */
-	private BTreeMap<Integer,Integer> poolContentCounts = null;
+	private transient BTreeMap<Integer,Integer> poolContentCounts = null;
 	
 	
 	/**
@@ -154,12 +147,7 @@ public class MapDBSelectionCycle implements SelectionCycle{
 		// Determine the unique file name associated with this cycle
 		String cycleFileName = round + "_" + name + ".mapdb";
 
-		if (Files.exists(Paths.get(poolDataPath.toString(), cycleFileName))){
-			LOGGER.info("Found selection cycle " + name + " on disk. Reading from file.");
-		}
-		else{
-			LOGGER.info("Creating new file '" + Paths.get(poolDataPath.toString(), cycleFileName).toFile() + "' for selection cycle " + name + ".");
-		}
+		LOGGER.info("Creating new file '" + Paths.get(poolDataPath.toString(), cycleFileName).toFile() + "' for selection cycle " + name + ".");
 
 		// Create map or read from file
 		DB db = DBMaker
@@ -173,16 +161,8 @@ public class MapDBSelectionCycle implements SelectionCycle{
 				//.valuesOutsideNodesEnable()
 				.keySerializer(Serializer.INTEGER)
 				.valueSerializer(Serializer.INTEGER)
-		        .createOrOpen();
+		        .create();
 		
-		// Update class parameters
-		for (Entry<Integer, Integer> item : poolContentCounts.getEntries()) {
-			poolContent.add(item.getKey());
-			this.size += item.getValue();
-		}
-		
-		this.unique_size = poolContentCounts.size();
-	
 	}
 	
 	@Override
@@ -194,7 +174,7 @@ public class MapDBSelectionCycle implements SelectionCycle{
 
 
 	@Override
-	public void addToSelectionCycle(String a) {
+	public void addToSelectionCycle(byte[] a) {
 		
 		// Check if the aptamer is already present in the pool and add it if not
 		int id_a = Configuration.getExperiment().getAptamerPool().registerAptamer(a);
@@ -220,9 +200,13 @@ public class MapDBSelectionCycle implements SelectionCycle{
 		
 	}
 
+	@Override
+	public void addToSelectionCycle(String a){
+		addToSelectionCycle(a.getBytes());
+	}
 
 	@Override
-	public boolean containsAptamer(String a) {
+	public boolean containsAptamer(byte[] a) {
 		
 		// Get the corresponding aptamer id from the pool
 		int id_a = Configuration.getExperiment().getAptamerPool().getIdentifier(a);
@@ -235,10 +219,15 @@ public class MapDBSelectionCycle implements SelectionCycle{
 			
 		return current_count != null;
 	}
+	
+	@Override
+	public boolean containsAptamer(String a){
+		return containsAptamer(a.getBytes());
+	}
 
 
 	@Override
-	public int getAptamerCardinality(String a) {
+	public int getAptamerCardinality(byte[] a) {
 		
 		int id_a = Configuration.getExperiment().getAptamerPool().getIdentifier(a);
 		
@@ -251,7 +240,11 @@ public class MapDBSelectionCycle implements SelectionCycle{
 		return count;
 	}
 
-
+	@Override
+	public int getAptamerCardinality(String a) {
+		return getAptamerCardinality(a.getBytes());
+	}
+	
 	@Override
 	public int getSize() {
 		return size;
@@ -351,5 +344,94 @@ public class MapDBSelectionCycle implements SelectionCycle{
 	public boolean isCounterSelection() {
 		return isCounterSelection;
 	}
+
+	@Override
+	public void setReadOnly() {
+		
+		poolContentCounts.close();
+		
+		Path projectPath = Paths.get(Configuration.getParameters().getString("Experiment.projectPath"));
+		Path poolDataPath = Paths.get(projectPath.toString(), "cycledata");
+		String cycleFileName = round + "_" + name + ".mapdb";
+		
+		DB db = DBMaker
+			    .fileDB(Paths.get(poolDataPath.toString(), cycleFileName).toFile())
+			    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
+			    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
+			    .executorEnable()
+			    .readOnly()
+			    .make();
+
+		poolContentCounts = db.treeMap("map")
+				.keySerializer(Serializer.INTEGER)
+				.valueSerializer(Serializer.INTEGER)
+		        .createOrOpen();
+		
+	}
+	
+	/**
+	 * Since MapDB objects are not serializable in itself, we need to 
+	 * handle storage and retrieval manually so we can use the java
+	 * Serializable interface with the main instance
+	 * 
+	 * Note: Calling this function will set the MapDB into read-only
+	 * mode
+	 * 
+	 * @param oos
+	 * @throws IOException
+	 */
+	private void writeObject(ObjectOutputStream oos) throws IOException {
+		
+		// default serialization 
+	    oos.defaultWriteObject();
+		
+	    // set into read-only mode
+	    this.setReadOnly();
+	}
+	
+	/**
+	 * Since MapDB objects are not serializable in itself, we need to 
+	 * handle storage and retrieval manually so we can use the java
+	 * Serializable interface with the main instance
+	 * 
+	 * Note: Calling this function will road the MapDB in read-only
+	 * mode
+	 * @param ois
+	 * @throws ClassNotFoundException
+	 * @throws IOException
+	 */
+	private void readObject(ObjectInputStream ois) throws ClassNotFoundException, IOException {
+
+		// default deserialization
+	    ois.defaultReadObject();
+
+		// read the mapdb instance	    
+		Path projectPath = Paths.get(Configuration.getParameters().getString("Experiment.projectPath"));
+		Path poolDataPath = Paths.get(projectPath.toString(), "cycledata");
+		String cycleFileName = round + "_" + name + ".mapdb";
+		
+		DB db = DBMaker
+			    .fileDB(Paths.get(poolDataPath.toString(), cycleFileName).toFile())
+			    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
+			    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
+			    .executorEnable()
+			    .readOnly()
+			    .make();
+
+		poolContentCounts = db.treeMap("map")
+				.keySerializer(Serializer.INTEGER)
+				.valueSerializer(Serializer.INTEGER)
+		        .createOrOpen();
+	
+		// Fill the bloom filter. Since we know the precise size by now, and the maps are read only
+		// we can save resources by setting the size to the dbmap size
+		poolContent = new FilterBuilder(unique_size, Configuration.getParameters().getDouble("MapDBSelectionCycle.bloomFilterCollisionProbability")).buildBloomFilter();
+		
+		Iterator<Entry<Integer, Integer>> contentit = poolContentCounts.entryIterator();
+		while (contentit.hasNext()){
+			poolContent.add(contentit.next().getKey());
+		}
+	}
+	
 	
 }
