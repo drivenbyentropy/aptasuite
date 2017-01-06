@@ -12,22 +12,27 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.apache.commons.io.FileUtils;
+import org.mapdb.BTreeMap;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.mapdb.HTreeMap;
 import org.mapdb.Serializer;
 import org.mapdb.serializer.SerializerCompressionWrapper;
 
+import exceptions.InvalidConfigurationException;
 import orestes.bloomfilter.BloomFilter;
 import orestes.bloomfilter.FilterBuilder;
-
+import utilities.AptaLogger;
 import utilities.Configuration;
 
 /**
@@ -37,12 +42,6 @@ import utilities.Configuration;
  *
  */
 public class MapDBAptamerPool implements AptamerPool {
-	
-	/**
-	 * Enable logging for debuging and information
-	 */
-	private final static Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
-
 	
 	/**
 	 * Path on file system for the current experiment
@@ -90,6 +89,18 @@ public class MapDBAptamerPool implements AptamerPool {
 
 	
 	/**
+	 * The inverse view of the <code>poolData</code> mapping ids to aptamers
+	 */
+	private transient BTreeMap<Integer, byte[]> poolDataInverse = null;
+	
+	
+	/**
+	 * Fast lookup of membership for <code>poolDataInverse</code>
+	 */
+	private BitSet poolDataInverseFilter = new BitSet(bloomFilterCapacity);
+	
+	
+	/**
 	 * Stores the file locations of the mapdb instance in <code>poolData</code>.
 	 */
 	private List<Path> poolDataPaths = new ArrayList<Path>();
@@ -119,20 +130,19 @@ public class MapDBAptamerPool implements AptamerPool {
 	 * Constructor
 	 * @param projectPath must point to the current projects working directory
 	 * all files related to the analysis of the HT-SELEX experiment are stored 
-	 * in that path. It must exist and be writable for the user the VM is running from.
+	 * in that path. It must exist and be writable for the user.
+	 * @param newdb if true, a new database is created on file. 
+	 * Any previously existing database will be deleted. If false, the existing database 
+	 * will be read from disk.
 	 * @throws FileNotFoundException if projectPath does not exist on file system.
 	 */
-	public MapDBAptamerPool(Path projectPath) throws IOException{
+	public MapDBAptamerPool(Path projectPath, boolean newdb) throws IOException{
 		
-		LOGGER.info("Instantiating PoolMapDB");
-		
-		// Make sure the folder exists
-		if (Files.notExists(projectPath)){
-			throw (new java.io.FileNotFoundException("The project path does not exist on the file system."));
-		}
+		AptaLogger.log(Level.INFO, this.getClass(), "Instantiating MapDBAptamerPool");
 		
 		// Make sure the folder is writable
 		if (!Files.isWritable(projectPath)){
+			AptaLogger.log(Level.SEVERE, this.getClass(),"The project path is not writable.");
 			throw (new IllegalStateException("The project path is not writable.") );
 		}
 		
@@ -142,58 +152,85 @@ public class MapDBAptamerPool implements AptamerPool {
 		// Check if the data path exists, and if not create it
 		this.poolDataPath = Files.createDirectories(Paths.get(this.projectPath.toString(), "pooldata"));
 		
-		// Iterate over the folder and open the individual MapDB instances
-//		LOGGER.info("Searching for existing datasets in " + poolDataPath.toString());
-//		try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(Paths.get(poolDataPath.toString()))) {
-//			
-//			for (Path file : directoryStream) {
-//                
-//    			// Open and read the TreeMap
-//    			if (Files.isRegularFile(file)){
-//    				
-//    				DB db = DBMaker
-//    					    .fileDB(file.toFile())
-//    					    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
-//    					    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
-//    					    .executorEnable()
-//    					    .make();
-//
-//    				HTreeMap<byte[], Integer> dbmap = db.hashMap("map")
-//    						.keySerializer(new SerializerCompressionWrapper(Serializer.BYTE_ARRAY))
-//    						.valueSerializer(Serializer.INTEGER)
-//    						.open();
-//    				
-//    				poolData.add(dbmap);
-//    				poolDataPaths.add(file);
-//    				
-//    				BloomFilter<String> localBloomFilter = new FilterBuilder(maxTreeMapCapacity, bloomFilterCollisionProbability).buildBloomFilter();
-//    				poolDataBloomFilter.add(localBloomFilter);
-//    				
-//    				// Update values
-//    				int currentDBmapSize = dbmap.size();
-//    				poolSize += currentDBmapSize;
-//    				currentTreeMapSize = currentDBmapSize;
-//    				
-//    				// Update bloom filter content
-//    				Iterator<byte[]> dbmapIterator = dbmap.getKeys().iterator();
-//    				while (dbmapIterator.hasNext()){
-//    					bloomFilter.add(dbmapIterator.next());
-//    					localBloomFilter.add(dbmapIterator.next());
-//    				}
-//    				
-//    				LOGGER.info(
-//    						"Found and loaded file " + file.toString() + "\n" +
-//    						"Total number of aptamers in file: " + currentTreeMapSize + "\n" +
-//    						"Total number of aptamers: " + poolSize
-//    						);
-//    			}
-//                
-//            }
-//        } catch (IOException ex) {}
 		
-		
-		// Create an empty instance of the MapDB Container
-//		if (poolData.isEmpty()){
+		// If we are reading an existing database, iterate over the folder and open the individual MapDB instances
+		if (! newdb){ 
+			AptaLogger.log(Level.INFO, this.getClass(), "Searching for existing datasets in " + poolDataPath.toString());
+			try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(Paths.get(poolDataPath.toString()))) {
+				
+				for (Path file : directoryStream) {
+	                
+	    			// Open and read the TreeMap, skip the inverse file
+	    			if (Files.isRegularFile(file) && !file.getFileName().toString().equals("data_inverse.mapdb") ){
+	    				
+	    				DB db = DBMaker
+	    					    .fileDB(file.toFile())
+	    					    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
+	    					    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
+	    					    .executorEnable()
+	    					    .make();
+	
+	    				HTreeMap<byte[], Integer> dbmap = db.hashMap("map")
+	    						.keySerializer(new SerializerCompressionWrapper(Serializer.BYTE_ARRAY))
+	    						.valueSerializer(Serializer.INTEGER)
+	    						.open();
+	    				
+	    				poolData.add(dbmap);
+	    				poolDataPaths.add(file);
+	    				
+	    				BloomFilter<String> localBloomFilter = new FilterBuilder(maxTreeMapCapacity, bloomFilterCollisionProbability).buildBloomFilter();
+	    				poolDataBloomFilter.add(localBloomFilter);
+	    				
+	    				// Update values
+	    				int currentDBmapSize = dbmap.size();
+	    				poolSize += currentDBmapSize;
+	    				currentTreeMapSize = currentDBmapSize;
+	    				
+	    				// Update bloom filter content
+	    				Iterator<byte[]> dbmapIterator = dbmap.getKeys().iterator();
+	    				while (dbmapIterator.hasNext()){
+	    					byte[] current_element = dbmapIterator.next(); 
+	    					bloomFilter.add(current_element);
+	    					localBloomFilter.add(current_element);
+	    				}
+	    				
+	    				AptaLogger.log(Level.CONFIG, this.getClass(), 
+	    						"Found and loaded file " + file.toString() + "\n" +
+	    						"Total number of aptamers in file: " + currentTreeMapSize + "\n" +
+	    						"Total number of aptamers: " + poolSize
+	    						);
+	    			}
+	                
+	            }
+	        } catch (IOException ex) {}
+			
+			// Now load and initialize the inverse view of the data
+			
+			AptaLogger.log(Level.CONFIG, this.getClass(), "Reading inverse view.");
+			
+			DB db_inverse = DBMaker
+				    .fileDB(Paths.get(poolDataPath.toString(), "data_inverse" + ".mapdb").toFile())
+				    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
+				    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
+				    .executorEnable()
+				    .make();
+
+			poolDataInverse = db_inverse.treeMap("map")
+					.valuesOutsideNodesEnable()
+					.keySerializer(Serializer.INTEGER)
+					.valueSerializer(new SerializerCompressionWrapper(Serializer.BYTE_ARRAY))
+			        .open();
+			
+			// Update the filter content
+			Iterator<Integer> inverse_iterator = poolDataInverse.keyIterator();
+			while (inverse_iterator.hasNext()){
+				poolDataInverseFilter.set(inverse_iterator.next());
+			}
+			
+			AptaLogger.log(Level.INFO, this.getClass(), "Found and loaded a total of " + poolSize + " aptamers on disk.");
+			
+		}
+		else{ // Create an empty instance of the MapDB Container
 
 		DB db = DBMaker
 			    .fileDB(Paths.get(poolDataPath.toString(), "data" + String.format("%04d", poolData.size()) + ".mapdb").toFile())
@@ -202,7 +239,6 @@ public class MapDBAptamerPool implements AptamerPool {
 			    .executorEnable()
 			    .make();
 
-		System.out.println(poolData.size());
 		HTreeMap<byte[], Integer> dbmap = db.hashMap("map")
 				.keySerializer(Serializer.BYTE_ARRAY)
 				.valueSerializer(Serializer.INTEGER)
@@ -216,15 +252,29 @@ public class MapDBAptamerPool implements AptamerPool {
 		
 		currentTreeMapSize = 0;
 		
-		LOGGER.info("Created new file " + Paths.get(poolDataPath.toString(), "data" + String.format("%04d", poolData.size()) + ".mapdb").toString());
+		AptaLogger.log(Level.CONFIG, this.getClass(), "Created new file " + Paths.get(poolDataPath.toString(), "data" + String.format("%04d", poolData.size()) + ".mapdb").toString());
+	
+		// Create the inverse view files
+		DB db_inverse = DBMaker
+			    .fileDB(Paths.get(poolDataPath.toString(), "data_inverse" + ".mapdb").toFile())
+			    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
+			    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
+			    .executorEnable()
+			    .make();
+
+		poolDataInverse = db_inverse.treeMap("map")
+				.valuesOutsideNodesEnable()
+				.keySerializer(Serializer.INTEGER)
+				.valueSerializer(new SerializerCompressionWrapper(Serializer.BYTE_ARRAY))
+		        .create();
+		
+		}
 	}
 		
-//	}
-	
 	/* (non-Javadoc)
 	 * @see aptamer.pool.AptamerPool#registerAptamer(byte[] a)
 	 */
-	synchronized public int registerAptamer(byte[] a){
+	public synchronized int registerAptamer(byte[] a){
 		
 		// Check if the item is already registered, and if so, return its identifier
 		int identifier = this.getIdentifier(a);
@@ -235,7 +285,7 @@ public class MapDBAptamerPool implements AptamerPool {
 		// Check that the current map is not at max capacity and create a new map if that is the case
 		if (currentTreeMapSize == maxTreeMapCapacity){
 			
-			LOGGER.info(
+			AptaLogger.log(Level.CONFIG, this.getClass(), 
 					"Current Map is at max capacity creating new file " + Paths.get(poolDataPath.toString(), "data" + String.format("%04d", poolData.size()) + ".mapdb").toString() + "\n" +
 					"Total number of aptamers: " + poolSize 
 					);
@@ -267,6 +317,9 @@ public class MapDBAptamerPool implements AptamerPool {
 		currentTreeMapSize++;
 		bloomFilter.add(a);
 		poolDataBloomFilter.get(poolData.size()-1).add(a);
+		
+		poolDataInverse.put(poolSize, a);
+		poolDataInverseFilter.set(poolSize);
 		
 		return poolSize;
 	}
@@ -326,6 +379,22 @@ public class MapDBAptamerPool implements AptamerPool {
 	}
 	
 	/* (non-Javadoc)
+	 * @see aptamer.pool.AptamerPool#getAptamer(int id)
+	 */
+	public byte[] getAptamer(int id) {
+		
+		// Check if the aptamer is present in the pool via fast lookup
+		if (!containsAptamer(id)){
+			return null;
+		}
+		
+		// find and return the sequence
+		return this.poolDataInverse.get(id);
+		
+	}
+	
+	
+	/* (non-Javadoc)
 	 * @see aptamer.pool.AptamerPool#hasAptamer(byte[])
 	 */
 	public Boolean containsAptamer(byte[] a) {
@@ -343,6 +412,15 @@ public class MapDBAptamerPool implements AptamerPool {
 		return getIdentifier(a.getBytes()) != -1;
 
 	}	
+	
+	/* (non-Javadoc)
+	 * @see aptamer.pool.AptamerPool#containsAptamer(int)
+	 */
+	public Boolean containsAptamer(int id) {
+		
+		return this.poolDataInverseFilter.get(id);
+				
+	}
 	
 	@Override
 	public int size() {
@@ -368,6 +446,8 @@ public class MapDBAptamerPool implements AptamerPool {
 
 		}
 		
+		// Close the inverse view
+		poolDataInverse.close();
 	}
 	
 	
@@ -380,7 +460,7 @@ public class MapDBAptamerPool implements AptamerPool {
 		this.close();
 		
 		// Now delete all the content in the project folder
-		LOGGER.info("Deleting all content in " + poolDataPath.toString());
+		AptaLogger.log(Level.CONFIG, this.getClass(), "Deleting all content in " + poolDataPath.toString());
 		try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(Paths.get(poolDataPath.toString()))) {
 			
 			for (Path file : directoryStream) {
@@ -393,6 +473,10 @@ public class MapDBAptamerPool implements AptamerPool {
 		// Reset the pool data
 		this.poolData.clear();
 		this.poolDataPaths.clear();
+		
+		// Reset the inverse pool data
+		this.poolDataInverse.clear();
+		this.poolDataInverseFilter.clear();
 		
 		// Reset the bloom filters
 		bloomFilter.clear();
@@ -511,7 +595,7 @@ public class MapDBAptamerPool implements AptamerPool {
 				
 				poolData.add(dbmap);
 				
-				LOGGER.info( "Reopened as read only file " + file.toString() );
+				AptaLogger.log(Level.CONFIG, this.getClass(), "Reopened as read only file " + file.toString() );
 			}
             
         }
@@ -592,7 +676,7 @@ public class MapDBAptamerPool implements AptamerPool {
 					localBloomFilter.add(entry.getKey());
 				}
 				
-				LOGGER.info( "Reopened as read only file " + file.toString() );
+				AptaLogger.log(Level.CONFIG, this.getClass(),  "Reopened as read only file " + file.toString() );
 			}
         }
 	}

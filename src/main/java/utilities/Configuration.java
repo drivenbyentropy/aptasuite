@@ -6,6 +6,7 @@ package utilities;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.configuration2.PropertiesConfiguration;
@@ -30,12 +31,6 @@ import lib.aptamer.datastructures.Experiment;
  *
  */
 public class Configuration {
-	
-	/**
-	 * Enable logging for debuging and information
-	 */
-	private final static Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
-	
 	
 	/**
 	 * The properties instance. Apache commons configuration API 2.x
@@ -63,7 +58,7 @@ public class Configuration {
 	public static void setConfiguration(String fileName){
 		
 			try {
-				LOGGER.info("Reading configuration from file.");
+				AptaLogger.log(Level.INFO, Configuration.class, "Reading configuration from file.");
 				
 				FileBasedConfigurationBuilder<org.apache.commons.configuration2.FileBasedConfiguration> builder =
 					    new FileBasedConfigurationBuilder<org.apache.commons.configuration2.FileBasedConfiguration>(PropertiesConfiguration.class)
@@ -75,7 +70,7 @@ public class Configuration {
 				
 			} catch (Exception e) {
 				
-				LOGGER.info("Error, could not read configuration file. Please check it for correctness");
+				AptaLogger.log(Level.SEVERE , Configuration.class, "Error, could not read configuration file. Please check it for correctness");
 				e.printStackTrace();
 			}	
 		
@@ -122,8 +117,6 @@ public class Configuration {
 				}
 			}
 			
-			LOGGER.info("Using the following parameters: ");
-			LOGGER.info(printParameters());
 			// TODO: Sanity checks!
 	}
 	
@@ -166,13 +159,13 @@ public class Configuration {
 	
 	
 	public static String printParameters(){
+
 		StringBuilder sb = new StringBuilder();
-		
 		Iterator<String> keys = parameters.getKeys();
 		
 		while (keys.hasNext()){
 			String key = keys.next();
-			System.out.printf("%s : %s\n", (String) key, parameters.getProperty(key) );
+			sb.append(String.format("%s : %s\n", (String) key, parameters.getProperty(key)) );
 		}
 		
 		return sb.toString();

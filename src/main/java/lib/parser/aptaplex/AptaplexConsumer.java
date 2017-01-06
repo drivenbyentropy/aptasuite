@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.BlockingQueue;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.milaboratory.core.PairedEndReadsLayout;
@@ -28,6 +29,7 @@ import lib.parser.aptaplex.distances.BitapDistance;
 import lib.parser.aptaplex.distances.Distance;
 import lib.parser.aptaplex.distances.EditDistance;
 import lib.parser.aptaplex.distances.Result;
+import utilities.AptaLogger;
 import utilities.Configuration;
 
 /**
@@ -37,11 +39,6 @@ import utilities.Configuration;
  *         from the queue, processes them and adds them to the aptamer pool.
  */
 public class AptaplexConsumer implements Runnable {
-
-	/**
-	 * Enable logging for debugging and information
-	 */
-	private final static Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 
 	/**
 	 * The queue to consume from
@@ -172,9 +169,8 @@ public class AptaplexConsumer implements Runnable {
 				Object queueElement = queue.take();
 
 				if (queueElement == Configuration.POISON_PILL) {
-					LOGGER.info("Encountered poison pill. Exiting thread.");
-					queue.put(Configuration.POISON_PILL); // notify other
-															// threads to stop
+					AptaLogger.log(Level.CONFIG, this.getClass(), "Encountered poison pill. Exiting thread.");
+					queue.put(Configuration.POISON_PILL); // notify other threads to stop
 					return;
 				}
 

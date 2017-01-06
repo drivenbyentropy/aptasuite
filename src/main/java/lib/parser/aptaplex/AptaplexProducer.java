@@ -7,9 +7,11 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.BlockingQueue;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import exceptions.InvalidSequenceReadFileException;
+import utilities.AptaLogger;
 import utilities.Configuration;
 
 /**
@@ -23,12 +25,6 @@ import utilities.Configuration;
 public class AptaplexProducer implements Runnable{
 
 
-	/**
-	 * Enable logging for debugging and information
-	 */
-	private final static Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
-	
-	
 	/**
 	 * The queue to fill
 	 */
@@ -84,28 +80,35 @@ public class AptaplexProducer implements Runnable{
 				reader_class = Class.forName("lib.parser.aptaplex." + Configuration.getParameters().getString("AptaplexParser.reader"));
 			} catch (ClassNotFoundException e) {
 
-				LOGGER.info("Error, the backend for the Reader could not be found.");
+				AptaLogger.log(Level.SEVERE, this.getClass(), "Error, the backend for the Reader could not be found.");
 				e.printStackTrace();
-			
+				System.exit(0);
 			}
 			
 			// Try to instantiate the class
+			boolean instanceSuccess = false;
 			try {
 				reader = (Reader)reader_class.getConstructor(Path.class, Path.class).newInstance(current_forward_file_path, current_reverse_file_path);
+				instanceSuccess = true;
 			} catch (InstantiationException e) {
-				LOGGER.info("Error, could not instantiate the backend for the SelectionCycle");
+				AptaLogger.log(Level.SEVERE, this.getClass(), "Error, could not instantiate the backend for the AptaplexParser.reader");
 				e.printStackTrace();
 			} catch (IllegalAccessException e) {
 				e.printStackTrace();
 			} catch (IllegalArgumentException e) {
 				e.printStackTrace();
 			} catch (InvocationTargetException e) {
-				LOGGER.info("Error invoking construtor of SelectionCycle backend");
+				AptaLogger.log(Level.SEVERE, this.getClass(), "Error invoking construtor of AptaplexParser.reader backend");
 				e.printStackTrace();
 			} catch (NoSuchMethodException e) {
 				e.printStackTrace();
 			} catch (SecurityException e) {
 				e.printStackTrace();
+			} finally{
+				if (!instanceSuccess){
+					AptaLogger.log(Level.SEVERE, this.getClass(), "Error invoking AptaplexParser.reader backend");
+					System.exit(0);
+				}
 			}
 			
 			try {
@@ -142,7 +145,7 @@ public class AptaplexProducer implements Runnable{
 		
 		// at the end we need to add a poison pill to 
 		// the queue to let the consumers know when to stop
-		LOGGER.info("Added poison pill to parsing queue");
+		AptaLogger.log(Level.CONFIG, this.getClass(), "Added poison pill to parsing queue");
 		try {
 			queue.put(Configuration.POISON_PILL);
 		} catch (InterruptedException e) {

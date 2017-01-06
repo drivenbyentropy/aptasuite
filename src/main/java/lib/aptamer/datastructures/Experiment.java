@@ -11,10 +11,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import exceptions.DuplicateSelectionCycleException;
+import exceptions.InvalidConfigurationException;
 import exceptions.InvalidSelectionCycleException;
+import utilities.AptaLogger;
 import utilities.Configuration;
 
 
@@ -31,11 +34,6 @@ import utilities.Configuration;
  *         its data.
  */
 public class Experiment implements Serializable{
-	
-	/**
-	 * Enable logging for debugging and information
-	 */
-	private final static Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 	
 	/**
 	 * A unique name of this experiment
@@ -90,30 +88,16 @@ public class Experiment implements Serializable{
 	 * experiment is created, otherwise the data as defined in the file, will be
 	 * loaded from disk.
 	 * 
-	 * @param configFile
-	 *            path to the configuration file
+	 * @param configFile path to the configuration file
+	 * @param newdb if true, a new database is created on file. 
+	 * Any previously existing database will be deleted. If false, the existing database 
+	 * will be read from disk.
 	 */
-	public Experiment(String configFile) {
+	public Experiment(String configFile, boolean newdb) {
 		
 		// Register the Experiment with the configuration class
 		Configuration.setExperiment(this);
 
-		// Make sure the configuration file is valid
-		Path cfp = Paths.get(configFile);
-
-		if (Files.notExists(cfp)) {
-			try {
-				throw new java.io.FileNotFoundException(
-						"The configuration file could not be found on the file system.");
-			} catch (FileNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-		
-		// Read config file and set defaults
-		Configuration.setConfiguration(configFile);
-		
 		// Now set name and description
 		this.name = Configuration.getParameters().getString("Experiment.name");
 		this.description = Configuration.getParameters().getString("Experiment.description");
@@ -125,28 +109,35 @@ public class Experiment implements Serializable{
 			c = Class.forName("lib.aptamer.datastructures." + Configuration.getParameters().getString("AptamerPool.backend"));
 		} catch (ClassNotFoundException e) {
 
-			LOGGER.info("Error, the backend for the AptamerPool could not be found.");
+			AptaLogger.log(Level.SEVERE, this.getClass(), "Error, the backend for the AptamerPool could not be found.");
 			e.printStackTrace();
-		
+			System.exit(0);
 		}
 		
-		// Try to instantiate the class
+		// Try to instantiate the class...
+		boolean instanceSuccess = false;
 		try {
-			pool = (AptamerPool)c.getConstructor(Path.class).newInstance(Paths.get(Configuration.getParameters().getString("Experiment.projectPath")));
+			pool = (AptamerPool)c.getConstructor(Path.class, boolean.class).newInstance(Paths.get(Configuration.getParameters().getString("Experiment.projectPath")), newdb);
+			instanceSuccess = true;
 		} catch (InstantiationException e) {
-			LOGGER.info("Error, could not instantiate the backend for the AptamerPool");
+			AptaLogger.log(Level.SEVERE, this.getClass(), "Error, could not instantiate the backend for the AptamerPool");
 			e.printStackTrace();
 		} catch (IllegalAccessException e) {
 			e.printStackTrace();
 		} catch (IllegalArgumentException e) {
 			e.printStackTrace();
 		} catch (InvocationTargetException e) {
-			LOGGER.info("Error invoking construtor of AptamerPool backend");
+			AptaLogger.log(Level.SEVERE, this.getClass(), "Error invoking construtor of AptamerPool backend");
 			e.printStackTrace();
 		} catch (NoSuchMethodException e) {
 			e.printStackTrace();
 		} catch (SecurityException e) {
 			e.printStackTrace();
+		} finally{ // ... we cannot continue if this fails 
+			if (!instanceSuccess){
+				AptaLogger.log(Level.SEVERE, this.getClass(), "Error invoking AptamerPool backend");
+				System.exit(0);
+			}
 		}
 		
 		// Set the SelectionCycle instances
@@ -161,6 +152,7 @@ public class Experiment implements Serializable{
 			rounds = (Integer[]) Configuration.getParameters().getArray(Integer.class, "SelectionCycle.round");
 		}
 		catch (Exception e){
+			AptaLogger.log(Level.SEVERE, this.getClass(), "One or more SelectionCycle.round parameters are non-numerical. Please check your configuration.");
 			throw new InvalidSelectionCycleException("One or more SelectionCycle.round parameters are non-numerical. Please check your configuration.");
 		}
 		
@@ -168,6 +160,7 @@ public class Experiment implements Serializable{
 			names = Configuration.getParameters().getStringArray("SelectionCycle.name");
 		}
 		catch (Exception e){
+			AptaLogger.log(Level.SEVERE, this.getClass(), "One or more SelectionCycle.name parameters are invalid. Please check your configuration.");
 			throw new InvalidSelectionCycleException("One or more SelectionCycle.name parameters are invalid. Please check your configuration.");
 		}
 		
@@ -175,6 +168,7 @@ public class Experiment implements Serializable{
 			isControls = (Boolean[]) Configuration.getParameters().getArray(Boolean.class,"SelectionCycle.isControlSelection");
 		}
 		catch (Exception e){
+			AptaLogger.log(Level.SEVERE, this.getClass(), "One or more SelectionCycle.isCounterSelection parameters are non-boolean. Please check your configuration.");
 			throw new InvalidSelectionCycleException("One or more SelectionCycle.isCounterSelection parameters are non-boolean. Please check your configuration.");
 		}
 		
@@ -182,11 +176,13 @@ public class Experiment implements Serializable{
 			isCounters = (Boolean[]) Configuration.getParameters().getArray(Boolean.class,"SelectionCycle.isCounterSelection");
 		}
 		catch (Exception e){
+			AptaLogger.log(Level.SEVERE, this.getClass(), "One or more SelectionCycle.isCounterSelection parameters are non-boolean. Please check your configuration.");
 			throw new InvalidSelectionCycleException("One or more SelectionCycle.isCounterSelection parameters are non-boolean. Please check your configuration.");
 		}		
 		
 		// Make sure all parameters required for instantiating the selection cycles are present in the configuration
 		if (! (rounds.length == names.length && names.length == isControls.length && isControls.length == isCounters.length)){
+			AptaLogger.log(Level.SEVERE, this.getClass(), "One or more parameters pertaining SelectionCycle.* are missing. Please check your configuration.");
 			throw new InvalidSelectionCycleException("One or more parameters pertaining SelectionCycle.* are missing. Please check your configuration.");
 		}
 		
@@ -206,7 +202,7 @@ public class Experiment implements Serializable{
 		
 		// Now we can instantiate the selection cycles
 		for (int x=0; x<rounds.length; x++){
-			registerSelectionCycle(names[x], rounds[x], isControls[x], isCounters[x]);
+			registerSelectionCycle(names[x], rounds[x], isControls[x], isCounters[x], newdb);
 		}
 	}
 
@@ -236,16 +232,18 @@ public class Experiment implements Serializable{
 	 * @param isCounterSelection Whether this selection represents a counter selection. Mutually exclusive with <code>isControl</code>.
 	 * @return the instance of the SelectionCycle that was created in the process
 	 */
-	public SelectionCycle registerSelectionCycle(String name, int round, boolean isControlSelection, boolean isCounterSelection){
+	public SelectionCycle registerSelectionCycle(String name, int round, boolean isControlSelection, boolean isCounterSelection, boolean newdb){
 		
 		// Sanity Checks
 		// We cannot add this cycle if another cycle with the same name is already present
 		if (getSelectionCycleById(name) != null){
+			AptaLogger.log(Level.SEVERE, this.getClass(), "One or more selection cycles contain the same name: " + name + " . Please check your configuration");
 			throw new DuplicateSelectionCycleException("One or more selection cycles contain the same name: " + name + " . Please check your configuration");
 		}
 		
 		// Make sure the selection round is a valid number and >=0
 		if (round < 0){
+			AptaLogger.log(Level.SEVERE, this.getClass(), "The selection cycle round " + round + " of " + name + " is invalid. Please check your configuration.");
 			throw new InvalidSelectionCycleException("The selection cycle round " + round + " of " + name + " is invalid. Please check your configuration.");
 		}
 		
@@ -259,28 +257,35 @@ public class Experiment implements Serializable{
 			selection_cycle_class = Class.forName("lib.aptamer.datastructures." + Configuration.getParameters().getString("SelectionCycle.backend"));
 		} catch (ClassNotFoundException e) {
 
-			LOGGER.info("Error, the backend for the SelectionCycle could not be found.");
+			AptaLogger.log(Level.SEVERE, this.getClass(), "Error, the backend for the SelectionCycle could not be found.");
 			e.printStackTrace();
-		
+			System.exit(0);
 		}
 		
 		// Try to instantiate the class
+		boolean instanceSuccess = false; 
 		try {
-			cycle = (SelectionCycle)selection_cycle_class.getConstructor(String.class, int.class, boolean.class, boolean.class).newInstance(name, round, isControlSelection, isCounterSelection);
+			cycle = (SelectionCycle)selection_cycle_class.getConstructor(String.class, int.class, boolean.class, boolean.class, boolean.class).newInstance(name, round, isControlSelection, isCounterSelection, newdb);
+			instanceSuccess = true;
 		} catch (InstantiationException e) {
-			LOGGER.info("Error, could not instantiate the backend for the SelectionCycle");
+			AptaLogger.log(Level.SEVERE, this.getClass(), "Error, could not instantiate the backend for the SelectionCycle");
 			e.printStackTrace();
 		} catch (IllegalAccessException e) {
 			e.printStackTrace();
 		} catch (IllegalArgumentException e) {
 			e.printStackTrace();
 		} catch (InvocationTargetException e) {
-			LOGGER.info("Error invoking construtor of SelectionCycle backend");
+			AptaLogger.log(Level.SEVERE, this.getClass(), "Error invoking construtor of SelectionCycle backend");
 			e.printStackTrace();
 		} catch (NoSuchMethodException e) {
 			e.printStackTrace();
 		} catch (SecurityException e) {
 			e.printStackTrace();
+		} finally{
+			if (!instanceSuccess){
+				AptaLogger.log(Level.SEVERE, this.getClass(), "Error invoking SelectionCycle backend");
+				System.exit(0);
+			}
 		}
 		
 		// Assign the selection cycle to the corresponding datastructure

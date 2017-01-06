@@ -9,19 +9,17 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.GZIPInputStream;
+
+import utilities.AptaLogger;
 
 /**
  * @author Jan Hoinka Implements the parsing logic for fastq files
  */
 public class FastqReader implements Reader {
 
-	/**
-	 * Enable logging for debugging and information
-	 */
-	private final static Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);	
-	
 	/**
 	 * The buffered reader for the forward file
 	 */
@@ -56,16 +54,17 @@ public class FastqReader implements Reader {
 		try { // This fill fail if the file is not gzip compressed
 			
 			forward_reader = new BufferedReader(new InputStreamReader(new GZIPInputStream((new FileInputStream(forward_file.toFile())))));
-			LOGGER.info("Opened gzip compressed forward file in fastq format" + forward_file.toString());
+			AptaLogger.log(Level.CONFIG, this.getClass(), "Opened gzip compressed forward file in fastq format" + forward_file.toString());
 		
 		} catch (IOException e) {
 			// Not in GZip Format
 			try {
 				forward_reader = new BufferedReader(new InputStreamReader(new FileInputStream(forward_file.toFile())));
-				LOGGER.info("Opened forward file in fastq format" + forward_file.toString());	
+				AptaLogger.log(Level.CONFIG, this.getClass(), "Opened forward file in fastq format" + forward_file.toString());	
 			} catch (FileNotFoundException e1) {
-				LOGGER.info("Error opening forward file " + forward_file.toString());
+				AptaLogger.log(Level.SEVERE, this.getClass(), "Error opening forward file " + forward_file.toString());
 				e1.printStackTrace();
+				System.exit(0);
 			}
 		}
 
@@ -74,18 +73,19 @@ public class FastqReader implements Reader {
 			try {
 				
 				reverse_reader = new BufferedReader(new InputStreamReader(new GZIPInputStream((new FileInputStream(reverse_file.toFile())))));
-				LOGGER.info("Opened gzip compressed reverse file in fastq format" + reverse_file.toString());
+				AptaLogger.log(Level.CONFIG, this.getClass(), "Opened gzip compressed reverse file in fastq format" + reverse_file.toString());
 				
 			} catch (IOException e) {
 				// Not in GZip Format
 				try {
 	
 					reverse_reader = new BufferedReader(new InputStreamReader(new FileInputStream(reverse_file.toFile())));
-					LOGGER.info("Opened forward reverse in fastq format" + reverse_file.toString());	
+					AptaLogger.log(Level.CONFIG, this.getClass(), "Opened forward reverse in fastq format" + reverse_file.toString());	
 					
 				} catch (FileNotFoundException e1) {
-					LOGGER.info("Error opening reverse file " + reverse_file.toString());
+					AptaLogger.log(Level.SEVERE, this.getClass(), "Error opening reverse file " + reverse_file.toString());
 					e1.printStackTrace();
+					System.exit(0);
 				}
 			}	
 		}
@@ -133,8 +133,9 @@ public class FastqReader implements Reader {
 			}
 			
 		} catch (IOException e) {
-			LOGGER.info("Error while parsing files.");
+			AptaLogger.log(Level.SEVERE, this.getClass(), "Error while parsing files.");
 			e.printStackTrace();
+			System.exit(0);
 		}
 		
 		return r;

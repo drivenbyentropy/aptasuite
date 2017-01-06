@@ -14,6 +14,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map.Entry;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.mapdb.BTreeMap;
@@ -25,6 +26,7 @@ import org.mapdb.serializer.SerializerCompressionWrapper;
 import orestes.bloomfilter.BloomFilter;
 import orestes.bloomfilter.CountingBloomFilter;
 import orestes.bloomfilter.FilterBuilder;
+import utilities.AptaLogger;
 import utilities.Configuration;
 
 /**
@@ -40,10 +42,6 @@ public class MapDBSelectionCycle implements SelectionCycle{
 	 */
 	private static final long serialVersionUID = 5440879993287731191L;
 
-	/**
-	 * Enable logging for debuging and information
-	 */
-	private final static Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);	
 	
 	/**
 	 * The name of this selection cycle as defined in the configuration file
@@ -130,7 +128,7 @@ public class MapDBSelectionCycle implements SelectionCycle{
 	 */
 	private int unique_size = 0;
 	
-	public MapDBSelectionCycle(String name, int round, boolean isControlSelection, boolean isCounterSelection) throws IOException{
+	public MapDBSelectionCycle(String name, int round, boolean isControlSelection, boolean isCounterSelection, boolean newdb) throws IOException{
 		
 		// Set basic information
 		this.name = name;
@@ -147,8 +145,6 @@ public class MapDBSelectionCycle implements SelectionCycle{
 		// Determine the unique file name associated with this cycle
 		String cycleFileName = round + "_" + name + ".mapdb";
 
-		LOGGER.info("Creating new file '" + Paths.get(poolDataPath.toString(), cycleFileName).toFile() + "' for selection cycle " + name + ".");
-
 		// Create map or read from file
 		DB db = DBMaker
 			    .fileDB(Paths.get(poolDataPath.toString(), cycleFileName).toFile())
@@ -156,13 +152,37 @@ public class MapDBSelectionCycle implements SelectionCycle{
 			    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
 			    .executorEnable()
 			    .make();
-
-		poolContentCounts = db.treeMap("map")
-				//.valuesOutsideNodesEnable()
-				.keySerializer(Serializer.INTEGER)
-				.valueSerializer(Serializer.INTEGER)
-		        .create();
 		
+		// Creating a new database
+		if (newdb)
+		{
+			AptaLogger.log(Level.CONFIG, this.getClass(), "Creating new file '" + Paths.get(poolDataPath.toString(), cycleFileName).toFile() + "' for selection cycle " + name + ".");
+	
+			poolContentCounts = db.treeMap("map")
+					//.valuesOutsideNodesEnable()
+					.keySerializer(Serializer.INTEGER)
+					.valueSerializer(Serializer.INTEGER)
+			        .create();
+		}
+		else { // we need to read from file and update class members
+			AptaLogger.log(Level.CONFIG, this.getClass(), "Reading from file '" + Paths.get(poolDataPath.toString(), cycleFileName).toFile() + "' for selection cycle " + name + ".");
+			
+			poolContentCounts = db.treeMap("map")
+					//.valuesOutsideNodesEnable()
+					.keySerializer(Serializer.INTEGER)
+					.valueSerializer(Serializer.INTEGER)
+			        .open();
+			
+			// update class members
+			Iterator<Entry<Integer, Integer>> entryit = poolContentCounts.entryIterator();
+			while ( entryit.hasNext() ){
+				Entry<Integer, Integer> entry = entryit.next();
+				
+				poolContent.add(entry.getKey());
+				size += entry.getValue();
+				unique_size++;
+			}
+		}
 	}
 	
 	@Override
@@ -174,7 +194,7 @@ public class MapDBSelectionCycle implements SelectionCycle{
 
 
 	@Override
-	public void addToSelectionCycle(byte[] a) {
+	public synchronized void addToSelectionCycle(byte[] a) {
 		
 		// Check if the aptamer is already present in the pool and add it if not
 		int id_a = Configuration.getExperiment().getAptamerPool().registerAptamer(a);

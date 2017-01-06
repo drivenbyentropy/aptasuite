@@ -75,8 +75,6 @@ public class AptaplexParser implements Parser, Runnable{
 	@Override
 	public void parsingCompleted() {
 		
-		
-
 	}
 
 	@Override

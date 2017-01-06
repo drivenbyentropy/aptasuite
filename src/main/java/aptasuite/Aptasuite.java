@@ -1,5 +1,16 @@
 package aptasuite;
 
+import java.util.logging.Level;
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.ParseException;
+
+import utilities.AptaLogger;
+import utilities.CLIOptions;
+
 /**
  * @author Jan Hoinka
  * The main class of the aptasuite implementation. This class controls the 
@@ -10,16 +21,41 @@ public class Aptasuite {
 
 	public static void main(String[] args) {
 
-		// case command line interface
-		//TODO: change this later so we can do java -jar --parse --cluster --motif --config path/to/file
-		if (args.length == 1){
+		// parse the command line
+	    CommandLineParser parser = new DefaultParser();
+	    try {
+	        // parse the command line arguments
+	        CommandLine line = parser.parse( CLIOptions.parameters, args );
+	        
+	        // print the help if requested
+	        if (line.hasOption("help") || args.length == 0){
+	        	HelpFormatter formatter = new HelpFormatter();
+	        	formatter.printHelp( "AptaSUITE", CLIOptions.parameters );
+	        	System.exit(1);
+	        }
+	        
+	        // case command line interface
+			if (args.length != 0){
+				
+				CLI cli = new CLI(line);
 			
-			CLI cli = new CLI(args[0]);
+			}
+			// case gui
+			else{
+				// TODO: implement the gui handling
+			}
+	        
+	        
+	    }
+	    catch( ParseException exp ) {
+	        // oops, something went wrong
+	        System.err.println( "Parsing failed.  Reason: " + exp.getMessage() );
+	        HelpFormatter formatter = new HelpFormatter();
+        	formatter.printHelp( "AptaSUITE", CLIOptions.parameters );
+	    }
+	    
 		
-		}
-		else{
-			// TODO implement the gui handling
-		}
+		AptaLogger.log(Level.INFO, Aptasuite.class, "Exiting.");
 	}
 
 }

@@ -1,5 +1,6 @@
 package benchmarks;
 
+import java.awt.List;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -10,11 +11,19 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
+import org.mapdb.BTreeMap;
+import org.mapdb.DB;
+import org.mapdb.DBMaker;
+import org.mapdb.HTreeMap;
+import org.mapdb.Serializer;
+import org.mapdb.serializer.SerializerCompressionWrapper;
 
 import lib.aptamer.datastructures.AptamerPool;
 import lib.aptamer.datastructures.Experiment;
@@ -48,6 +57,99 @@ public class MapDB {
 			current++;
 		}
 	}
+	
+	public static void testBTreeMap() {
+
+		// TODO Auto-generated method stub
+		System.out.println("Hola Aptamero!");
+
+		Path pp = Paths.get("/home/matrix/temp/aptasuite");
+
+		try{
+
+			DB db = DBMaker
+				    .fileDB(Paths.get("/home/hoinkaj/aptamers/data_pan/tmp/aptasuite/btreemap.mapdb").toFile())
+				    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
+				    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
+				    .executorEnable()
+				    .make();
+
+			BTreeMap<Integer, byte[]> dbmap = db.treeMap("map")
+					.valuesOutsideNodesEnable()
+					.keySerializer(Serializer.INTEGER)
+					.valueSerializer(new SerializerCompressionWrapper(Serializer.BYTE_ARRAY))
+			        .create();
+			
+			char[] alphabet = { 'A', 'C', 'G', 'T' };
+			char[] sb = { 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A',
+					'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A',
+					'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A',
+					'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A',
+					'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A',
+					'A' };
+			Random r = new Random();
+			int current = 0;
+			int total = 500000000;
+			long tStart = System.currentTimeMillis();
+			long tStartTotal = System.currentTimeMillis();
+	
+			while (current < total) {
+				if (current % 100000 == 0) {
+					System.out.printf("%s / %s \t insert:%s \t total:%s \n", current, total,
+							((System.currentTimeMillis() - tStart) / 1000.0),
+							((System.currentTimeMillis() - tStartTotal) / 1000.0));
+					tStart = System.currentTimeMillis();
+				}
+				for (int i = 0; i < 100; i++) {
+					sb[i] = alphabet[r.nextInt(4)];
+				}
+				dbmap.put(current, sb.toString().getBytes());
+				// bf.add(new String(sb));
+				current++;
+			}
+	
+			System.out.println("Iterating Dataset");
+			tStart = System.currentTimeMillis();
+			int count = 0;
+			for (Entry<Integer, byte[]> item : dbmap.getEntries()) {
+				item.getValue();
+				item.getKey();
+				count++;
+			}
+			System.out.printf("Iterated over %s items in %s seconds\n", count,
+					((System.currentTimeMillis() - tStart) / 1000.0));
+	
+			System.out.println("Iterating Dataset");
+			tStart = System.currentTimeMillis();
+			ArrayList<Integer> perm = new ArrayList<Integer>();
+			for (int x =0; x<count; x++){ perm.add(x); }
+			Collections.shuffle(perm);
+			count = 0;
+			for (Integer x : perm) {
+				byte[] item = dbmap.get(x);
+				count++;
+			}
+			System.out.printf("Iterated over %s items in %s seconds\n", count,
+					((System.currentTimeMillis() - tStart) / 1000.0));
+			
+			
+			int mb = 1024 * 1024;
+			// Getting the runtime reference from system
+			Runtime runtime = Runtime.getRuntime();
+			System.out.println("##### Heap utilization statistics [MB] #####");
+			// Print used memory
+			System.out.println("Used Memory:" + (runtime.totalMemory() - runtime.freeMemory()) / mb);
+			// Print free memory
+			System.out.println("Free Memory:" + runtime.freeMemory() / mb);
+			// Print total available memory
+			System.out.println("Total Memory:" + runtime.totalMemory() / mb);
+			// Print Maximum available memory
+			System.out.println("Max Memory:" + runtime.maxMemory() / mb);
+		}
+		catch (Exception e){
+			e.printStackTrace();
+		}
+	}	
 
 	public static void testRandomSequences() {
 
@@ -61,7 +163,7 @@ public class MapDB {
 		
 		//Experiment e = new Experiment(Configuration.getParameters().getString("Experiment.projectPath"));
 		try{
-			AptamerPool p = new MapDBAptamerPool(pp);
+			AptamerPool p = new MapDBAptamerPool(pp, true);
 			
 			char[] alphabet = { 'A', 'C', 'G', 'T' };
 			char[] sb = { 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A',
@@ -282,7 +384,7 @@ public class MapDB {
 		Path pp = Paths.get("/home/matrix/temp/aptasuite");
 		MapDBAptamerPool p = null;
 		try {
-			p = new MapDBAptamerPool(pp);
+			p = new MapDBAptamerPool(pp, true);
 		} catch (IOException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
@@ -310,25 +412,10 @@ public class MapDB {
 
 	public static void main(String[] args) {
 		
-		generatePairedEndDataset(); 
+		testBTreeMap();
+//		generatePairedEndDataset(); 
 //		testRandomSequences();
 		
-//		CountingBloomFilter<String> cbf = new FilterBuilder(1000, 0.01).buildCountingBloomFilter();
-//		
-//		cbf.add("one");
-//		cbf.add("one");
-//		cbf.add("one");
-//		cbf.add("one");
-//		cbf.add("one");
-//		
-//		cbf.add("two");
-//		cbf.add("two");
-//		cbf.add("two");
-//		
-//		cbf.add("three");
-//		
-//		System.out.printf("one %s   two %s   tree %s", cbf.getEstimatedCount("one"),cbf.getEstimatedCount("two"),cbf.getEstimatedCount("three"));
-//		
 
 	}
 

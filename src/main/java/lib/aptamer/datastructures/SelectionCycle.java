@@ -75,7 +75,7 @@ public interface SelectionCycle extends Serializable{
 	
 	
 	/**
-	 * The number if unique aptamers in this pool.
+	 * The number of unique aptamers in this pool.
 	 * @return
 	 */
 	public int getUniqueSize();

@@ -55,6 +55,12 @@ public interface AptamerPool extends Serializable, Iterable<Entry<byte[], Intege
 	 */
 	public int getIdentifier(String a);
 
+	/**
+	 * Returns the aptamer corresponding to <code>id</>
+	 * @param id the unique identifier of an aptamer in the pool
+	 * @return aptamer sequence or null if no key with <code>id</code> could be found
+	 */
+	public byte[] getAptamer(int id);
 	
 	/**
 	 * Checks for the existence of a specific aptamer <code>a</code> in the pool.
@@ -68,6 +74,12 @@ public interface AptamerPool extends Serializable, Iterable<Entry<byte[], Intege
 	 */	
 	public Boolean containsAptamer(String a);	
 	
+	/**
+	 * Checks for the existence of an aptamer with a particular id
+	 * @param id the id to be checked for
+	 * @return true if aptamer exists, false otherwise
+	 */
+	public Boolean containsAptamer(int id);
 	
 	/**
 	 * Returns the total number of unique aptamers in the pool
