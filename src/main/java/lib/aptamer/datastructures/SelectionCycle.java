@@ -5,6 +5,8 @@ package lib.aptamer.datastructures;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Map.Entry;
 
 /**
  * @author Jan Hoinka
@@ -61,10 +63,18 @@ public interface SelectionCycle extends Serializable{
 	 */
 	public int getAptamerCardinality(String a); 
 
+	
 	/**
 	 * @see SelectionCycle#getAptamerCardinality(String a)
 	 */
 	public int getAptamerCardinality(byte[] a); 
+	
+	
+	/**
+	 * @see SelectionCycle#getAptamerCardinality(String a)
+	 */
+	public int getAptamerCardinality(int id); 
+
 	
 	/**
 	 * The total number of aptamer molecules in this pool. This is typically defined as 
@@ -148,6 +158,18 @@ public interface SelectionCycle extends Serializable{
 	public void setReadOnly();
 	
 	
-	//TODO: +iteratator for all aptamers in this pool
+	/**
+	 * Provides an iterator over every aptamer id (key) in this selection cycle  
+	 * together with its count (value).
+	 * Note that the order of iteration is dependent on the implementing class
+	 */
+	public Iterable<Entry<Integer, Integer>> iterator();
+	
+	/**
+	 * Provides an iterator over every aptamer in the pool (key)  
+	 * along with the corresponding count (value).
+	 * Note that the order of iteration is dependent on the implementing class
+	 */
+	public Iterable<Entry<byte[],Integer>> sequence_iterator();
 	
 }

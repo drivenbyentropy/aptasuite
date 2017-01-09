@@ -196,7 +196,7 @@ public class MapDB {
 			System.out.println("Iterating Dataset");
 			tStart = System.currentTimeMillis();
 			int count = 0;
-			for (Entry<byte[], Integer> item : p) {
+			for ( Entry<byte[], Integer> item : p.iterator() ) {
 				item.getValue();
 				item.getKey();
 				count++;
@@ -208,7 +208,7 @@ public class MapDB {
 			System.out.println("Iterating And Finding Values in Dataset");
 			tStart = System.currentTimeMillis();
 			count = 0;
-			for (Entry<byte[], Integer> item : p) {
+			for (Entry<byte[], Integer> item : p.iterator()) {
 				p.getIdentifier(item.getKey());
 				count++;
 				if (count % 100000 == 0){

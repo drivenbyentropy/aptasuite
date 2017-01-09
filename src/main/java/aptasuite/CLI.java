@@ -140,6 +140,7 @@ public class CLI {
 
 					}
 				} catch (InterruptedException e) {
+					AptaLogger.log(Level.SEVERE, this.getClass(), "User interrupt on partherTread");
 				}
 			}
 		});

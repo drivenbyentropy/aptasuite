@@ -9,10 +9,12 @@ import java.io.ObjectOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -193,7 +195,6 @@ public class MapDBSelectionCycle implements SelectionCycle{
 	}
 
 
-	@Override
 	public synchronized void addToSelectionCycle(byte[] a) {
 		
 		// Check if the aptamer is already present in the pool and add it if not
@@ -220,12 +221,10 @@ public class MapDBSelectionCycle implements SelectionCycle{
 		
 	}
 
-	@Override
 	public void addToSelectionCycle(String a){
 		addToSelectionCycle(a.getBytes());
 	}
 
-	@Override
 	public boolean containsAptamer(byte[] a) {
 		
 		// Get the corresponding aptamer id from the pool
@@ -240,52 +239,50 @@ public class MapDBSelectionCycle implements SelectionCycle{
 		return current_count != null;
 	}
 	
-	@Override
 	public boolean containsAptamer(String a){
 		return containsAptamer(a.getBytes());
 	}
 
 
-	@Override
 	public int getAptamerCardinality(byte[] a) {
 		
 		int id_a = Configuration.getExperiment().getAptamerPool().getIdentifier(a);
 		
-		Integer count = poolContentCounts.get(id_a);
+		return getAptamerCardinality(id_a);
+	}
+
+	public int getAptamerCardinality(String a) {
+		return getAptamerCardinality(a.getBytes());
+	}
+	
+	public int getAptamerCardinality(int id){
+		
+		Integer count = poolContentCounts.get(id);
 		
 		if (count == null){
 			count = 0;
 		}
 		
 		return count;
-	}
-
-	@Override
-	public int getAptamerCardinality(String a) {
-		return getAptamerCardinality(a.getBytes());
+		
 	}
 	
-	@Override
 	public int getSize() {
 		return size;
 	}
 
-	@Override
 	public int getUniqueSize() {
 		return unique_size;
 	}
 	
-	@Override
 	public String getName(){	
 		return this.name;
 	}
 
-	@Override
 	public int getRound() {
 		return this.round;
 	}
 
-	@Override
 	public SelectionCycle getNextSelectionCycle() {
 		
 		ArrayList<SelectionCycle> cycles = Configuration.getExperiment().getSelectionCycles();
@@ -308,7 +305,6 @@ public class MapDBSelectionCycle implements SelectionCycle{
 		
 	}
 
-	@Override
 	public SelectionCycle getPreviousSelectionCycle() {
 		ArrayList<SelectionCycle> cycles = Configuration.getExperiment().getSelectionCycles();
 
@@ -329,7 +325,6 @@ public class MapDBSelectionCycle implements SelectionCycle{
 		return previous;
 	}
 
-	@Override
 	public ArrayList<SelectionCycle> getControlCycles() {
 		
 		// If no control cycle is present, we return an empty list as specified by the interface
@@ -342,7 +337,6 @@ public class MapDBSelectionCycle implements SelectionCycle{
 	
 	}
 
-	@Override
 	public ArrayList<SelectionCycle> getCounterSelectionCycles() {
 		
 		// If no control cycle is present, we return an empty list as specified by the interface
@@ -355,17 +349,14 @@ public class MapDBSelectionCycle implements SelectionCycle{
 	
 	}
 
-	@Override
 	public boolean isControlSelection() {
 		return isControlSelection;
 	}
 
-	@Override
 	public boolean isCounterSelection() {
 		return isCounterSelection;
 	}
 
-	@Override
 	public void setReadOnly() {
 		
 		poolContentCounts.close();
@@ -452,6 +443,66 @@ public class MapDBSelectionCycle implements SelectionCycle{
 			poolContent.add(contentit.next().getKey());
 		}
 	}
+
 	
+	/**
+	 * @author Jan Hoinka
+	 * Make use of internal classes so we can provide iterators for id->count and sequence->count to the API.
+	 * This class implements the id->count view.
+	 * Eg. <code>for ( cycle_it : cycle.iterator() ){ }</code>
+	 */
+	private class SelectionCycleIterator implements Iterable<Entry<Integer, Integer>> {
+
+		public Iterator<Entry<Integer, Integer>> iterator() {
+			return poolContentCounts.entryIterator();
+		}
+
+	}
+	
+	/**
+	 * @author Jan Hoinka
+	 * Make use of internal classes so we can provide iterators for id->count and sequence->count to the API.
+	 * This class implements the sequence->count view.
+	 */
+	private class SelectionCycleSequenceIterator implements Iterable<Entry<byte[], Integer>> {
+
+		@Override
+		public Iterator<Entry<byte[], Integer>> iterator() {
+			Iterator<Entry<byte[], Integer>> it = new Iterator<Entry<byte[], Integer>>() {
+	
+				Iterator<Entry<Integer, Integer>> pool_iterator = poolContentCounts.entryIterator();
+	            
+	            @Override
+	            public boolean hasNext() {
+	                return pool_iterator.hasNext();
+	            }
+	
+	            @Override
+	            public Entry<byte[], Integer> next() {
+	            	
+	            	Entry<Integer, Integer> entry = pool_iterator.next();
+	            	
+	            	//get the next Id from the map and look up the corresponding sequence
+	            	return new AbstractMap.SimpleEntry<byte[], Integer>(Configuration.getExperiment().getAptamerPool().getAptamer(entry.getKey()) , entry.getValue());
+	            	
+	            }
+	
+	            @Override
+	            public void remove() {
+	                throw new UnsupportedOperationException();
+	            }
+	        };
+	        return it;
+		}	
+		
+	}
+	
+	public Iterable<Entry<Integer, Integer>> iterator(){
+		return new SelectionCycleIterator();
+	}
+
+	public Iterable<Entry<byte[], Integer>> sequence_iterator(){
+		return new SelectionCycleSequenceIterator();
+	}
 	
 }

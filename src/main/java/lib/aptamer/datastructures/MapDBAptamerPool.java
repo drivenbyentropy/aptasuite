@@ -680,43 +680,80 @@ public class MapDBAptamerPool implements AptamerPool {
 			}
         }
 	}
-	 
-	 
-    /* (non-Javadoc)
-     * @see java.lang.Iterable#iterator()
+	
+	
+
+	/**
+	 * @author Jan Hoinka
+	 * Make use of internal classes so we can provide iterators for aptamer->id and id->aptamer to the API.
+	 * This class implements the aptamer->id view.
+	 * Eg. <code>for ( pool_it : pool.iterator() ){ }</code>
+	 */
+	private class PoolIterator implements Iterable<Entry<byte[], Integer>> {
+
+		@Override
+	    public Iterator<Entry<byte[], Integer>> iterator() {
+	        Iterator<Map.Entry<byte[], Integer>> it = new Iterator<Map.Entry<byte[], Integer>>() {
+
+	            private int currentTreeMapIndex = 0;
+	            private Iterator<Entry<byte[], Integer>> currentTreeMapIterator= poolData.get(currentTreeMapIndex).getEntries().iterator();
+	            
+	            @Override
+	            public boolean hasNext() {
+	                return currentTreeMapIterator.hasNext() || currentTreeMapIndex < poolData.size()-1;
+	            }
+
+	            @Override
+	            public Entry<byte[], Integer> next() {
+	            	
+	            	// Move on to the next map if all items from the previous have been iterated over
+	                if (!currentTreeMapIterator.hasNext() && currentTreeMapIndex < poolData.size()-1)
+	                {
+	                	currentTreeMapIndex++;
+	                	currentTreeMapIterator= poolData.get(currentTreeMapIndex).getEntries().iterator();
+	                }
+	                	
+	                return currentTreeMapIterator.next();
+	            }
+
+	            @Override
+	            public void remove() {
+	                throw new UnsupportedOperationException();
+	            }
+	        };
+	        return it;
+	    }
+	}
+	
+	/**
+	 * @author Jan Hoinka
+	 * Internal class implementing the iterator of the inverse view of the pool content, 
+	 * i.e id->aptamer
+	 */
+	private class InverseViewPoolIterator implements Iterable<Entry<Integer,byte[]>> {
+		
+		@Override
+		public Iterator<Entry<Integer,byte[]>> iterator(){
+	    	return poolDataInverse.getEntries().iterator();
+	    }
+		
+	}
+
+        
+    /**
+     * Provide public access to the iterator, since <code>PoolCollection</code> implements 
+     * <code>Iterable</code>.
+     * @return Instance of <code>PoolCollection</code>.
      */
-    @Override
-    public Iterator<Entry<byte[], Integer>> iterator() {
-        Iterator<Map.Entry<byte[], Integer>> it = new Iterator<Map.Entry<byte[], Integer>>() {
-
-            private int currentTreeMapIndex = 0;
-            private Iterator<Entry<byte[], Integer>> currentTreeMapIterator= poolData.get(currentTreeMapIndex).getEntries().iterator();
-            
-            @Override
-            public boolean hasNext() {
-                return currentTreeMapIterator.hasNext() || currentTreeMapIndex < poolData.size()-1;
-            }
-
-            @Override
-            public Entry<byte[], Integer> next() {
-            	
-            	// Move on to the next map if all items from the previous have been iterated over
-                if (!currentTreeMapIterator.hasNext() && currentTreeMapIndex < poolData.size()-1)
-                {
-                	currentTreeMapIndex++;
-                	currentTreeMapIterator= poolData.get(currentTreeMapIndex).getEntries().iterator();
-                }
-                	
-                return currentTreeMapIterator.next();
-            }
-
-            @Override
-            public void remove() {
-                throw new UnsupportedOperationException();
-            }
-        };
-        return it;
+    public Iterable<Entry<byte[], Integer>> iterator(){
+    	return new PoolIterator();
     }
-
-   
+    
+    /**
+     * Provide public access to the iterator of the inverse view of the pool.
+     * @return Instance of <code>PoolCollectionInverse</code>
+     */
+    public Iterable<Entry<Integer,byte[]>> inverse_view_iterator(){
+    	return new InverseViewPoolIterator();
+    }
 }

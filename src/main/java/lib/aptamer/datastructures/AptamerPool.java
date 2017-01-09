@@ -4,6 +4,7 @@
 package lib.aptamer.datastructures;
 
 import java.io.Serializable;
+import java.util.Iterator;
 import java.util.Map.Entry;
 
 /**
@@ -16,7 +17,7 @@ import java.util.Map.Entry;
  * This API provides efficient and transparent methods for aptamer 
  * storage, retrieval, and manipulation.
  */
-public interface AptamerPool extends Serializable, Iterable<Entry<byte[], Integer>>{
+public interface AptamerPool extends Serializable{
 
 
 	/**
@@ -104,4 +105,20 @@ public interface AptamerPool extends Serializable, Iterable<Entry<byte[], Intege
 	 * Optional. Sets the underlying data structure of the implementing class to read only mode. 
 	 */
 	public void setReadOnly();
+	
+	
+	/**
+	 * Provides an iterator over every aptamer in the pool  
+	 * together with its unique id.
+	 * Note that the order of iteration is implementation dependent
+	 */
+	public Iterable<Entry<byte[], Integer>> iterator();
+	
+	/**
+	 * Provides an iterator over every aptamer in the pool  
+	 * in inverse view, i.e. it provides every unique ID
+	 * along with the corresponding aptamer.
+	 * Note that the order of iteration is implementation dependent
+	 */
+	public Iterable<Entry<Integer,byte[]>> inverse_view_iterator();
 }
