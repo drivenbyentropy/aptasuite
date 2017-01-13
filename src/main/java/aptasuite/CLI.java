@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map.Entry;
 import java.util.logging.Level;
 
 import org.apache.commons.cli.CommandLine;
@@ -16,6 +17,8 @@ import exceptions.InvalidConfigurationException;
 import lib.aptamer.datastructures.Experiment;
 import lib.aptamer.datastructures.SelectionCycle;
 import lib.parser.aptaplex.AptaplexParser;
+import lib.structure.capr.CapR;
+import lib.structure.capr.InitLoops;
 import utilities.AptaLogger;
 import utilities.CLIOptions;
 import utilities.Configuration;
@@ -217,7 +220,44 @@ public class CLI {
 			AptaLogger.log(Level.INFO, this.getClass(), "Using existing data");
 		}
 		
-		System.out.println("Pool Size " + experiment.getAptamerPool().size());
+//		System.out.println("Pool Size " + experiment.getAptamerPool().size());
+//		
+//		for ( Entry<byte[], Integer> item : experiment.getAllSelectionCycles().get(1).sequence_iterator()){
+//			for (int x=0; x<item.getKey().length; x++){
+//				System.out.print(item.getKey()[x] + "  ");
+//			}
+//			System.out.println();
+//		}
+		
+		CapR capr = new CapR();
+		
+		String p5 = Configuration.getParameters().getString("Experiment.primer5");
+		String p3 = Configuration.getParameters().getString("Experiment.primer3");
+		
+		StringBuilder sb = new StringBuilder();
+		
+		int counter = 0;
+		int num = 100;
+		long tParserStart = System.currentTimeMillis();
+		
+		for ( Entry<byte[], Integer> item : experiment.getAptamerPool().iterator()){
+			
+			sb.append(p5).append(new String(item.getKey())).append(p3);
+			
+			capr.CalcMain(sb.toString().getBytes(), "test", sb.length());
+			
+			sb = new StringBuilder();
+			
+			counter++;
+			
+			if (counter % num == 0){
+				System.out.println(
+				String.format("Prediction for %s structures took %s seconds.\n",
+						num , ((System.currentTimeMillis() - tParserStart) / 1000.0))
+				);
+				tParserStart = System.currentTimeMillis();
+			}
+		}
 		
 	}
 	

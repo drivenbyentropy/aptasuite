@@ -28,6 +28,9 @@ import org.mapdb.serializer.SerializerCompressionWrapper;
 import lib.aptamer.datastructures.AptamerPool;
 import lib.aptamer.datastructures.Experiment;
 import lib.aptamer.datastructures.MapDBAptamerPool;
+import lib.structure.capr.CapR;
+import lib.structure.capr.EnergyPar;
+import lib.structure.capr.InitLoops;
 import orestes.bloomfilter.CountingBloomFilter;
 import orestes.bloomfilter.FilterBuilder;
 import utilities.Configuration;
@@ -412,7 +415,15 @@ public class MapDB {
 
 	public static void main(String[] args) {
 		
-		testBTreeMap();
+		String sequence = "ACGCTGTCTGTACTTGTATCAGTACACTGACGAGTCCCTAAAGGACGAAACAGCGC";
+		System.out.println(sequence.length());
+		CapR capr = new CapR();
+		capr.CalcMain(sequence.getBytes(), "test", sequence.length());
+
+
+		
+		
+		//testBTreeMap();
 //		generatePairedEndDataset(); 
 //		testRandomSequences();
 		
