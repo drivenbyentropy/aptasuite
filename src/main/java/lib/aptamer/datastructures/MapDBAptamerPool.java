@@ -37,7 +37,7 @@ import utilities.Configuration;
 
 /**
  * Implements the AptamerPool interface using a non-volatile based storage solution in order
- * to minimize memory useage at the expense of speed.
+ * to minimize memory usage at the expense of speed.
  * @author Jan Hoinka
  *
  */
@@ -727,6 +727,20 @@ public class MapDBAptamerPool implements AptamerPool {
 	
 	/**
 	 * @author Jan Hoinka
+	 * Make use of internal classes so we can provide iterators for id.
+	 */
+	private class IdIterator implements Iterable<Integer> {
+
+		@Override
+	    public Iterator<Integer> iterator() {
+	        
+	        return poolDataInverse.keyIterator();
+	        
+	    }
+	}
+	
+	/**
+	 * @author Jan Hoinka
 	 * Internal class implementing the iterator of the inverse view of the pool content, 
 	 * i.e id->aptamer
 	 */
@@ -756,4 +770,11 @@ public class MapDBAptamerPool implements AptamerPool {
     public Iterable<Entry<Integer,byte[]>> inverse_view_iterator(){
     	return new InverseViewPoolIterator();
     }
+
+	@Override
+	public Iterable<Integer> id_iterator() {
+		
+		return new IdIterator();
+		
+	}
 }

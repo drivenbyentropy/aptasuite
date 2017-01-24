@@ -12,6 +12,7 @@ import java.io.Writer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map.Entry;
 import java.util.Random;
@@ -29,6 +30,7 @@ import lib.aptamer.datastructures.AptamerPool;
 import lib.aptamer.datastructures.Experiment;
 import lib.aptamer.datastructures.MapDBAptamerPool;
 import lib.structure.capr.CapR;
+import lib.structure.capr.CapROriginal;
 import lib.structure.capr.EnergyPar;
 import lib.structure.capr.InitLoops;
 import orestes.bloomfilter.CountingBloomFilter;
@@ -415,12 +417,20 @@ public class MapDB {
 
 	public static void main(String[] args) {
 		
+		CapR capr = new CapR();
+		
+		
 		String sequence = "ACGCTGTCTGTACTTGTATCAGTACACTGACGAGTCCCTAAAGGACGAAACAGCGC";
 		System.out.println(sequence.length());
-		CapR capr = new CapR();
-		capr.CalcMain(sequence.getBytes(), "test", sequence.length());
+		capr.ComputeStructuralProfile(sequence.getBytes(), sequence.length());
+		System.out.println(Arrays.toString(capr.getStructuralProfile()));
 
-
+		System.out.println();
+		
+		String sequence2 = "ACGCTGTCTGTACTTGTATCAGTACACAGTAGCTAGCATCGATGACGAGTCCCTAAAGGACGAAACAGCGC";
+		System.out.println(sequence2.length());
+		capr.ComputeStructuralProfile(sequence2.getBytes(), sequence2.length());
+		System.out.println(Arrays.toString(capr.getStructuralProfile()));
 		
 		
 		//testBTreeMap();

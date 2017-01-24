@@ -106,7 +106,7 @@ public class Configuration {
 			     put("AptaplexParser.PrimerTolerance", 3); // Maximal number of mutations allowed in the primers
 			     
 			     // Performance Options
-			     put("Performance.maxNumberOfCores", 10); // if larger than available, min of both is taken
+			     put("Performance.maxNumberOfCores", 30); // if larger than available, min of both is taken
 			     
 			}};
 			

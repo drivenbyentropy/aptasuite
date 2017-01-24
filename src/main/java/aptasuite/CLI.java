@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 
 import org.apache.commons.cli.CommandLine;
@@ -18,6 +19,8 @@ import lib.aptamer.datastructures.Experiment;
 import lib.aptamer.datastructures.SelectionCycle;
 import lib.parser.aptaplex.AptaplexParser;
 import lib.structure.capr.CapR;
+import lib.structure.capr.CapRFactory;
+import lib.structure.capr.CapROriginal;
 import lib.structure.capr.InitLoops;
 import utilities.AptaLogger;
 import utilities.CLIOptions;
@@ -39,6 +42,12 @@ public class CLI {
 	 * allows for nearly real-time estimates of the parsing progress.
 	 */
 	Thread parserThread = null;
+	
+	/**
+	 * The thread used to control the parser. Running the parser in this thread
+	 * allows for nearly real-time estimates of the parsing progress.
+	 */
+	Thread structureThread = null;	
 
 	public CLI(CommandLine line) {
 
@@ -86,6 +95,13 @@ public class CLI {
 			// call data input logic
 			createDatabase( line.getOptionValue("config") );
 		}
+		
+		// Case for AptaTRACE
+		if (line.hasOption("structures")){
+			
+			runStructurePrediction( line.getOptionValue("config") );
+
+		}		
 		
 		// Case for AptaTRACE
 		if (line.hasOption("trace")){
@@ -143,7 +159,7 @@ public class CLI {
 
 					}
 				} catch (InterruptedException e) {
-					AptaLogger.log(Level.SEVERE, this.getClass(), "User interrupt on partherTread");
+					AptaLogger.log(Level.SEVERE, this.getClass(), "User interrupt on parserThread");
 				}
 			}
 		});
@@ -204,6 +220,70 @@ public class CLI {
 	}
 
 	
+	private void runStructurePrediction(String configFile){
+		
+		AptaLogger.log(Level.INFO, this.getClass(), "Starting Structure Predition");
+		
+		// Make sure we have data prior or load it from disk
+		if (experiment == null) {
+			AptaLogger.log(Level.INFO, this.getClass(), "Loading data from disk");
+			this.experiment = new Experiment(configFile, false);
+		}
+		else{
+			AptaLogger.log(Level.INFO, this.getClass(), "Using existing data");
+		}
+		
+		// Start parralel processing of structure prediction
+		CapRFactory caprf = new CapRFactory(experiment.getAptamerPool().iterator());
+		
+		structureThread = new Thread(caprf);
+
+		AptaLogger.log(Level.INFO, this.getClass(), "Starting Structure Prediction using " + Configuration.getParameters().getInt("Performance.maxNumberOfCores") + " threads:");
+		long tParserStart = System.currentTimeMillis();
+		structureThread.start();
+
+		// we need to add a shutdown hook for the CapRFactory in case the
+		// user presses ctl-c
+		Runtime.getRuntime().addShutdownHook(new Thread() {
+			@Override
+			public void run() {
+				try {
+					if (structureThread != null) {
+
+						structureThread.interrupt();
+						structureThread.join();
+
+					}
+				} catch (InterruptedException e) {
+					AptaLogger.log(Level.SEVERE, this.getClass(), "User interrupt on structureTread");
+				}
+			}
+		});
+
+		AptaLogger.log(Level.INFO, this.getClass(), "Predicting...");
+
+		long sps = 0;
+		while (structureThread.isAlive() && !structureThread.isInterrupted()) {
+			try {
+				long current_progress = caprf.getProgress().longValue();
+				System.out.print(String.format("Completed: %s/%s (%s structures per second)     " + "\r", current_progress, experiment.getAptamerPool().size(), current_progress-sps ));
+				sps = current_progress;
+				
+				// Once every second should suffice
+				Thread.sleep(1000);
+				
+			} catch (InterruptedException ie) {
+			}
+		}
+		// final update
+		System.out.print(        String.format("Completed: %s/%s                                 ", caprf.getProgress(), experiment.getAptamerPool().size()));
+
+		AptaLogger.log(Level.INFO, this.getClass(), String.format("Structure prediction completed in %s seconds.\n",
+				((System.currentTimeMillis() - tParserStart) / 1000.0)));
+		
+	}
+	
+	
 	/**
 	 * Implements the logic for calling AptaTrace
 	 */
@@ -220,44 +300,9 @@ public class CLI {
 			AptaLogger.log(Level.INFO, this.getClass(), "Using existing data");
 		}
 		
-//		System.out.println("Pool Size " + experiment.getAptamerPool().size());
-//		
-//		for ( Entry<byte[], Integer> item : experiment.getAllSelectionCycles().get(1).sequence_iterator()){
-//			for (int x=0; x<item.getKey().length; x++){
-//				System.out.print(item.getKey()[x] + "  ");
-//			}
-//			System.out.println();
-//		}
+		// TODO: Load structure database
 		
-		CapR capr = new CapR();
-		
-		String p5 = Configuration.getParameters().getString("Experiment.primer5");
-		String p3 = Configuration.getParameters().getString("Experiment.primer3");
-		
-		StringBuilder sb = new StringBuilder();
-		
-		int counter = 0;
-		int num = 100;
-		long tParserStart = System.currentTimeMillis();
-		
-		for ( Entry<byte[], Integer> item : experiment.getAptamerPool().iterator()){
-			
-			sb.append(p5).append(new String(item.getKey())).append(p3);
-			
-			capr.CalcMain(sb.toString().getBytes(), "test", sb.length());
-			
-			sb = new StringBuilder();
-			
-			counter++;
-			
-			if (counter % num == 0){
-				System.out.println(
-				String.format("Prediction for %s structures took %s seconds.\n",
-						num , ((System.currentTimeMillis() - tParserStart) / 1000.0))
-				);
-				tParserStart = System.currentTimeMillis();
-			}
-		}
+				
 		
 	}
 	

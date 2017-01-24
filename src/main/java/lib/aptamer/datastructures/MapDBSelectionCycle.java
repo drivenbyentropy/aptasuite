@@ -497,12 +497,30 @@ public class MapDBSelectionCycle implements SelectionCycle{
 		
 	}
 	
+	
+	/**
+	 * @author Jan Hoinka
+	 * Make use of internal classes so we can provide iterators for id to the API.
+	 */
+	private class IdIterator implements Iterable<Integer> {
+
+		public Iterator<Integer> iterator() {
+			return poolContentCounts.keyIterator();
+		}
+
+	}
+	
 	public Iterable<Entry<Integer, Integer>> iterator(){
 		return new SelectionCycleIterator();
 	}
 
 	public Iterable<Entry<byte[], Integer>> sequence_iterator(){
 		return new SelectionCycleSequenceIterator();
+	}
+
+	@Override
+	public Iterable<Integer> id_iterator() {
+		return new IdIterator();
 	}
 	
 }

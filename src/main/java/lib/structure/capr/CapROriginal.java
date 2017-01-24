@@ -6,13 +6,12 @@ package lib.structure.capr;
 import java.util.ArrayList;
 
 /**
- * @author Jan Hoinka 
- * Implements the <code>CapR.cpp</code> and
- * <code>CapR.h</code> of the CapR package available at <a href=
- * "https://github.com/fukunagatsu/CapR">https://github.com/fukunagatsu/CapR</a>.
- * All intellectual credits of this work goes to the original authors.
+ * @author Jan Hoinka Implements the <code>CapR.cpp</code> and
+ *         <code>CapR.h</code> of the CapR package available at <a href=
+ *         "https://github.com/fukunagatsu/CapR">https://github.com/fukunagatsu/CapR</a>.
+ *         All intellectual credits of this work goes to the original authors.
  */
-public class CapR {
+public class CapROriginal {
 
 	int _maximal_span;
 
@@ -37,34 +36,38 @@ public class CapR {
 	int _seq_length;
 
 	ArrayList<Double> _Alpha_outer = new ArrayList<Double>();
-	DataMatrix<Double> _Alpha_stem = new DataMatrix<Double>();
-	DataMatrix<Double> _Alpha_stemend = new DataMatrix<Double>();
-	DataMatrix<Double> _Alpha_multi = new DataMatrix<Double>();
-	DataMatrix<Double> _Alpha_multibif = new DataMatrix<Double>();
-	DataMatrix<Double> _Alpha_multi1 = new DataMatrix<Double>();
-	DataMatrix<Double> _Alpha_multi2 = new DataMatrix<Double>();
+	ArrayList<ArrayList<Double>> _Alpha_stem = new ArrayList<ArrayList<Double>>();
+	ArrayList<ArrayList<Double>> _Alpha_stemend = new ArrayList<ArrayList<Double>>();
+	ArrayList<ArrayList<Double>> _Alpha_multi = new ArrayList<ArrayList<Double>>();
+	ArrayList<ArrayList<Double>> _Alpha_multibif = new ArrayList<ArrayList<Double>>();
+	ArrayList<ArrayList<Double>> _Alpha_multi1 = new ArrayList<ArrayList<Double>>();
+	ArrayList<ArrayList<Double>> _Alpha_multi2 = new ArrayList<ArrayList<Double>>();
 
 	ArrayList<Double> _Beta_outer = new ArrayList<Double>();
-	DataMatrix<Double> _Beta_stem = new DataMatrix<Double>();
-	DataMatrix<Double> _Beta_stemend = new DataMatrix<Double>();
-	DataMatrix<Double> _Beta_multi = new DataMatrix<Double>();
-	DataMatrix<Double> _Beta_multibif = new DataMatrix<Double>();
-	DataMatrix<Double> _Beta_multi1 = new DataMatrix<Double>();
-	DataMatrix<Double> _Beta_multi2 = new DataMatrix<Double>();
+	ArrayList<ArrayList<Double>> _Beta_stem = new ArrayList<ArrayList<Double>>();
+	ArrayList<ArrayList<Double>> _Beta_stemend = new ArrayList<ArrayList<Double>>();
+	ArrayList<ArrayList<Double>> _Beta_multi = new ArrayList<ArrayList<Double>>();
+	ArrayList<ArrayList<Double>> _Beta_multibif = new ArrayList<ArrayList<Double>>();
+	ArrayList<ArrayList<Double>> _Beta_multi1 = new ArrayList<ArrayList<Double>>();
+	ArrayList<ArrayList<Double>> _Beta_multi2 = new ArrayList<ArrayList<Double>>();
 
-	public CapR(){
+	public CapROriginal(){
 		set_energy_parameters();
 	}
 
-	public void ComputeStructuralProfile(byte[] sequence, int maximal_span) {
+	public void Run() {
+
+	}
+
+	public void CalcMain(byte[] sequence, String name, int maximal_span) {
 		_maximal_span = maximal_span;
 		_seq_length = 0;
 		
-		Clear();
 		Initiallize(sequence);
 		CalcInsideVariable();
 		CalcOutsideVariable();
-		
+		CalcStructuralProfile(name);
+		Clear();
 	}
 
 	private void set_energy_parameters() {
@@ -125,14 +128,9 @@ public class CapR {
 		
 		_seq_length = sequence.length;
 		_int_sequence.ensureCapacity(_seq_length + 1);
-		
 		for (int x = 0; x < _seq_length + 1; x++) {
 			_int_sequence.add(0);
-			
-			_Alpha_outer.add(0.0);
-			_Beta_outer.add(0.0);
 		}
-		
 		for (int i = 0; i < _seq_length; i++) {
 			if (sequence[i] == 'A' || sequence[i] == 'a') {
 				_int_sequence.set(i + 1, 1);
@@ -147,21 +145,31 @@ public class CapR {
 			}
 		}
 		
+		ArrayList<Double> dummy = new ArrayList<Double>();
+		for (int y = 0; y < _maximal_span + 2; y++) {
+			dummy.add((double) -EnergyPar.INF);
+		}
 		
-		_Alpha_stem.reshape(_seq_length + 1, _maximal_span + 2).clear((double) -EnergyPar.INF);
-		_Alpha_stemend.reshape(_seq_length + 1, _maximal_span + 2).clear((double) -EnergyPar.INF);
-		_Alpha_multi.reshape(_seq_length + 1, _maximal_span + 2).clear((double) -EnergyPar.INF);
-		_Alpha_multibif.reshape(_seq_length + 1, _maximal_span + 2).clear((double) -EnergyPar.INF);
-		_Alpha_multi1.reshape(_seq_length + 1, _maximal_span + 2).clear((double) -EnergyPar.INF);
-		_Alpha_multi2.reshape(_seq_length + 1, _maximal_span + 2).clear((double) -EnergyPar.INF);
+		_Alpha_outer.ensureCapacity(_seq_length + 1);
+		_Beta_outer.ensureCapacity(_seq_length + 1);
+		for (int x = 0; x < _seq_length + 1; x++) {
+			_Alpha_outer.add(0.0);
+			_Beta_outer.add(0.0);
 
-		_Beta_stem.reshape(_seq_length + 1, _maximal_span + 2).clear((double) -EnergyPar.INF);
-		_Beta_stemend.reshape(_seq_length + 1, _maximal_span + 2).clear((double) -EnergyPar.INF);
-		_Beta_multi.reshape(_seq_length + 1, _maximal_span + 2).clear((double) -EnergyPar.INF);
-		_Beta_multibif.reshape(_seq_length + 1, _maximal_span + 2).clear((double) -EnergyPar.INF);
-		_Beta_multi1.reshape(_seq_length + 1, _maximal_span + 2).clear((double) -EnergyPar.INF);
-		_Beta_multi2.reshape(_seq_length + 1, _maximal_span + 2).clear((double) -EnergyPar.INF);
-		
+			_Alpha_stem.add(new ArrayList<Double>(dummy));
+			_Alpha_stemend.add(new ArrayList<Double>(dummy));
+			_Alpha_multi.add(new ArrayList<Double>(dummy));
+			_Alpha_multibif.add(new ArrayList<Double>(dummy));
+			_Alpha_multi1.add(new ArrayList<Double>(dummy));
+			_Alpha_multi2.add(new ArrayList<Double>(dummy));
+
+			_Beta_stem.add(new ArrayList<Double>(dummy));
+			_Beta_stemend.add(new ArrayList<Double>(dummy));
+			_Beta_multi.add(new ArrayList<Double>(dummy));
+			_Beta_multibif.add(new ArrayList<Double>(dummy));
+			_Beta_multi1.add(new ArrayList<Double>(dummy));
+			_Beta_multi2.add(new ArrayList<Double>(dummy));
+		}
 	}
 
 	private void CalcInsideVariable() {
@@ -175,85 +183,85 @@ public class CapR {
 				boolean flag = false;
 				if (type != 0) {
 					type2 = EnergyPar.rtype[type2];
-					if (_Alpha_stem.get(i + 1, j - i - 2) != -EnergyPar.INF) {
+					if (_Alpha_stem.get(i + 1).get(j - i - 2) != -EnergyPar.INF) {
 						// Stem¨Stem
 						if (type2 != 0) {
-							temp = _Alpha_stem.get(i + 1,j - i - 2)
+							temp = _Alpha_stem.get(i + 1).get(j - i - 2)
 									+ LoopEnergy(type, type2, i + 1, j, i + 2, j - 1);
 						}
 						flag = true;
 					}
 
-					if (_Alpha_stemend.get(i + 1,j - i - 2) != -EnergyPar.INF) {
+					if (_Alpha_stemend.get(i + 1).get(j - i - 2) != -EnergyPar.INF) {
 						// Stem¨StemEnd
-						temp = (flag == true) ? logsumexp(temp, _Alpha_stemend.get(i + 1,j - i - 2))
-								: _Alpha_stemend.get(i + 1,j - i - 2);
+						temp = (flag == true) ? logsumexp(temp, _Alpha_stemend.get(i + 1).get(j - i - 2))
+								: _Alpha_stemend.get(i + 1).get(j - i - 2);
 						flag = true;
 					}
 
-					_Alpha_stem.set(i, j - i, (flag == false) ? -EnergyPar.INF : temp);
+					_Alpha_stem.get(i).set(j - i, (flag == false) ? -EnergyPar.INF : temp);
 				} else {
-					_Alpha_stem.set(i, j - i, (double) -EnergyPar.INF);
+					_Alpha_stem.get(i).set(j - i, (double) -EnergyPar.INF);
 				}
 
 				// Alpha_multiBif
 				temp = 0;
 				flag = false;
 				for (int k = i + 1; k <= j - 1; k++) {
-					if (_Alpha_multi1.get(i,k - i) != -EnergyPar.INF
-							&& _Alpha_multi2.get(k,j - k) != -EnergyPar.INF) {
-						temp = (flag == false) ? _Alpha_multi1.get(i,k - i) + _Alpha_multi2.get(k,j - k)
-								: logsumexp(temp, _Alpha_multi1.get(i,k - i) + _Alpha_multi2.get(k,j - k));
+					if (_Alpha_multi1.get(i).get(k - i) != -EnergyPar.INF
+							&& _Alpha_multi2.get(k).get(j - k) != -EnergyPar.INF) {
+						temp = (flag == false) ? _Alpha_multi1.get(i).get(k - i) + _Alpha_multi2.get(k).get(j - k)
+								: logsumexp(temp, _Alpha_multi1.get(i).get(k - i) + _Alpha_multi2.get(k).get(j - k));
 						flag = true;
 					}
 				}
-				_Alpha_multibif.set(i, j - i, (flag == false) ? -EnergyPar.INF : temp);
+				_Alpha_multibif.get(i).set(j - i, (flag == false) ? -EnergyPar.INF : temp);
 
 				// Alpha_multi2
 				temp = 0;
 				flag = false;
 				if (type != 0) {
-					if (_Alpha_stem.get(i,j - i) != -EnergyPar.INF) {
-						temp = _Alpha_stem.get(i,j - i) + MLintern + CalcDangleEnergy(type, i, j);
+					if (_Alpha_stem.get(i).get(j - i) != -EnergyPar.INF) {
+						temp = _Alpha_stem.get(i).get(j - i) + MLintern + CalcDangleEnergy(type, i, j);
 						flag = true;
 					}
 				}
-				if (_Alpha_multi2.get(i,j - i - 1) != -EnergyPar.INF) {
-					_Alpha_multi2.set(i, j - i, _Alpha_multi2.get(i,j - i - 1) + MLbase);
+				if (_Alpha_multi2.get(i).get(j - i - 1) != -EnergyPar.INF) {
+					_Alpha_multi2.get(i).set(j - i, _Alpha_multi2.get(i).get(j - i - 1) + MLbase);
 					if (flag == true) {
-						_Alpha_multi2.set(i, j - i, logsumexp(temp, _Alpha_multi2.get(i,j - i)));
+						_Alpha_multi2.get(i).set(j - i, logsumexp(temp, _Alpha_multi2.get(i).get(j - i)));
 					}
 				} else {
-					_Alpha_multi2.set(i, j - i, (flag == false) ? -EnergyPar.INF : temp);
+					_Alpha_multi2.get(i).set(j - i, (flag == false) ? -EnergyPar.INF : temp);
 				}
 
 				// Alpha_multi1
-				if (_Alpha_multi2.get(i,j - i) != -EnergyPar.INF
-						&& _Alpha_multibif.get(i,j - i) != -EnergyPar.INF) {
-					_Alpha_multi1.set(i, j - i,
-							logsumexp(_Alpha_multi2.get(i,j - i), _Alpha_multibif.get(i,j - i)));
-				} else if (_Alpha_multi2.get(i,j - i) == -EnergyPar.INF) {
-					_Alpha_multi1.set(i, j - i, _Alpha_multibif.get(i,j - i));
-				} else if (_Alpha_multibif.get(i,j - i) == -EnergyPar.INF) {
-					_Alpha_multi1.set(i, j - i, _Alpha_multi2.get(i,j - i));
+				if (_Alpha_multi2.get(i).get(j - i) != -EnergyPar.INF
+						&& _Alpha_multibif.get(i).get(j - i) != -EnergyPar.INF) {
+					_Alpha_multi1.get(i).set(j - i,
+							logsumexp(_Alpha_multi2.get(i).get(j - i), _Alpha_multibif.get(i).get(j - i)));
+				} else if (_Alpha_multi2.get(i).get(j - i) == -EnergyPar.INF) {
+					_Alpha_multi1.get(i).set(j - i, _Alpha_multibif.get(i).get(j - i));
+				} else if (_Alpha_multibif.get(i).get(j - i) == -EnergyPar.INF) {
+					_Alpha_multi1.get(i).set(j - i, _Alpha_multi2.get(i).get(j - i));
 				} else {
-					_Alpha_multi1.set(i, j - i, (double) -EnergyPar.INF);
+					_Alpha_multi1.get(i).set(j - i, (double) -EnergyPar.INF);
 				}
 
 				// Alpha_multi
 				flag = false;
-				if (_Alpha_multi.get(i + 1,j - i - 1) != -EnergyPar.INF) {
-					_Alpha_multi.set(i, j - i, _Alpha_multi.get(i + 1,j - i - 1) + MLbase);
+				if (_Alpha_multi.get(i + 1).get(j - i - 1) != -EnergyPar.INF) {
+					_Alpha_multi.get(i).set(j - i, _Alpha_multi.get(i + 1).get(j - i - 1) + MLbase);
 					flag = true;
 				}
 
 				if (flag == true) {
-					if (_Alpha_multibif.get(i,j - i) != -EnergyPar.INF) {
-						_Alpha_multi.set(i, j - i,
-								logsumexp(_Alpha_multi.get(i,j - i), _Alpha_multibif.get(i,j - i)));
+					if (_Alpha_multibif.get(i).get(j - i) != -EnergyPar.INF) {
+						_Alpha_multi.get(i).set(j - i,
+								logsumexp(_Alpha_multi.get(i).get(j - i), _Alpha_multibif.get(i).get(j - i)));
 					}
 				} else {
-					_Alpha_multi.set(i, j - i, _Alpha_multibif.get(i,j - i));
+					_Alpha_multi.get(i).set(j - i, _Alpha_multibif.get(i).get(j - i));
 				}
 
 				// Alpha_stemend
@@ -269,10 +277,10 @@ public class CapR {
 							int u1 = p - i;
 							for (int q = Math.max(p + EnergyPar.TURN + 2, j - EnergyPar.MAXLOOP + u1); q <= j; q++) {
 								type2 = EnergyPar.BP_pair[_int_sequence.get(p + 1)][_int_sequence.get(q)];
-								if (_Alpha_stem.get(p,q - p) != -EnergyPar.INF) {
+								if (_Alpha_stem.get(p).get(q - p) != -EnergyPar.INF) {
 									if (type2 != 0 && !(p == i && q == j)) {
 										type2 = EnergyPar.rtype[type2];
-										temp = logsumexp(temp, _Alpha_stem.get(p,q - p)
+										temp = logsumexp(temp, _Alpha_stem.get(p).get(q - p)
 												+ LoopEnergy(type, type2, i, j + 1, p + 1, q));
 									}
 								}
@@ -281,11 +289,11 @@ public class CapR {
 
 						// StemEnd¨Multi
 						int tt = EnergyPar.rtype[type];
-						temp = logsumexp(temp, _Alpha_multi.get(i,j - i) + MLclosing + MLintern
+						temp = logsumexp(temp, _Alpha_multi.get(i).get(j - i) + MLclosing + MLintern
 								+ dangle3[tt][_int_sequence.get(i + 1)] + dangle5[tt][_int_sequence.get(j)]);
-						_Alpha_stemend.set(i, j - i, temp);
+						_Alpha_stemend.get(i).set(j - i, temp);
 					} else {
-						_Alpha_stemend.set(i, j - i, (double) -EnergyPar.INF);
+						_Alpha_stemend.get(i).set(j - i, (double) -EnergyPar.INF);
 					}
 				}
 			}
@@ -295,52 +303,17 @@ public class CapR {
 		for (int i = 1; i <= _seq_length; i++) {
 			double temp = _Alpha_outer.get(i - 1);
 			for (int p = Math.max(0, i - _maximal_span - 1); p < i; p++) {
-				if (_Alpha_stem.get(p,i - p) != -EnergyPar.INF) {
+				if (_Alpha_stem.get(p).get(i - p) != -EnergyPar.INF) {
 					int type = EnergyPar.BP_pair[_int_sequence.get(p + 1)][_int_sequence.get(i)];
-					double ao = _Alpha_stem.get(p,i - p) + CalcDangleEnergy(type, p, i);
+					double ao = _Alpha_stem.get(p).get(i - p) + CalcDangleEnergy(type, p, i);
 					temp = logsumexp(temp, ao + _Alpha_outer.get(p));
 				}
 			}
 			_Alpha_outer.set(i, temp);
 		}
 	}
-	
 
-//	TODO: MODIFY THIS TO RETURN ONE DOUBLE[] CONTAINING ALL PROBABILITIES TO STORE IN DBMAP
-	/**
-	 * Returns the structural profile in accordance with the StructurePool Interface 
-	 * @return array containing <code>[h1,h2,...hn,i1,i2,...,in,b1,b2,...,bn,m1,m2,...mn,d1,d2,...,dn]</code>
-	 * for a sequence of size <code>n</code> and where <code>h,i,b,m</code>, and <code>d</code> stand for hairpin, inner loop, bulge loop,
-	 * multi-loop, and dangling end respectively.
-	 */
-	public double[] getStructuralProfile(){ 
-		
-		// compute the required size of the array and allocate it
-		double[] profile = new double[_seq_length*5];
-		
-		// fill the array
-		double pf = _Alpha_outer.get(_seq_length);
-		if (pf >= -690 && pf <= 690) {
-			CalcBulgeAndInternalProbability2(profile, 2*_seq_length,1*_seq_length);
-		} else {
-			CalcLogSumBulgeAndInternalProbability2(profile, 2*_seq_length,1*_seq_length);
-		}
-
-		CalcHairpinProbability2(profile, 0*_seq_length);
-
-		for (int i = 1; i <= _seq_length; i++) {
-			
-			profile[4*_seq_length + i -1] = CalcExteriorProbability(i);
-			profile[3*_seq_length + i -1] = CalcMultiProbability(i);
-			
-		}
-
-		// return it
-		return profile;
-	}
-	
-
-	public void CalcStructuralProfile(String name) {
+	private void CalcStructuralProfile(String name) {
 		
 		ArrayList<Double> bulge_probability = new ArrayList<Double>(_seq_length);
 		ArrayList<Double> internal_probability = new ArrayList<Double>(_seq_length);
@@ -370,8 +343,8 @@ public class CapR {
 		for (int i = 1; i <= _seq_length; i++) {
 			exterior_probability.set(i - 1, CalcExteriorProbability(i));
 			multi_probability.set(i - 1, CalcMultiProbability(i));
-			//stem_probability.set(i - 1, 1.0 - bulge_probability.get(i - 1) - exterior_probability.get(i - 1)
-			//		- hairpin_probability.get(i - 1) - internal_probability.get(i - 1) - multi_probability.get(i - 1));
+			stem_probability.set(i - 1, 1.0 - bulge_probability.get(i - 1) - exterior_probability.get(i - 1)
+					- hairpin_probability.get(i - 1) - internal_probability.get(i - 1) - multi_probability.get(i - 1));
 		}
 
 		StringBuilder sb = new StringBuilder();
@@ -401,11 +374,11 @@ public class CapR {
 		for (int i = 0; i < _seq_length; i++) {
 			sb.append(multi_probability.get(i) + " ");
 		}
-//		sb.append("\n");
-//		sb.append("Stem ");
-//		for (int i = 0; i < _seq_length; i++) {
-//			sb.append(stem_probability.get(i) + " ");
-//		}
+		sb.append("\n");
+		sb.append("Stem ");
+		for (int i = 0; i < _seq_length; i++) {
+			sb.append(stem_probability.get(i) + " ");
+		}
 		sb.append("\n\n");
 //		System.out.println(sb.toString());
 	}
@@ -415,32 +388,6 @@ public class CapR {
 		return (probability);
 	}
 
-	private void CalcHairpinProbability2(double[] profile, int hairpin_offset) {
-		for (int x = 1; x <= _seq_length; x++) {
-			double temp = 0.0;
-			int type = 0;
-			boolean flag = false;
-			double h_energy = 0.0;
-
-			for (int i = Math.max(1, x - _maximal_span); i < x; i++) {
-				for (int j = x + 1; j <= Math.min(i + _maximal_span, _seq_length); j++) {
-					type = EnergyPar.BP_pair[_int_sequence.get(i)][_int_sequence.get(j)];
-					if (_Beta_stemend.get(i,j - i - 1) != -EnergyPar.INF) {
-						h_energy = _Beta_stemend.get(i,j - i - 1) + HairpinEnergy(type, i, j);
-						temp = flag == true ? logsumexp(temp, h_energy) : h_energy;
-						flag = true;
-					}
-				}
-			}
-
-			if (flag == true) {
-				profile[hairpin_offset + x - 1] = Math.exp(temp - _Alpha_outer.get(_seq_length));
-			} else {
-				profile[hairpin_offset + x - 1] = 0.0;
-			}
-		}
-	}
-	
 	private void CalcHairpinProbability(ArrayList<Double> hairpin_probability) {
 		for (int x = 1; x <= _seq_length; x++) {
 			double temp = 0.0;
@@ -451,8 +398,8 @@ public class CapR {
 			for (int i = Math.max(1, x - _maximal_span); i < x; i++) {
 				for (int j = x + 1; j <= Math.min(i + _maximal_span, _seq_length); j++) {
 					type = EnergyPar.BP_pair[_int_sequence.get(i)][_int_sequence.get(j)];
-					if (_Beta_stemend.get(i,j - i - 1) != -EnergyPar.INF) {
-						h_energy = _Beta_stemend.get(i,j - i - 1) + HairpinEnergy(type, i, j);
+					if (_Beta_stemend.get(i).get(j - i - 1) != -EnergyPar.INF) {
+						h_energy = _Beta_stemend.get(i).get(j - i - 1) + HairpinEnergy(type, i, j);
 						temp = flag == true ? logsumexp(temp, h_energy) : h_energy;
 						flag = true;
 					}
@@ -473,19 +420,19 @@ public class CapR {
 		boolean flag = false;
 
 		for (int i = x; i <= Math.min(x + _maximal_span, _seq_length); i++) {
-			if (_Beta_multi.get(x - 1,i - x + 1) != -EnergyPar.INF
-					&& _Alpha_multi.get(x,i - x) != -EnergyPar.INF) {
-				temp = (flag == false) ? _Beta_multi.get(x - 1,i - x + 1) + _Alpha_multi.get(x,i - x)
-						: logsumexp(temp, _Beta_multi.get(x - 1,i - x + 1) + _Alpha_multi.get(x,i - x));
+			if (_Beta_multi.get(x - 1).get(i - x + 1) != -EnergyPar.INF
+					&& _Alpha_multi.get(x).get(i - x) != -EnergyPar.INF) {
+				temp = (flag == false) ? _Beta_multi.get(x - 1).get(i - x + 1) + _Alpha_multi.get(x).get(i - x)
+						: logsumexp(temp, _Beta_multi.get(x - 1).get(i - x + 1) + _Alpha_multi.get(x).get(i - x));
 				flag = true;
 			}
 		}
 
 		for (int i = Math.max(0, x - _maximal_span); i < x; i++) {
-			if (_Beta_multi2.get(i,x - i) != -EnergyPar.INF
-					&& _Alpha_multi2.get(i,x - i - 1) != -EnergyPar.INF) {
-				temp = (flag == false) ? _Beta_multi2.get(i,x - i) + _Alpha_multi2.get(i,x - i - 1)
-						: logsumexp(temp, _Beta_multi2.get(i,x - i) + _Alpha_multi2.get(i,x - i - 1));
+			if (_Beta_multi2.get(i).get(x - i) != -EnergyPar.INF
+					&& _Alpha_multi2.get(i).get(x - i - 1) != -EnergyPar.INF) {
+				temp = (flag == false) ? _Beta_multi2.get(i).get(x - i) + _Alpha_multi2.get(i).get(x - i - 1)
+						: logsumexp(temp, _Beta_multi2.get(i).get(x - i) + _Alpha_multi2.get(i).get(x - i - 1));
 				flag = true;
 			}
 		}
@@ -495,61 +442,6 @@ public class CapR {
 		return (probability);
 	}
 
-	
-	private void CalcBulgeAndInternalProbability2(double[] profile, int bulge_offset, int internal_offset) {
-		double temp = 0;
-		int type = 0;
-		int type2 = 0;
-
-		for (int i = 1; i < _seq_length - EnergyPar.TURN - 2; i++) {
-			for (int j = i + EnergyPar.TURN + 3; j <= Math.min(i + _maximal_span, _seq_length); j++) {
-				type = EnergyPar.BP_pair[_int_sequence.get(i)][_int_sequence.get(j)];
-				if (type != 0) {
-					for (int p = i + 1; p <= Math.min(i + EnergyPar.MAXLOOP + 1, j - EnergyPar.TURN - 2); p++) {
-						int u1 = p - i - 1;
-						for (int q = Math.max(p + EnergyPar.TURN + 1, j - EnergyPar.MAXLOOP + u1 - 1); q < j; q++) {
-							type2 = EnergyPar.BP_pair[_int_sequence.get(p)][_int_sequence.get(q)];
-							if (type2 != 0 && !(p == i + 1 && q == j - 1)) {
-								type2 = EnergyPar.rtype[type2];
-								if (_Beta_stemend.get(i,j - i - 1) != -EnergyPar.INF
-										&& _Alpha_stem.get(p - 1,q - p + 1) != -EnergyPar.INF) {
-									temp = Math.exp(
-											_Beta_stemend.get(i,j - i - 1) + LoopEnergy(type, type2, i, j, p, q)
-													+ _Alpha_stem.get(p - 1,q - p + 1));
-
-									for (int k = i + 1; k <= p - 1; k++) {
-										if (j == q + 1) {
-											profile[bulge_offset + k - 1] += temp;
-										} else {
-											profile[internal_offset + k - 1] += temp;
-										}
-									}
-
-									for (int k = q + 1; k <= j - 1; k++) {
-										if (i == p - 1) {
-											profile[bulge_offset + k - 1] += temp;
-										} else {
-											profile[internal_offset + k - 1] += temp;
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-
-		for (int i = 0; i < _seq_length; i++) {
-			if (profile[bulge_offset + i] != 0) {
-				profile[bulge_offset + i] /= Math.exp(_Alpha_outer.get(_seq_length));
-			}
-			if (profile[internal_offset + i] != 0) {
-				profile[internal_offset + i] /= Math.exp(_Alpha_outer.get(_seq_length));
-			}
-		}
-	}	
-	
 	private void CalcBulgeAndInternalProbability(ArrayList<Double> bulge_probability,
 			ArrayList<Double> internal_probability) {
 		double temp = 0;
@@ -566,11 +458,11 @@ public class CapR {
 							type2 = EnergyPar.BP_pair[_int_sequence.get(p)][_int_sequence.get(q)];
 							if (type2 != 0 && !(p == i + 1 && q == j - 1)) {
 								type2 = EnergyPar.rtype[type2];
-								if (_Beta_stemend.get(i,j - i - 1) != -EnergyPar.INF
-										&& _Alpha_stem.get(p - 1,q - p + 1) != -EnergyPar.INF) {
+								if (_Beta_stemend.get(i).get(j - i - 1) != -EnergyPar.INF
+										&& _Alpha_stem.get(p - 1).get(q - p + 1) != -EnergyPar.INF) {
 									temp = Math.exp(
-											_Beta_stemend.get(i,j - i - 1) + LoopEnergy(type, type2, i, j, p, q)
-													+ _Alpha_stem.get(p - 1,q - p + 1));
+											_Beta_stemend.get(i).get(j - i - 1) + LoopEnergy(type, type2, i, j, p, q)
+													+ _Alpha_stem.get(p - 1).get(q - p + 1));
 
 									for (int k = i + 1; k <= p - 1; k++) {
 										if (j == q + 1) {
@@ -604,77 +496,6 @@ public class CapR {
 			}
 		}
 	}
-	
-	
-	private void CalcLogSumBulgeAndInternalProbability2(double[] profile, int bulge_offset, int internal_offset) {
-		double temp = 0;
-		int type = 0;
-		int type2 = 0;
-
-		ArrayList<Boolean> b_flag_array = new ArrayList<Boolean>(_seq_length);
-		ArrayList<Boolean> i_flag_array = new ArrayList<Boolean>(_seq_length);
-		for (int x = 0; x < _seq_length; x++) {
-			b_flag_array.add(false);
-			i_flag_array.add(false);
-		}
-
-		for (int i = 1; i < _seq_length - EnergyPar.TURN - 2; i++) {
-			for (int j = i + EnergyPar.TURN + 3; j <= Math.min(i + _maximal_span, _seq_length); j++) {
-				type = EnergyPar.BP_pair[_int_sequence.get(i)][_int_sequence.get(j)];
-				if (type != 0) {
-					for (int p = i + 1; p <= Math.min(i + EnergyPar.MAXLOOP + 1, j - EnergyPar.TURN - 2); p++) {
-						int u1 = p - i - 1;
-						for (int q = Math.max(p + EnergyPar.TURN + 1, j - EnergyPar.MAXLOOP + u1 - 1); q < j; q++) {
-							type2 = EnergyPar.BP_pair[_int_sequence.get(p)][_int_sequence.get(q)];
-							if (type2 != 0 && !(p == i + 1 && q == j - 1)) {
-								type2 = EnergyPar.rtype[type2];
-								if (_Beta_stemend.get(i,j - i - 1) != -EnergyPar.INF
-										&& _Alpha_stem.get(p - 1,q - p + 1) != -EnergyPar.INF) {
-									temp = _Beta_stemend.get(i,j - i - 1) + LoopEnergy(type, type2, i, j, p, q)
-											+ _Alpha_stem.get(p - 1,q - p + 1);
-
-									for (int k = i + 1; k <= p - 1; k++) {
-										if (j == q + 1) {
-											profile[bulge_offset + k - 1] = (b_flag_array.get(k - 1) == true)
-													? logsumexp(profile[bulge_offset + k - 1], temp) : temp;
-											b_flag_array.set(k - 1, true);
-										} else {
-											profile[internal_offset + k - 1] = (i_flag_array.get(k - 1) == true)
-													? logsumexp(profile[internal_offset + k - 1], temp) : temp;
-											i_flag_array.set(k - 1, true);
-										}
-									}
-
-									for (int k = q + 1; k <= j - 1; k++) {
-										if (i == p - 1) {
-											profile[bulge_offset + k - 1] = (b_flag_array.get(k - 1) == true)
-													? logsumexp(profile[bulge_offset + k - 1], temp) : temp;
-											b_flag_array.set(k - 1, true);
-										} else {
-											profile[internal_offset + k - 1] = (i_flag_array.get(k - 1) == true)
-													? logsumexp(profile[internal_offset + k - 1], temp) : temp;
-											i_flag_array.set(k - 1, true);
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-
-		for (int i = 0; i < _seq_length; i++) {
-			if (b_flag_array.get(i) == true) {
-				profile[bulge_offset + i] = Math.exp(profile[bulge_offset + i] - _Alpha_outer.get(_seq_length));
-			}
-			if (i_flag_array.get(i) == true) {
-				profile[internal_offset + i] = Math.exp(profile[internal_offset + i] - _Alpha_outer.get(_seq_length));
-			}
-		}
-	}
-
-	
 
 	private void CalcLogSumBulgeAndInternalProbability(ArrayList<Double> bulge_probability,
 			ArrayList<Double> internal_probability) {
@@ -699,10 +520,10 @@ public class CapR {
 							type2 = EnergyPar.BP_pair[_int_sequence.get(p)][_int_sequence.get(q)];
 							if (type2 != 0 && !(p == i + 1 && q == j - 1)) {
 								type2 = EnergyPar.rtype[type2];
-								if (_Beta_stemend.get(i,j - i - 1) != -EnergyPar.INF
-										&& _Alpha_stem.get(p - 1,q - p + 1) != -EnergyPar.INF) {
-									temp = _Beta_stemend.get(i,j - i - 1) + LoopEnergy(type, type2, i, j, p, q)
-											+ _Alpha_stem.get(p - 1,q - p + 1);
+								if (_Beta_stemend.get(i).get(j - i - 1) != -EnergyPar.INF
+										&& _Alpha_stem.get(p - 1).get(q - p + 1) != -EnergyPar.INF) {
+									temp = _Beta_stemend.get(i).get(j - i - 1) + LoopEnergy(type, type2, i, j, p, q)
+											+ _Alpha_stem.get(p - 1).get(q - p + 1);
 
 									for (int k = i + 1; k <= p - 1; k++) {
 										if (j == q + 1) {
@@ -764,9 +585,9 @@ public class CapR {
 		for (int i = _seq_length - 1; i >= 0; i--) {
 			double temp = _Beta_outer.get(i + 1);
 			for (int p = i + 1; p <= Math.min(i + _maximal_span + 1, _seq_length); p++) {
-				if (_Alpha_stem.get(i,p - i) != -EnergyPar.INF) {
+				if (_Alpha_stem.get(i).get(p - i) != -EnergyPar.INF) {
 					int type = EnergyPar.BP_pair[_int_sequence.get(i + 1)][_int_sequence.get(p)];
-					double bo = _Alpha_stem.get(i,p - i) + CalcDangleEnergy(type, i, p);
+					double bo = _Alpha_stem.get(i).get(p - i) + CalcDangleEnergy(type, i, p);
 					temp = logsumexp(temp, bo + _Beta_outer.get(p));
 				}
 			}
@@ -782,14 +603,14 @@ public class CapR {
 				boolean flag = false;
 				if (p != 0 && q != _seq_length) {
 					// Beta_stemend
-					_Beta_stemend.set(p, q - p,
-							(q - p >= _maximal_span) ? -EnergyPar.INF : _Beta_stem.get(p - 1,q - p + 2));
+					_Beta_stemend.get(p).set(q - p,
+							(q - p >= _maximal_span) ? -EnergyPar.INF : _Beta_stem.get(p - 1).get(q - p + 2));
 
 					// Beta_Multi
 					flag = false;
 					if (q - p + 1 <= _maximal_span + 1) {
-						if (_Beta_multi.get(p - 1,q - p + 1) != -EnergyPar.INF) {
-							temp = _Beta_multi.get(p - 1,q - p + 1) + MLbase;
+						if (_Beta_multi.get(p - 1).get(q - p + 1) != -EnergyPar.INF) {
+							temp = _Beta_multi.get(p - 1).get(q - p + 1) + MLbase;
 							flag = true;
 						}
 					}
@@ -797,71 +618,71 @@ public class CapR {
 					type = EnergyPar.BP_pair[_int_sequence.get(p)][_int_sequence.get(q + 1)];
 					int tt = EnergyPar.rtype[type];
 					if (flag == true) {
-						if (_Beta_stemend.get(p,q - p) != -EnergyPar.INF) {
-							temp = logsumexp(temp, _Beta_stemend.get(p,q - p) + MLclosing + MLintern
+						if (_Beta_stemend.get(p).get(q - p) != -EnergyPar.INF) {
+							temp = logsumexp(temp, _Beta_stemend.get(p).get(q - p) + MLclosing + MLintern
 									+ dangle3[tt][_int_sequence.get(p + 1)] + dangle5[tt][_int_sequence.get(q)]);
 						}
 					} else {
-						if (_Beta_stemend.get(p,q - p) != -EnergyPar.INF) {
-							temp = _Beta_stemend.get(p,q - p) + MLclosing + MLintern
+						if (_Beta_stemend.get(p).get(q - p) != -EnergyPar.INF) {
+							temp = _Beta_stemend.get(p).get(q - p) + MLclosing + MLintern
 									+ dangle3[tt][_int_sequence.get(p + 1)] + dangle5[tt][_int_sequence.get(q)];
 						} else {
 							temp = -EnergyPar.INF;
 						}
 					}
-					_Beta_multi.set(p, q - p, temp);
+					_Beta_multi.get(p).set(q - p, temp);
 
 					// Beta_Multi1
 					temp = 0;
 					flag = false;
 					for (int k = q + 1; k <= Math.min(_seq_length, p + _maximal_span); k++) {
-						if (_Beta_multibif.get(p,k - p) != -EnergyPar.INF
-								&& _Alpha_multi2.get(q,k - q) != -EnergyPar.INF) {
-							temp = (flag == false) ? _Beta_multibif.get(p,k - p) + _Alpha_multi2.get(q,k - q)
+						if (_Beta_multibif.get(p).get(k - p) != -EnergyPar.INF
+								&& _Alpha_multi2.get(q).get(k - q) != -EnergyPar.INF) {
+							temp = (flag == false) ? _Beta_multibif.get(p).get(k - p) + _Alpha_multi2.get(q).get(k - q)
 									: logsumexp(temp,
-											_Beta_multibif.get(p,k - p) + _Alpha_multi2.get(q,k - q));
+											_Beta_multibif.get(p).get(k - p) + _Alpha_multi2.get(q).get(k - q));
 							flag = true;
 						}
 					}
-					_Beta_multi1.set(p, q - p, (flag == true) ? temp : -EnergyPar.INF);
+					_Beta_multi1.get(p).set(q - p, (flag == true) ? temp : -EnergyPar.INF);
 
 					// Beta_Multi2
 					temp = 0;
 					flag = false;
-					if (_Beta_multi1.get(p,q - p) != -EnergyPar.INF) {
-						temp = _Beta_multi1.get(p,q - p);
+					if (_Beta_multi1.get(p).get(q - p) != -EnergyPar.INF) {
+						temp = _Beta_multi1.get(p).get(q - p);
 						flag = true;
 					}
 					if (q - p <= _maximal_span) {
-						if (_Beta_multi2.get(p,q - p + 1) != -EnergyPar.INF) {
-							temp = (flag == true) ? logsumexp(temp, _Beta_multi2.get(p,q - p + 1) + MLbase)
-									: _Beta_multi2.get(p,q - p + 1) + MLbase;
+						if (_Beta_multi2.get(p).get(q - p + 1) != -EnergyPar.INF) {
+							temp = (flag == true) ? logsumexp(temp, _Beta_multi2.get(p).get(q - p + 1) + MLbase)
+									: _Beta_multi2.get(p).get(q - p + 1) + MLbase;
 							flag = true;
 						}
 					}
 
 					for (int k = Math.max(0, q - _maximal_span); k < p; k++) {
-						if (_Beta_multibif.get(k,q - k) != -EnergyPar.INF
-								&& _Alpha_multi1.get(k,p - k) != -EnergyPar.INF) {
-							temp = (flag == false) ? _Beta_multibif.get(k,q - k) + _Alpha_multi1.get(k,p - k)
+						if (_Beta_multibif.get(k).get(q - k) != -EnergyPar.INF
+								&& _Alpha_multi1.get(k).get(p - k) != -EnergyPar.INF) {
+							temp = (flag == false) ? _Beta_multibif.get(k).get(q - k) + _Alpha_multi1.get(k).get(p - k)
 									: logsumexp(temp,
-											_Beta_multibif.get(k,q - k) + _Alpha_multi1.get(k,p - k));
+											_Beta_multibif.get(k).get(q - k) + _Alpha_multi1.get(k).get(p - k));
 							flag = true;
 						}
 					}
-					_Beta_multi2.set(p, q - p, (flag == false) ? -EnergyPar.INF : temp);
+					_Beta_multi2.get(p).set(q - p, (flag == false) ? -EnergyPar.INF : temp);
 
 					// Beta_multibif
-					if (_Beta_multi1.get(p,q - p) != -EnergyPar.INF
-							&& _Beta_multi.get(p,q - p) != -EnergyPar.INF) {
-						_Beta_multibif.set(p, q - p,
-								logsumexp(_Beta_multi1.get(p,q - p), _Beta_multi.get(p,q - p)));
-					} else if (_Beta_multi.get(p,q - p) == -EnergyPar.INF) {
-						_Beta_multibif.set(p, q - p, _Beta_multi1.get(p,q - p));
-					} else if (_Beta_multi1.get(p,q - p) == -EnergyPar.INF) {
-						_Beta_multibif.set(p, q - p, _Beta_multi.get(p,q - p));
+					if (_Beta_multi1.get(p).get(q - p) != -EnergyPar.INF
+							&& _Beta_multi.get(p).get(q - p) != -EnergyPar.INF) {
+						_Beta_multibif.get(p).set(q - p,
+								logsumexp(_Beta_multi1.get(p).get(q - p), _Beta_multi.get(p).get(q - p)));
+					} else if (_Beta_multi.get(p).get(q - p) == -EnergyPar.INF) {
+						_Beta_multibif.get(p).set(q - p, _Beta_multi1.get(p).get(q - p));
+					} else if (_Beta_multi1.get(p).get(q - p) == -EnergyPar.INF) {
+						_Beta_multibif.get(p).set(q - p, _Beta_multi.get(p).get(q - p));
 					} else {
-						_Beta_multibif.set(p, q - p, (double) -EnergyPar.INF);
+						_Beta_multibif.get(p).set(q - p, (double) -EnergyPar.INF);
 					}
 
 				}
@@ -876,8 +697,8 @@ public class CapR {
 						for (int j = q; j <= Math.min(q + EnergyPar.MAXLOOP - p + i, _seq_length - 1); j++) {
 							type = EnergyPar.BP_pair[_int_sequence.get(i)][_int_sequence.get(j + 1)];
 							if (type != 0 && !(i == p && j == q)) {
-								if (j - i <= _maximal_span + 1 && _Beta_stemend.get(i,j - i) != -EnergyPar.INF) {
-									temp = logsumexp(temp, _Beta_stemend.get(i,j - i)
+								if (j - i <= _maximal_span + 1 && _Beta_stemend.get(i).get(j - i) != -EnergyPar.INF) {
+									temp = logsumexp(temp, _Beta_stemend.get(i).get(j - i)
 											+ LoopEnergy(type, type2, i, j + 1, p + 1, q));
 								}
 							}
@@ -888,21 +709,21 @@ public class CapR {
 						type = EnergyPar.BP_pair[_int_sequence.get(p)][_int_sequence.get(q + 1)];
 						if (type != 0) {
 							if (q - p + 2 <= _maximal_span + 1
-									&& _Beta_stem.get(p - 1,q - p + 2) != -EnergyPar.INF) {
-								temp = logsumexp(temp, _Beta_stem.get(p - 1,q - p + 2)
+									&& _Beta_stem.get(p - 1).get(q - p + 2) != -EnergyPar.INF) {
+								temp = logsumexp(temp, _Beta_stem.get(p - 1).get(q - p + 2)
 										+ LoopEnergy(type, type2, p, q + 1, p + 1, q));
 							}
 						}
 					}
-					_Beta_stem.set(p, q - p, temp);
+					_Beta_stem.get(p).set(q - p, temp);
 
-					if (_Beta_multi2.get(p,q - p) != -EnergyPar.INF) {
+					if (_Beta_multi2.get(p).get(q - p) != -EnergyPar.INF) {
 						type2 = EnergyPar.rtype[type2];
-						temp = _Beta_multi2.get(p,q - p) + MLintern + CalcDangleEnergy(type2, p, q);
-						_Beta_stem.set(p, q - p, logsumexp(temp, _Beta_stem.get(p,q - p)));
+						temp = _Beta_multi2.get(p).get(q - p) + MLintern + CalcDangleEnergy(type2, p, q);
+						_Beta_stem.get(p).set(q - p, logsumexp(temp, _Beta_stem.get(p).get(q - p)));
 					}
 				} else {
-					_Beta_stem.set(p, q - p, (double) -EnergyPar.INF);
+					_Beta_stem.get(p).set(q - p, (double) -EnergyPar.INF);
 				}
 			}
 		}
@@ -975,12 +796,39 @@ public class CapR {
 
 	private void Clear() {
 		
+		for (int i = 0; i <= _seq_length; i++) {
+			_Alpha_stem.get(i).clear();
+			_Alpha_stemend.get(i).clear();
+			_Alpha_multi.get(i).clear();
+			_Alpha_multibif.get(i).clear();
+			_Alpha_multi1.get(i).clear();
+			_Alpha_multi2.get(i).clear();
+			_Beta_stem.get(i).clear();
+			_Beta_stemend.get(i).clear();
+			_Beta_multi.get(i).clear();
+			_Beta_multibif.get(i).clear();
+			_Beta_multi1.get(i).clear();
+			_Beta_multi2.get(i).clear();
+		}
+
 		_int_sequence.clear();
 		_seq_length = 0;
 		
 		_Alpha_outer.clear();
+		_Alpha_stem.clear();
+		_Alpha_stemend.clear();
+		_Alpha_multi.clear();
+		_Alpha_multibif.clear();
+		_Alpha_multi1.clear();
+		_Alpha_multi2.clear();
+
 		_Beta_outer.clear();
-		
+		_Beta_stem.clear();
+		_Beta_stemend.clear();
+		_Beta_multi.clear();
+		_Beta_multibif.clear();
+		_Beta_multi1.clear();
+		_Beta_multi2.clear();
 	}
 
 }

@@ -4,7 +4,6 @@
 package lib.aptamer.datastructures;
 
 import java.io.Serializable;
-import java.util.Iterator;
 import java.util.Map.Entry;
 
 /**
@@ -114,6 +113,7 @@ public interface AptamerPool extends Serializable{
 	 */
 	public Iterable<Entry<byte[], Integer>> iterator();
 	
+	
 	/**
 	 * Provides an iterator over every aptamer in the pool  
 	 * in inverse view, i.e. it provides every unique ID
@@ -121,4 +121,10 @@ public interface AptamerPool extends Serializable{
 	 * Note that the order of iteration is implementation dependent
 	 */
 	public Iterable<Entry<Integer,byte[]>> inverse_view_iterator();
+	
+	
+	/**
+	 * Provides an iterator over every id in the pool
+	 */
+	public Iterable<Integer> id_iterator();
 }

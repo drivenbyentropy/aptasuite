@@ -165,11 +165,19 @@ public interface SelectionCycle extends Serializable{
 	 */
 	public Iterable<Entry<Integer, Integer>> iterator();
 	
+	
 	/**
 	 * Provides an iterator over every aptamer in the pool (key)  
 	 * along with the corresponding count (value).
 	 * Note that the order of iteration is dependent on the implementing class
 	 */
 	public Iterable<Entry<byte[],Integer>> sequence_iterator();
+	
+	
+	/**
+	 * Provides an iterator over every aptamer id in the selection
+	 * cycle.
+	 */
+	public Iterable<Integer> id_iterator();
 	
 }
