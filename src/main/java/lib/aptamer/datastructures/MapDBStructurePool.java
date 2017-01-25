@@ -10,8 +10,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 
@@ -51,29 +54,55 @@ public class MapDBStructurePool implements StructurePool {
 	 */
 	private Path structureDataPath = null;
 	
-
 	/**
-	 * The total number of expected items in the bloom filter.
+	 * Stores the file locations of the mapdb instance in <code>structureData</code>.
 	 */
-	private int bitSetCapacity = Configuration.getParameters().getInt("MapDBAptamerPool.bloomFilterCapacity");
+	private List<Path> structureDataPaths = new ArrayList<Path>();
+	
+	/**
+	 * The total number of expected items in the bitSet
+	 */
+	private int globalFilterCapacity = Configuration.getParameters().getInt("MapDBAptamerPool.bloomFilterCapacity");
 
+	
+	/**
+	 * The expected false positive rate
+	 */
+	private double bloomFilterCollisionProbability = Configuration.getParameters().getDouble("MapDBStructurePool.bloomFilterCollisionProbability");
+	
+	
+	/**
+	 * Maximal number of items to store in one treemap
+	 */
+	private int maxTreeMapCapacity = Configuration.getParameters().getInt("MapDBStructurePool.maxTreeMapCapacity");
 	
 	/**
 	 * The structural data of the aptamer 
 	 */
-	private transient BTreeMap<Integer, double[]> structureData = null;
+	private transient List<BTreeMap<Integer, double[]>> structureData = new ArrayList<BTreeMap<Integer, double[]>>();
 	
 	
 	/**
 	 * Fast lookup of membership for <code>structureData</code>
 	 */
-	private BitSet structureDataFilter = new BitSet(bitSetCapacity);
+	private BloomFilter<Integer> globalStructureDataFilter = new FilterBuilder(globalFilterCapacity, bloomFilterCollisionProbability).buildBloomFilter(); 
 	
+	/**
+	 * Fast lookup of membership for <code>structureData</code>
+	 */
+	private List<BloomFilter<Integer>> structureDataFilter = new ArrayList<BloomFilter<Integer>>();
 	
 	/**
 	 * Number of element found on disk
 	 */
 	private int structureDataSize = 0;
+	
+	/**
+	 * The number of elements of the tree map that is currently been filled.
+	 * We need to keep this record separately as the .size() function of dbmap
+	 * objects is noticeably slow.
+	 */
+	private int currentTreeMapSize = 0;
 	
 	/**
 	 * Constructor
@@ -105,48 +134,85 @@ public class MapDBStructurePool implements StructurePool {
 		// If we are reading an existing database, iterate over the folder and open the individual MapDB instances
 		if (! newdb){ 
 			AptaLogger.log(Level.INFO, this.getClass(), "Searching for existing datasets in " + structureDataPath.toString());
-			
-			DB db_structure = DBMaker
-				    .fileDB(Paths.get(structureDataPath.toString(), "structure_data" + ".mapdb").toFile())
-				    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
-				    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
-				    .executorEnable()
-				    .make();
 
-			structureData = db_structure.treeMap("map")
-					.valuesOutsideNodesEnable()
-					.keySerializer(Serializer.INTEGER)
-					.valueSerializer(new SerializerCompressionWrapper(Serializer.DOUBLE_ARRAY))
-			        .open();
-			
-			// Update the filter content
-			Iterator<Integer> iterator = structureData.keyIterator();
-			while (iterator.hasNext()){
-				structureDataFilter.set(iterator.next());
-				structureDataSize++;
-			}
+			try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(Paths.get(structureDataPath.toString()))) {
+				
+				for (Path file : directoryStream) {
+	                
+	    			// Open and read the TreeMap, skip the inverse file
+	    			if (Files.isRegularFile(file)){
+	    				
+	    				DB db_structure = DBMaker
+					    .fileDB(file.toFile())
+					    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
+					    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
+					    .executorEnable()
+					    .make();
+	
+	    				BTreeMap<Integer, double[]> dbmap = db_structure.treeMap("map")
+						.valuesOutsideNodesEnable()
+						.keySerializer(Serializer.INTEGER)
+						.valueSerializer(new SerializerCompressionWrapper(Serializer.DOUBLE_ARRAY))
+				        .open();
+	    				
+	    				structureData.add(dbmap);
+	    				structureDataPaths.add(file);
+	    				
+	    				BloomFilter<Integer> localBloomFilter = new FilterBuilder(maxTreeMapCapacity, bloomFilterCollisionProbability).buildBloomFilter();
+	    				structureDataFilter.add(localBloomFilter);
+	    				
+	    				// Update values
+	    				currentTreeMapSize = dbmap.size();
+	    				structureDataSize += currentTreeMapSize;
+	    				
+	    				// Update the filter content
+	    				Iterator<Integer> iterator = dbmap.keyIterator();
+	    				while (iterator.hasNext()){
+	    					Integer item = iterator.next();
+	    					localBloomFilter.add(item);
+	    					globalStructureDataFilter.add(item);
+	    				}
+	    				
+	    				AptaLogger.log(Level.CONFIG, this.getClass(), 
+	    						"Found and loaded file " + file.toString() + "\n" +
+	    						"Total number of aptamers in file: " + currentTreeMapSize + "\n" +
+	    						"Total number of aptamers: " + structureDataSize
+	    						);
+		                
+		            }
+				}
+        	} catch (IOException ex) {}
 			
 			AptaLogger.log(Level.INFO, this.getClass(), "Found and loaded a total of " + structureDataSize + " structures on disk.");
 			
 		}
 		else{ // Create an empty instance of the MapDB Container
 
-		DB db_structure = DBMaker
-			    .fileDB(Paths.get(this.structureDataPath.toString(), "structure_data" + ".mapdb").toFile())
-			    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
-			    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
-			    .executorEnable()
-			    .make();
-
-		structureData = db_structure.treeMap("map")
-				.valuesOutsideNodesEnable()
-				.keySerializer(Serializer.INTEGER)
-				.valueSerializer(new SerializerCompressionWrapper(Serializer.DOUBLE_ARRAY))
-		        .create();
+			DB db_structure = DBMaker
+				    .fileDB(Paths.get(structureDataPath.toString(), "data" + String.format("%04d", structureData.size()) + ".mapdb").toFile())
+				    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
+				    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
+				    .executorEnable()
+				    .make();
+	
+			BTreeMap<Integer, double[]> dbmap = db_structure.treeMap("map")
+					.valuesOutsideNodesEnable()
+					.keySerializer(Serializer.INTEGER)
+					.valueSerializer(new SerializerCompressionWrapper(Serializer.DOUBLE_ARRAY))
+			        .create();
+			
+			structureDataPaths.add(Paths.get(structureDataPath.toString(), "data" + String.format("%04d", structureData.size()) + ".mapdb"));
+			structureData.add(dbmap);
+	
+			BloomFilter<Integer> localBloomFilter = new FilterBuilder(maxTreeMapCapacity, bloomFilterCollisionProbability).buildBloomFilter();
+			structureDataFilter.add(localBloomFilter);
+			
+			currentTreeMapSize = 0;
+			
+			AptaLogger.log(Level.CONFIG, this.getClass(), "Created new file " + Paths.get(structureDataPath.toString(), "data" + String.format("%04d", structureData.size()) + ".mapdb").toFile());
 		
 		}
 		
-		AptaLogger.log(Level.CONFIG, this.getClass(), "Created new file " + Paths.get(structureDataPath.toString(), "structure_data" + ".mapdb").toFile());
 	}
 	
 	
@@ -159,11 +225,43 @@ public class MapDBStructurePool implements StructurePool {
 	@Override
 	public synchronized void registerStructure(int id, double[] structure) {
 		
-		// Add structure to map
-		structureData.put(id, structure);
+		// Check that the current map is not at max capacity and create a new map if that is the case
+		if (currentTreeMapSize == maxTreeMapCapacity){
+			
+			AptaLogger.log(Level.CONFIG, this.getClass(), 
+					"Current Structure Map is at max capacity creating new file " + Paths.get(structureDataPath.toString(), "data" + String.format("%04d", structureData.size()) + ".mapdb").toString() + "\n" +
+					"Total number of aptamers: " + this.structureDataSize 
+					);
+			
+			DB db_structure = DBMaker
+				    .fileDB(Paths.get(structureDataPath.toString(), "data" + String.format("%04d", structureData.size()) + ".mapdb").toFile())
+				    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
+				    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
+				    .executorEnable()
+				    .make();
 
-		// and update bitset
-		structureDataFilter.set(id);
+			BTreeMap<Integer, double[]> dbmap = db_structure.treeMap("map")
+					.valuesOutsideNodesEnable()
+					.keySerializer(Serializer.INTEGER)
+					.valueSerializer(new SerializerCompressionWrapper(Serializer.DOUBLE_ARRAY))
+			        .create();
+
+			structureDataPaths.add(Paths.get(structureDataPath.toString(), "data" + String.format("%04d", structureData.size()) + ".mapdb"));
+			structureData.add(dbmap);
+			
+			BloomFilter<Integer> localBloomFilter = new FilterBuilder(maxTreeMapCapacity, bloomFilterCollisionProbability).buildBloomFilter();
+			this.structureDataFilter.add(localBloomFilter);
+			
+			currentTreeMapSize = 0;
+			
+		}
+
+		// Now insert the sequence
+		structureDataSize++;
+		structureData.get(structureData.size()-1).put(id,structure);
+		currentTreeMapSize++;
+		this.globalStructureDataFilter.add(id);
+		this.structureDataFilter.get(structureData.size()-1).add(id);
 		
 	}
 
@@ -173,12 +271,32 @@ public class MapDBStructurePool implements StructurePool {
 	@Override
 	public double[] getStructure(int id) {
 
-		//check if structure is available
-		if (!structureDataFilter.get(id)){
-			return null;
+		// Check for existence using bloom filter. 
+		if (!this.globalStructureDataFilter.contains(id)){
+			return null; // This result is always accurate (no false negatives)
 		}
 		
-		return structureData.get(id);
+		double[] structure = null;
+		
+		// Iterate over all treeMaps and bloomFilters
+		ListIterator<BTreeMap<Integer,double[]>> lim = structureData.listIterator(structureData.size());
+		ListIterator<BloomFilter<Integer>> lib = this.structureDataFilter.listIterator(structureData.size());
+		
+		// Iterate in reverse
+		while(lim.hasPrevious() && structure == null) {
+			
+			// Prevent expensive disk lookups by using the bloom filters...
+			if(! lib.previous().contains(id) ){
+				lim.previous();
+				continue;
+			}
+			
+			// ... and only look it up when we have to
+			structure = lim.previous().get(id); //note, in case of a false positive, this returns null
+
+		}
+		
+		return structure;
 		
 	}
 
@@ -206,7 +324,7 @@ public class MapDBStructurePool implements StructurePool {
 	            	Integer entry = pool_iterator.next();
 	            	
 	            	//get the next Id from the map and look up the corresponding sequence
-	            	return new AbstractMap.SimpleEntry<Integer, double[]>(entry, structureData.get(entry));
+	            	return new AbstractMap.SimpleEntry<Integer, double[]>(entry, getStructure(entry));
 	            	
 	            }
 	
@@ -244,7 +362,7 @@ public class MapDBStructurePool implements StructurePool {
 	            	Entry<byte[], Integer> entry = pool_iterator.next();
 	            	
 	            	//get the next Id from the map and look up the corresponding sequence
-	            	return new AbstractMap.SimpleEntry<byte[], double[]>(entry.getKey(), structureData.get(entry.getValue()));
+	            	return new AbstractMap.SimpleEntry<byte[], double[]>(entry.getKey(), getStructure(entry.getValue()));
 	            	
 	            }
 	

@@ -268,6 +268,8 @@ public class MapDBAptamerPool implements AptamerPool {
 				.valueSerializer(new SerializerCompressionWrapper(Serializer.BYTE_ARRAY))
 		        .create();
 		
+		AptaLogger.log(Level.CONFIG, this.getClass(), "Created new file " + Paths.get(poolDataPath.toString(), "data_inverse" + ".mapdb").toFile());
+		
 		}
 	}
 		

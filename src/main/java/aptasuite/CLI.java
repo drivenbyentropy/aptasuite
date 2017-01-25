@@ -81,12 +81,13 @@ public class CLI {
 		}
 
 		// Case for AptaPLEX, create a database or overwrite an existing one
-		if (line.hasOption("createdb")){
+		if (line.hasOption("parse")){
 			
 			// clean up old data if required
 			try {
 				FileUtils.deleteDirectory(Paths.get(projectPath.toString(), "pooldata").toFile());
 				FileUtils.deleteDirectory(Paths.get(projectPath.toString(), "cycledata").toFile());
+				FileUtils.deleteDirectory(Paths.get(projectPath.toString(), "structuredata").toFile());
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -99,13 +100,21 @@ public class CLI {
 		// Case for AptaTRACE
 		if (line.hasOption("structures")){
 			
+			// clean up old data if required
+			try {
+				FileUtils.deleteDirectory(Paths.get(projectPath.toString(), "structuredata").toFile());
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+						
 			runStructurePrediction( line.getOptionValue("config") );
 
 		}		
 		
 		// Case for AptaTRACE
 		if (line.hasOption("trace")){
-			
+
 			runAptaTrace( line.getOptionValue("config") );
 
 		}
@@ -224,16 +233,19 @@ public class CLI {
 		
 		AptaLogger.log(Level.INFO, this.getClass(), "Starting Structure Predition");
 		
-		// Make sure we have data prior or load it from disk
+		// Make sure we have prior data or load it from disk
 		if (experiment == null) {
 			AptaLogger.log(Level.INFO, this.getClass(), "Loading data from disk");
 			this.experiment = new Experiment(configFile, false);
 		}
 		else{
-			AptaLogger.log(Level.INFO, this.getClass(), "Using existing data");
+			AptaLogger.log(Level.INFO, this.getClass(), "Using existing sequencing data");
 		}
 		
-		// Start parralel processing of structure prediction
+		// Create a new instance of the StructurePool
+		experiment.instantiateStructurePool(true);
+		
+		// Start parallel processing of structure prediction
 		CapRFactory caprf = new CapRFactory(experiment.getAptamerPool().iterator());
 		
 		structureThread = new Thread(caprf);

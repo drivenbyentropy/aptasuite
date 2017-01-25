@@ -19,7 +19,7 @@ public class CLIOptions {
 		parameters.addOption("help", false, "print this message");
 		
 		// AptaPLEX 
-		parameters.addOption("createdb", false, "Creates a new aptamer pool and associated selection cycles according to the configuration file");
+		parameters.addOption("parse", false, "Creates a new aptamer pool and associated selection cycles according to the configuration file");
 	
 		// Structure Prediction
 		parameters.addOption("structures", false, "Predicts the structural ensamble of all aptamers in the pool and stores them on disk");

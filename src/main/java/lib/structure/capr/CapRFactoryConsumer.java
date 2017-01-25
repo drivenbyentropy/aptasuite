@@ -27,6 +27,7 @@ import com.milaboratory.core.sequence.NucleotideSequence;
 
 import exceptions.InvalidConfigurationException;
 import lib.aptamer.datastructures.SelectionCycle;
+import lib.aptamer.datastructures.StructurePool;
 import lib.parser.aptaplex.distances.BitapDistance;
 import lib.parser.aptaplex.distances.Distance;
 import lib.parser.aptaplex.distances.EditDistance;
@@ -41,6 +42,11 @@ import utilities.Configuration;
  *         from the queue, processes them and adds them to the structure database.
  */
 public class CapRFactoryConsumer implements Runnable {
+	
+	/**
+	 * The instance of StructurePool to store the data in 
+	 */
+	private StructurePool pool = Configuration.getExperiment().getStructurePool();
 
 	/**
 	 * The queue to consume from
@@ -116,11 +122,10 @@ public class CapRFactoryConsumer implements Runnable {
 				
 				capr.ComputeStructuralProfile(sb.toString().getBytes(), sb.length());
 				
-				capr.getStructuralProfile();
+				// add item to storage
+				pool.registerStructure(item.getValue(), capr.getStructuralProfile());
 				
 				sb = new StringBuilder();
-				
-				//TODO: ADD TO STRUCTURE DATABASE
 
 			} catch (Exception e) {
 				e.printStackTrace();
