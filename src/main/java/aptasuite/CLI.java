@@ -314,9 +314,12 @@ public class CLI {
 			AptaLogger.log(Level.INFO, this.getClass(), "Using existing data");
 		}
 		
-		// Create a new instance of the StructurePool, load from disk
-//		experiment.instantiateStructurePool(false);
-			
+		// Get the instance of the StructurePool
+		if (experiment.getStructurePool() == null)
+		{
+			experiment.instantiateStructurePool(false);
+		}	
+		
 		// TEMP print aptamer and counts
 		long tParserStart = System.currentTimeMillis();
 		int counter = 0;
