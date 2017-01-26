@@ -440,7 +440,7 @@ public class Experiment implements Serializable{
 	/**
 	 * Provides access to all created instances of selection cycles in order of apperance
 	 * in the configuration
-	 * @return
+	 * @return ArrayList<SelectionCycle>
 	 */
 	public ArrayList<SelectionCycle> getAllSelectionCycles() {
 		return allSelectionCycles;

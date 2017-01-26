@@ -44,16 +44,16 @@ public class CapRFactory implements Runnable{
 		int num_threads = Math.min( Runtime.getRuntime().availableProcessors(), Configuration.getParameters().getInt("Performance.maxNumberOfCores"));
 		
 		// Creating Producer and Consumer Thread
-		Thread prodThread  = new Thread(new CapRFactoryProducer(items, sharedQueue));
+		Thread prodThread  = new Thread(new CapRFactoryProducer(items, sharedQueue), "CapR Producer");
 		
 		ArrayList<Thread> consumers = new ArrayList<Thread>();
 		
 		// We need at least one consumer
-		consumers.add(new Thread(new CapRFactoryConsumer(sharedQueue, progress)));
+		consumers.add(new Thread(new CapRFactoryConsumer(sharedQueue, progress), "CapR Consumer 1"));
 		
 		// Add remaining consumers
 		for (int x=1; x<num_threads-1; x++){
-			consumers.add(new Thread(new CapRFactoryConsumer(sharedQueue, progress)));
+			consumers.add(new Thread(new CapRFactoryConsumer(sharedQueue, progress), ("CapR Consumer " + (x+1)) ));
 		}
 
 		// Start the producer and consumer threads

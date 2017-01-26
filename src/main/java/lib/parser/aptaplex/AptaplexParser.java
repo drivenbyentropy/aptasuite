@@ -36,16 +36,16 @@ public class AptaplexParser implements Parser, Runnable{
 		int num_threads = Math.min( Runtime.getRuntime().availableProcessors(), Configuration.getParameters().getInt("Performance.maxNumberOfCores"));
 		
 		// Creating Producer and Consumer Thread
-		Thread prodThread  = new Thread(new AptaplexProducer(sharedQueue));
+		Thread prodThread  = new Thread(new AptaplexProducer(sharedQueue), "AptaPlex Producer");
 		
 		ArrayList<Thread> consumers = new ArrayList<Thread>();
 		
 		// We need at least one consumer
-		consumers.add(new Thread(new AptaplexConsumer(sharedQueue, progress)));
+		consumers.add(new Thread(new AptaplexConsumer(sharedQueue, progress), "AptaPlex Consumer 1"));
 		
 		// Add remaining consumers
 		for (int x=1; x<num_threads-1; x++){
-			consumers.add(new Thread(new AptaplexConsumer(sharedQueue, progress)));
+			consumers.add(new Thread(new AptaplexConsumer(sharedQueue, progress), "AptaPlex Consumer " + (x+1)));
 		}
 
 		// Start the producer and consumer threads

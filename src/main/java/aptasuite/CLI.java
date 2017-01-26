@@ -13,6 +13,7 @@ import java.util.logging.Level;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.time.DateUtils;
 
 import exceptions.InvalidConfigurationException;
 import lib.aptamer.datastructures.Experiment;
@@ -278,7 +279,8 @@ public class CLI {
 		while (structureThread.isAlive() && !structureThread.isInterrupted()) {
 			try {
 				long current_progress = caprf.getProgress().longValue();
-				System.out.print(String.format("Completed: %s/%s (%s structures per second)     " + "\r", current_progress, experiment.getAptamerPool().size(), current_progress-sps ));
+				long eta = (experiment.getAptamerPool().size()-current_progress)/(current_progress-sps+1);
+				System.out.print(String.format("Completed: %s/%s (%s structures per second  ETA:%s)     " + "\r", current_progress, experiment.getAptamerPool().size(), current_progress-sps, String.format("%02d:%02d:%02d", eta / 3600, (eta % 3600) / 60, eta % 60)));
 				sps = current_progress;
 				
 				// Once every second should suffice
@@ -288,7 +290,7 @@ public class CLI {
 			}
 		}
 		// final update
-		System.out.print(        String.format("Completed: %s/%s                                 ", caprf.getProgress(), experiment.getAptamerPool().size()));
+		System.out.print(        String.format("Completed: %s/%s                                            ", caprf.getProgress(), experiment.getAptamerPool().size()));
 
 		AptaLogger.log(Level.INFO, this.getClass(), String.format("Structure prediction completed in %s seconds.\n",
 				((System.currentTimeMillis() - tParserStart) / 1000.0)));
@@ -312,10 +314,27 @@ public class CLI {
 			AptaLogger.log(Level.INFO, this.getClass(), "Using existing data");
 		}
 		
-		// TODO: Load structure database
-		
-				
-		
+		// Create a new instance of the StructurePool, load from disk
+//		experiment.instantiateStructurePool(false);
+			
+		// TEMP print aptamer and counts
+		long tParserStart = System.currentTimeMillis();
+		int counter = 0;
+		StringBuilder sb = new StringBuilder();
+		for (Entry<byte[], Integer> aptamer : experiment.getAptamerPool().iterator()){
+			counter++;
+			sb.append(new String(aptamer.getKey()));
+			sb.append("\t");
+			for (SelectionCycle sc : experiment.getAllSelectionCycles()){
+				sb.append(sc.getAptamerCardinality(aptamer.getValue()));
+				sb.append("\t");
+			}
+			sb.append("\t");
+//			System.out.println(sb.toString());
+			sb.setLength(0);
+		}
+		AptaLogger.log(Level.INFO, this.getClass(), String.format("Iterated %s sequences in %s seconds.\n",
+				counter, ((System.currentTimeMillis() - tParserStart) / 1000.0)));
 	}
 	
 }
