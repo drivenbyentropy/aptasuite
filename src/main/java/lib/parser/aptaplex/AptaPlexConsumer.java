@@ -38,7 +38,7 @@ import utilities.Configuration;
  *         The consumer implementation of aptaplex. The consumer takes reads
  *         from the queue, processes them and adds them to the aptamer pool.
  */
-public class AptaplexConsumer implements Runnable {
+public class AptaPlexConsumer implements Runnable {
 
 	/**
 	 * The queue to consume from
@@ -130,7 +130,7 @@ public class AptaplexConsumer implements Runnable {
 	int primerTolerance = Configuration.getParameters().getInt("AptaplexParser.PrimerTolerance");
 	int barcodeTolerance = Configuration.getParameters().getInt("AptaplexParser.BarcodeTolerance");
 
-	public AptaplexConsumer(BlockingQueue<Object> queue, AptaPlexProgress progress) {
+	public AptaPlexConsumer(BlockingQueue<Object> queue, AptaPlexProgress progress) {
 
 		this.queue = queue;
 		this.progress = progress;

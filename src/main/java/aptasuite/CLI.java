@@ -18,7 +18,7 @@ import org.apache.commons.lang3.time.DateUtils;
 import exceptions.InvalidConfigurationException;
 import lib.aptamer.datastructures.Experiment;
 import lib.aptamer.datastructures.SelectionCycle;
-import lib.parser.aptaplex.AptaplexParser;
+import lib.parser.aptaplex.AptaPlexParser;
 import lib.structure.capr.CapR;
 import lib.structure.capr.CapRFactory;
 import lib.structure.capr.CapROriginal;
@@ -148,7 +148,7 @@ public class CLI {
 
 		// Initialize the parser and run it in a thread
 		AptaLogger.log(Level.INFO, this.getClass(), "Initializing parser " + Configuration.getParameters().getString("Parser.backend"));
-		AptaplexParser parser = new AptaplexParser();
+		AptaPlexParser parser = new AptaPlexParser();
 
 		parserThread = new Thread(parser);
 
@@ -295,6 +295,10 @@ public class CLI {
 		AptaLogger.log(Level.INFO, this.getClass(), String.format("Structure prediction completed in %s seconds.\n",
 				((System.currentTimeMillis() - tParserStart) / 1000.0)));
 		
+	
+		// now that we have the data, set any file backed implementations 
+		// of StructurePool to read only
+		experiment.getStructurePool().setReadOnly();
 	}
 	
 	

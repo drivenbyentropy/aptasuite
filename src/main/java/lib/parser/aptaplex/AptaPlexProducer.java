@@ -22,7 +22,7 @@ import utilities.Configuration;
  * to a queue for the consumers to process.
  *
  */
-public class AptaplexProducer implements Runnable{
+public class AptaPlexProducer implements Runnable{
 
 
 	/**
@@ -31,7 +31,7 @@ public class AptaplexProducer implements Runnable{
 	BlockingQueue<Object> queue = null;
 	
 	
-	public AptaplexProducer(BlockingQueue<Object> queue){
+	public AptaPlexProducer(BlockingQueue<Object> queue){
 		
 		this.queue = queue;
 	

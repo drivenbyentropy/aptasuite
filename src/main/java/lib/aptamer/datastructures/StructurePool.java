@@ -34,6 +34,16 @@ public interface StructurePool {
 	
 	
 	/**
+	 * Optional. Closes any file handles the implementing class might have.
+	 */
+	public void close();	
+	
+	/**
+	 * Optional. Sets the underlying data structure of the implementing class to read only mode. 
+	 */
+	public void setReadOnly();
+	
+	/**
 	 * Provides an iterator over every aptamer id in the pool  
 	 * together with its corresponding structure.
 	 * Note that the order of iteration is implementation dependent

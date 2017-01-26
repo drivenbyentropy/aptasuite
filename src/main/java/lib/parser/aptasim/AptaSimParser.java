@@ -10,7 +10,7 @@ import lib.parser.aptaplex.AptaPlexProgress;
  * @author Jan Hoinka
  * Java implementation of AptaSIM
  */
-public class AptasimParser implements Parser{
+public class AptaSimParser implements Parser{
 
 	@Override
 	public void parse() {

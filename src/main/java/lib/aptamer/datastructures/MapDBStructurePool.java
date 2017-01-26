@@ -300,6 +300,63 @@ public class MapDBStructurePool implements StructurePool {
 		
 	}
 
+	/* (non-Javadoc)
+	 * @see lib.aptamer.datastructures.StructurePool#close()
+	 */
+	@Override
+	public void close(){
+		
+		// Iterate over each TreeMap instance and close it
+		ListIterator<BTreeMap<Integer, double[]>> li = structureData.listIterator(structureData.size());
+
+		// Iterate in reverse
+		while(li.hasPrevious()) {
+			
+			li.previous().close();
+
+		}
+	}
+	
+
+	/* (non-Javadoc)
+	 * @see lib.aptamer.datastructures.StructurePool#setReadOnly()
+	 */
+	@Override
+    public void setReadOnly(){
+    	
+    	// close all the file handles
+    	close();
+    	
+    	// clear references
+    	structureData.clear();
+    	
+    	// reopen as read only
+		for (Path file : structureDataPaths) {
+            
+			// Open and read the TreeMap
+			if (Files.isRegularFile(file)){
+				
+				DB db = DBMaker
+					    .fileDB(file.toFile())
+					    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
+					    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
+					    .executorEnable()
+					    .readOnly()
+					    .make();
+
+				BTreeMap<Integer, double[]> dbmap = db.treeMap("map")
+						.valuesOutsideNodesEnable()
+						.keySerializer(Serializer.INTEGER)
+						.valueSerializer(new SerializerCompressionWrapper(Serializer.DOUBLE_ARRAY))
+				        .open();
+				
+				structureData.add(dbmap);
+				
+				AptaLogger.log(Level.CONFIG, this.getClass(), "Reopened as read only file " + file.toString() );
+			}
+            
+        }
+    }
 	
 	/**
 	 * @author Jan Hoinka
@@ -387,5 +444,8 @@ public class MapDBStructurePool implements StructurePool {
 	public Iterable<Entry<byte[], double[]>> sequence_iterator() {
 		return new AptamerStructureIterator();
 	}
+
+
+
 
 }
