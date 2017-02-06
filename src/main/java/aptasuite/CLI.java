@@ -292,7 +292,7 @@ public class CLI {
 		AptaLogger.log(Level.INFO, this.getClass(), "Simulation Statistics:");
 		for (SelectionCycle c : Configuration.getExperiment().getSelectionCycles()){
 			AptaLogger.log(Level.INFO, this.getClass(), 
-					String.format("%-20s: Total Pool Size: %s\t Unique Pool Size: %s\t Diversity: %.4f %", 
+					String.format("%-20s: Total Pool Size: %s\t Unique Pool Size: %s\t Diversity: %.4f %%", 
 							c.getName(), 
 							c.getSize(), 
 							c.getUniqueSize(), 
