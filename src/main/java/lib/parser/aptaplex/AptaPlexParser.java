@@ -12,6 +12,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.SynchronousQueue;
 
 import lib.parser.Parser;
+import lib.parser.ParserProgress;
 import utilities.Configuration;
 
 /**
@@ -78,7 +79,7 @@ public class AptaPlexParser implements Parser, Runnable{
 	}
 
 	@Override
-	public AptaPlexProgress getProgress() {
+	public ParserProgress Progress() {
 		return progress;
 	}
 

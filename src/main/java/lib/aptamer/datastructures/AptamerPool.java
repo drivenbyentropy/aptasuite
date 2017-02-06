@@ -105,6 +105,12 @@ public interface AptamerPool extends Serializable{
 	 */
 	public void setReadOnly();
 	
+	/**
+	 * Optional. Sets the underlying data structure of the implementing class to read/write mode. 
+	 */
+	public void setReadWrite();
+	
+	
 	
 	/**
 	 * Provides an iterator over every aptamer in the pool  

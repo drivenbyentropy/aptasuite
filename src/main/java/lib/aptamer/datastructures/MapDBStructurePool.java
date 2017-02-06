@@ -358,6 +358,48 @@ public class MapDBStructurePool implements StructurePool {
         }
     }
 	
+	
+	/* (non-Javadoc)
+	 * @see lib.aptamer.datastructures.StructurePool#setReadWrite()
+	 */
+	@Override
+    public void setReadWrite(){
+    	
+    	// close all the file handles
+    	close();
+    	
+    	// clear references
+    	structureData.clear();
+    	
+    	// reopen as read only
+		for (Path file : structureDataPaths) {
+            
+			// Open and read the TreeMap
+			if (Files.isRegularFile(file)){
+				
+				DB db = DBMaker
+					    .fileDB(file.toFile())
+					    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
+					    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
+					    .executorEnable()
+					    .make();
+
+				BTreeMap<Integer, double[]> dbmap = db.treeMap("map")
+						.valuesOutsideNodesEnable()
+						.keySerializer(Serializer.INTEGER)
+						.valueSerializer(new SerializerCompressionWrapper(Serializer.DOUBLE_ARRAY))
+				        .open();
+				
+				structureData.add(dbmap);
+				
+				AptaLogger.log(Level.CONFIG, this.getClass(), "Reopened as read/write file " + file.toString() );
+			}
+            
+        }
+    }	
+	
+	
+	
 	/**
 	 * @author Jan Hoinka
 	 * Make use of internal classes so we can provide iterators for id->structure to the API.

@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -282,6 +283,7 @@ public class Experiment implements Serializable{
 	 * @param round The selection round this cycle belongs to
 	 * @param isControl Whether this selection cycle represents a control selection, eg. against a homologous target. Mutually exclusive with <code>isCounterSelection</code>.
 	 * @param isCounterSelection Whether this selection represents a counter selection. Mutually exclusive with <code>isControl</code>.
+	 * @param newdb true if a new instance should be created, false, if an existing instance should be loaded from disk
 	 * @return the instance of the SelectionCycle that was created in the process
 	 */
 	public SelectionCycle registerSelectionCycle(String name, int round, boolean isControlSelection, boolean isCounterSelection, boolean newdb){
@@ -298,8 +300,6 @@ public class Experiment implements Serializable{
 			AptaLogger.log(Level.SEVERE, this.getClass(), "The selection cycle round " + round + " of " + name + " is invalid. Please check your configuration.");
 			throw new InvalidSelectionCycleException("The selection cycle round " + round + " of " + name + " is invalid. Please check your configuration.");
 		}
-		
-		// If the selection cycle is not a control, nor a counter selection, we 
 		
 		SelectionCycle cycle = null;
 		
@@ -371,6 +371,50 @@ public class Experiment implements Serializable{
 		return cycle;
 	}
 	
+	/**
+	 * Removes the SelectionCycle <code>cycle</cycle> from the experiment
+	 * @param cycle
+	 */
+	public void unregisterSelectionCycle(SelectionCycle cycle){
+		//TODO: Implement deletion routines for AptamerPool Selection Cycle, StruturePool etc
+		// and call them from here. For now we just remove it from the experiment 
+		
+		// Locate the selection cycle and remove from the corresponding data structure
+		if (cycle.isControlSelection()){
+			for (Iterator<ArrayList<SelectionCycle>> iterator = this.controlSelectionCycles.iterator(); iterator.hasNext();) {
+				for (Iterator<SelectionCycle> iterator2 = iterator.next().iterator(); iterator2.hasNext();) {
+					if (iterator2.next() == cycle) {
+				        // Remove the current element from the iterator and the list.
+				        iterator2.remove();
+				    }
+				}
+			}
+		}
+		else if (cycle.isCounterSelection()){
+			for (Iterator<ArrayList<SelectionCycle>> iterator = this.counterSelectionCycles.iterator(); iterator.hasNext();) {
+				for (Iterator<SelectionCycle> iterator2 = iterator.next().iterator(); iterator2.hasNext();) {
+					if (iterator2.next() == cycle) {
+				        iterator2.remove();
+				    }
+				}
+			}
+		}
+		else{
+			for (Iterator<SelectionCycle> iterator = this.selectionCycles.iterator(); iterator.hasNext();) {
+			    if (iterator.next() == cycle) {
+			        iterator.remove();
+			    }
+			}
+		}
+		
+		for (Iterator<SelectionCycle> iterator = this.allSelectionCycles.iterator(); iterator.hasNext();) {
+		    if (iterator.next() == cycle) {
+		        iterator.remove();
+		    }
+		}
+		
+		//TODO: cycle.clear()
+	}
 	
 	/**
 	 * Searches for the SelectionCycle with name <code>id</code> in all cycles (i.e. counter and controls as well)

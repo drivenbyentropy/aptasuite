@@ -36,13 +36,38 @@ public interface SelectionCycle extends Serializable{
 	 * it adds 1 to its cardinality. If the aptamer has never been observerd in the <code>AptamerPool</code>, this
 	 * function also add it to the corresponding instance.
 	 * @param a the aptamer in question
+	 * @return the unique id assigned to aptamer <code>a</code>
 	 */
-	public void addToSelectionCycle(String a);
+	public int addToSelectionCycle(String a);
 	
 	/**
-	 * @see SelectionCycle#addToSelectionCycle(String a)
+	 * Adds aptamer <code>a</code> to this selection cycle. If the aptamer is already present
+	 * it adds 1 to its cardinality. If the aptamer has never been observerd in the <code>AptamerPool</code>, this
+	 * function also add it to the corresponding instance.
+	 * @param a the aptamer in question
+	 * @return the unique id assigned to aptamer <code>a</code>
 	 */
-	public void addToSelectionCycle(byte[] a);
+	public int addToSelectionCycle(byte[] a);
+	
+	/**
+	 * Adds aptamer <code>a</code> to this selection cycle. If the aptamer is already present
+	 * it adds 1 to its cardinality. If the aptamer has never been observerd in the <code>AptamerPool</code>, this
+	 * function also add it to the corresponding instance.
+	 * @param a the aptamer in question
+	 * @param the number by which the current count of <code>a</code> should be increased with
+	 * @return the unique id assigned to aptamer <code>a</code> 
+	 */
+	public int addToSelectionCycle(byte[] a, int count);
+	
+	/**
+	 * Adds aptamer <code>a</code> to this selection cycle. If the aptamer is already present
+	 * it adds 1 to its cardinality. If the aptamer has never been observerd in the <code>AptamerPool</code>, this
+	 * function also add it to the corresponding instance.
+	 * @param a the aptamer in question
+	 * @param the number by which the current count of <code>a</code> should be increased with
+	 * @return the unique id assigned to aptamer <code>a</code> 
+	 */
+	public int addToSelectionCycle(String a, int count);
 	
 	/**
 	 * Checks whether an aptamer is part of this selection cycle
@@ -157,6 +182,12 @@ public interface SelectionCycle extends Serializable{
 	 */
 	public void setReadOnly();
 	
+	
+	/**
+	 * Optional. Sets the implementing class to read/write mode in case
+	 * persistent storage is used.
+	 */
+	public void setReadWrite();	
 	
 	/**
 	 * Provides an iterator over every aptamer id (key) in this selection cycle  

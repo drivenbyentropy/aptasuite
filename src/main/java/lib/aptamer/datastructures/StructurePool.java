@@ -44,6 +44,12 @@ public interface StructurePool {
 	public void setReadOnly();
 	
 	/**
+	 * Optional. Sets the implementing class to read/write mode in case
+	 * persistent storage is used.
+	 */
+	public void setReadWrite();	
+	
+	/**
 	 * Provides an iterator over every aptamer id in the pool  
 	 * together with its corresponding structure.
 	 * Note that the order of iteration is implementation dependent

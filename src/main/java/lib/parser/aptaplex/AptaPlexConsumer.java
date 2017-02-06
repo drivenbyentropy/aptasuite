@@ -49,7 +49,7 @@ public class AptaPlexConsumer implements Runnable {
 	 * The progress of the parser instance. Writable to the consumers and
 	 * thread-safe
 	 */
-	private static AptaPlexProgress progress = null;
+	private AptaPlexProgress progress = null;
 
 	/**
 	 * Switch to let the consumer know when to finish

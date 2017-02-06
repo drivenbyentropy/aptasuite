@@ -603,6 +603,41 @@ public class MapDBAptamerPool implements AptamerPool {
         }
     }	
 	
+	@Override
+    public void setReadWrite(){
+    	
+    	// close all the file handles
+    	close();
+    	
+    	// clear references
+    	poolData.clear();
+    	
+    	// reopen as read/write
+		for (Path file : poolDataPaths) {
+            
+			// Open and read the TreeMap
+			if (Files.isRegularFile(file)){
+				
+				DB db = DBMaker
+					    .fileDB(file.toFile())
+					    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
+					    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
+					    .executorEnable()
+					    .make();
+
+				HTreeMap<byte[], Integer> dbmap = db.hashMap("map")
+						.keySerializer(new SerializerCompressionWrapper(Serializer.BYTE_ARRAY))
+						.valueSerializer(Serializer.INTEGER)
+						.open();
+				
+				poolData.add(dbmap);
+				
+				AptaLogger.log(Level.CONFIG, this.getClass(), "Reopened as read/write file " + file.toString() );
+			}
+            
+        }
+    }		 
+	 
 	 
 	/**
 	 * Since MapDB objects are not serializable in itself, we need to 

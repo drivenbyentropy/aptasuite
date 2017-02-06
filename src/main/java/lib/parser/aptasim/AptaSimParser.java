@@ -3,19 +3,210 @@
  */
 package lib.parser.aptasim;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Random;
+import java.util.logging.Level;
+
+import lib.aptamer.datastructures.SelectionCycle;
 import lib.parser.Parser;
-import lib.parser.aptaplex.AptaPlexProgress;
+import lib.parser.ParserProgress;
+import utilities.AptaLogger;
+import utilities.Configuration;
 
 /**
  * @author Jan Hoinka
  * Java implementation of AptaSIM
  */
-public class AptaSimParser implements Parser{
+public class AptaSimParser implements Parser, Runnable{
 
+	/**
+	 * Track the progress of the simulation
+	 */
+	private AptaSimProgress progress = new AptaSimProgress();
+	
+	/**
+	 * The degree of the Markov model 
+	 */
+	private int hmm_degree = Configuration.getParameters().getInt("Aptasim.HmmDegree");
+	
+	/**
+	 * Fastq file containing training sequences
+	 */
+	private String filename = Configuration.getParameters().getString("Aptasim.HmmFile");
+	
+	/**
+	 * Number of sequences in the initial pool
+	 */
+	private int number_of_sequences = Configuration.getParameters().getInt("Aptasim.NumberOfSequences");
+	
+	/**
+	 * Number of high affinity sequences in the initial pool
+	 */
+	private int number_of_seeds = Configuration.getParameters().getInt("Aptasim.NumberOfSeeds");
+	
+	/**
+	 * Length of the randomized region in the aptamers
+	 */
+	private int randomized_region_size = Configuration.getParameters().getInt("Aptasim.RandomizedRegionSize"); 
+	
+	/**
+	 * Maximal count of remaining sequences
+	 */
+	private int max_sequence_count = Configuration.getParameters().getInt("Aptasim.MaxSequenceCount");
+	
+	/**
+	 * The minimal affinity for seed sequences (INT range: 0-100)
+	 */
+	private int min_seed_affinity = Configuration.getParameters().getInt("Aptasim.MinSeedAffinity");
+	
+	/**
+	 * The maximal sequence affinity for non-seeds (INT range: 0-100)
+	 */
+	private int max_sequence_affinity = Configuration.getParameters().getInt("Aptasim.MaxSequenceAffinity");
+	
+	/**
+	 * Random generator for the simulation
+	 */
+	private Random rand = new Random();
+	
+	/**
+	 * If no training data is specified, create pool based on this distribution
+	 */
+	private Map<Character, Double> nucleotide_distribution = new HashMap<Character,Double>(); 
+	
+	/**
+	 * The percentage of sequences that remain after selection (DOUBLE range: 0-1)
+	 */
+	private double selection_percentage = Configuration.getParameters().getDouble("Aptasim.SelectionPercentage");
+	
+	/**
+	 * PCR amplification efficiency (DOUBLE range: 0-1) 
+	 */
+	private double amplification_efficiency = Configuration.getParameters().getDouble("Aptasim.AmplificationEfficiency");
+	
+	/**
+	 * Mutation probability during PCR (DOUBLE range: 0-1)
+	 */
+	private double mutation_probability = Configuration.getParameters().getDouble("Aptasim.MutationProbability");
+	
+	/**
+	 * Mutation rates for individual nucleotides (order A,C,G,T)
+	 */
+	private byte[] base_mutation_rates = null; 
+	
+	/**
+	 * Temporary storage for the affinities required during the selection stage of AptaSim 
+	 */
+	private HashMap<Integer, Integer> affinities = new HashMap<Integer, Integer>();
+	
+	/**
+	 * Store a list of all selection cycles not specified in the configuration
+	 * but required for the simulation. These cycles will be removed from the experiment
+	 * at the end of the AptaSim run.
+	 */
+	private ArrayList<SelectionCycle> temporary_cycles = new ArrayList<SelectionCycle>();
+	
+	
+	public AptaSimParser(){
+
+		// Set the nucleotide distribution
+		Double[] dist = (Double[]) Configuration.getParameters().getArray(Double.class, "Aptasim.NucleotideDistribution");
+		nucleotide_distribution.put('A', dist[0]);
+		nucleotide_distribution.put('C', dist[1]);
+		nucleotide_distribution.put('G', dist[2]);
+		nucleotide_distribution.put('T', dist[3]);
+		
+		// Set the base mutation rates
+		Double[] rates = (Double[]) Configuration.getParameters().getArray(Double.class, "Aptasim.BaseMutationRates");
+		// Compute the size of the array
+		int size = 0;
+		for (Double c : rates){ size+= new Double(c*100.0).intValue(); }
+		base_mutation_rates = new byte[size];
+		
+		size = 0;
+		// A
+		for (int x=0; x<new Double(rates[0]*100.0).intValue(); x++){
+			base_mutation_rates[size] = 'A';
+			size++;
+		}
+		
+		// C
+		for (int x=0; x<new Double(rates[1]*100.0).intValue(); x++){
+			base_mutation_rates[size] = 'C';
+			size++;
+		}
+		
+		// G
+		for (int x=0; x<new Double(rates[2]*100.0).intValue(); x++){
+			base_mutation_rates[size] = 'G';
+			size++;
+		}
+		
+		// T
+		for (int x=0; x<new Double(rates[3]*100.0).intValue(); x++){
+			base_mutation_rates[size] = 'T';
+			size++;
+		}
+		
+	}
+	
 	@Override
 	public void parse() {
-		// TODO Auto-generated method stub
 		
+		// Prepare the experiment
+		createTemporarySelectionCycles();
+		
+		// Generate the first pool
+		if (filename != null){
+			progress.trainingStage(filename);
+			HMMSequenceGenerator hmm = trainModel();
+			progress.reset();
+		
+			System.out.println();
+		
+			progress.initialPoolStage(0);
+			generatePoolWithModel(hmm);
+			progress.reset();
+		}
+		else{
+			progress.initialPoolStage(0);
+			generatePoolWithoutModel();
+			progress.reset();
+		}
+		
+	
+		// Perform selection and amplification
+		ArrayList<SelectionCycle> cycles = Configuration.getExperiment().getSelectionCycles();
+		for (int x=1; x<cycles.size(); x++){
+			
+			System.out.println();
+			System.out.println();
+			
+			//do selection
+			progress.selectionStage(x);
+			selectBinders(cycles.get(x-1), cycles.get(x));
+			progress.reset();
+			
+			System.out.println();
+			
+			//amplify
+			progress.amplificationStage(x);
+			amplifyPool(cycles.get(x));
+			progress.reset();
+			
+		}
+		
+		System.out.println();
+		
+		// Clean up
+		removeTemporarySelectionCycles();
 	}
 
 	@Override
@@ -25,9 +216,332 @@ public class AptaSimParser implements Parser{
 	}
 
 	@Override
-	public AptaPlexProgress getProgress() {
-		// TODO Auto-generated method stub
-		return null;
+	public ParserProgress Progress() {
+		return progress;
 	}
 
+	@Override
+	public void run() {
+		
+		parse();
+		
+	}
+
+	/**
+	 * Train the Markov Model with the sequencing data as specified in the configuration
+	 */
+	private HMMSequenceGenerator trainModel(){
+		
+		// Read sequences from file and train the model
+		AptaLogger.log(Level.CONFIG, this.getClass(), "Training Markov Model with data from " + filename);
+		HMMSequenceGenerator hmm = new HMMSequenceGenerator(hmm_degree);
+		try(BufferedReader br = new BufferedReader(new FileReader(new File(filename)))) 
+		{
+			int i = 0;
+		    for(String line; (line = br.readLine()) != null; i++) 
+		    {
+		    	if (i%4 == 1)
+		    	{
+		    		hmm.trainModel(line);
+		    		progress.totalProcessedReads.getAndIncrement();
+		    	}
+		    }
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+		AptaLogger.log(Level.CONFIG, this.getClass(), "Training completed.");
+
+		return hmm;
+	}
+	
+	/**
+	 * Creates and initial pool based on the training data 
+	 * @param filename
+	 * @return
+	 */
+	private void generatePoolWithModel(HMMSequenceGenerator hmm)	{
+		
+		AptaLogger.log(Level.CONFIG, this.getClass(), "Creating inital pool");
+		
+		SelectionCycle cycle = Configuration.getExperiment().getSelectionCycles().get(0);
+		
+		//add small number of seeds
+		int total = 0;
+		for (int x=0; x<number_of_seeds; x++)
+		{
+			byte[] n = hmm.generateSequence(randomized_region_size);
+			int c = rand.nextInt(max_sequence_count); 
+			int a = min_seed_affinity + rand.nextInt(21);
+			
+			// Add aptamer to pool and update affinity 
+			int a_id = cycle.addToSelectionCycle(n,c);
+			affinities.put(a_id, a);
+			
+			total += c;
+			progress.totalProcessedReads.getAndAdd(c);
+			progress.totalPoolSize.getAndIncrement();
+		}
+		
+		//add remaining sequences
+		for (int x=number_of_seeds; x<number_of_sequences; x++)
+		{
+			byte[] n = hmm.generateSequence(randomized_region_size);
+			int c = rand.nextInt(max_sequence_count);
+			int a = rand.nextInt(max_sequence_affinity);
+			
+			// Add aptamer to pool and update affinity 
+			int a_id = cycle.addToSelectionCycle(n,c);
+			affinities.put(a_id, a);
+			
+			total += c;
+			progress.totalProcessedReads.getAndAdd(c);
+			progress.totalPoolSize.getAndIncrement();
+		}
+		
+		AptaLogger.log(Level.CONFIG, this.getClass(), "Sequence generation completed. Pool size: " + total);
+		
+	}
+	
+	/**
+	 * Creates a pool based on the specified nucleotide distribution
+	 */
+	private void generatePoolWithoutModel() {
+		
+		AptaLogger.log(Level.CONFIG, this.getClass(), "Creating inital pool");
+		
+		SelectionCycle cycle = Configuration.getExperiment().getSelectionCycles().get(0);
+		
+		//add small number of seeds
+		int total = 0;
+		for (int x=0; x<number_of_seeds; x++)
+		{
+			byte[] n = generateSequence(randomized_region_size);
+			int c = rand.nextInt(max_sequence_count); 
+			int a = min_seed_affinity + rand.nextInt(21);
+			
+			// Add aptamer to pool and update affinity 
+			int a_id = cycle.addToSelectionCycle(n,c);
+			affinities.put(a_id, a);
+			
+			total += c;
+			progress.totalProcessedReads.getAndAdd(c);	
+			progress.totalPoolSize.getAndIncrement();
+		}
+		
+		//add remaining sequences
+		for (int x=number_of_seeds; x<number_of_sequences; x++)
+		{
+			byte[] n = generateSequence(randomized_region_size);
+			int c = rand.nextInt(max_sequence_count);
+			int a = rand.nextInt(max_sequence_affinity);
+			
+			// Add aptamer to pool and update affinity 
+			int a_id = cycle.addToSelectionCycle(n,c);
+			affinities.put(a_id, a);
+			
+			total += c;
+			progress.totalProcessedReads.getAndAdd(c);	
+			progress.totalPoolSize.getAndIncrement();
+			
+		}
+		
+		AptaLogger.log(Level.CONFIG, this.getClass(), "Sequence generation completed. Pool size: " + total);
+		
+	}
+	
+	
+	/**
+	 * Simulates selection
+	 * @param sequences
+	 * @return
+	 */
+	private void selectBinders(SelectionCycle current, SelectionCycle next)
+	{
+		int sequences_total = current.getSize();
+		
+		// Temporary data structure for fast weighted sampling
+		// Put all aptamer ids according to their count into sampler
+		BitSet bit = new BitSet(sequences_total);
+		int[] sampler = new int[sequences_total];
+		int counter = 0;
+		
+		for (Entry<Integer, Integer> entry : current.iterator())
+		{
+			for (int x = 0; x<entry.getValue(); x++)
+			{
+				sampler[counter] = entry.getKey();
+				counter++;
+			}
+		}
+		
+		int number_of_sequences_to_sample = new Double (number_of_sequences * selection_percentage).intValue();
+		int sample_total = 0;
+		
+		while (sample_total < number_of_sequences_to_sample)
+		{
+			
+//			generate random number between 0 and sequences_total
+			int pick = rand.nextInt(sequences_total);
+			
+			//pick sequence 
+			int a_id = sampler[pick];
+			while (bit.get(pick))
+			{
+				pick = rand.nextInt(sequences_total);
+				a_id = sampler[pick];
+			}
+			
+			
+			//accept sequence based on affinity
+			if (rand.nextInt(101) <= affinities.get(a_id))
+			{
+				//set sequence as chosen
+				bit.flip(pick);
+				
+				//add or update sample
+				next.addToSelectionCycle(Configuration.getExperiment().getAptamerPool().getAptamer(a_id));
+				progress.totalSampledReads.getAndIncrement();
+				
+				sample_total++;
+			}
+			else{
+				progress.totalDiscardedReads.getAndIncrement();
+			}
+			progress.totalProcessedReads.getAndIncrement();
+			
+		}
+	
+	}	
+	
+	
+	/**
+	 * Simulates error prone PCR
+	 * @param sequences
+	 * @return
+	 */
+	public void amplifyPool(SelectionCycle cycle)
+	{
+		//compute number of pcr_cycles
+		int pcr_cycles = (int) Math.ceil(Math.log( ((double)number_of_sequences)/((double)cycle.getSize())) / Math.log(1.0+amplification_efficiency) );
+		
+		for (int x=0; x<pcr_cycles; x++)
+		{
+			//iterate over every sequence and amplify
+			for (Entry<byte[], Integer> entry : cycle.sequence_iterator())
+			{
+				int nr_molecules = entry.getValue();
+				
+				//we need to amplify each molecule
+				for (int y=0; y<nr_molecules; y++)
+				{
+					//only amplify if according to the amplification_efficiency
+					double amp = rand.nextDouble();
+					
+					if (amp <= amplification_efficiency)
+					{
+					
+						//do we have to mutate?
+						double mut = rand.nextDouble();
+						if(mut <= mutation_probability)
+						{
+							//Create mutant
+							int pos = rand.nextInt(randomized_region_size);
+							byte[] mutant = entry.getKey().clone();
+							mutant[pos] = base_mutation_rates[rand.nextInt(base_mutation_rates.length)];
+													
+							//update
+							int m_id = cycle.addToSelectionCycle(mutant);
+							progress.totalMutatedReads.getAndIncrement();
+							
+							// The mutant is set to the affinity of its parent sequence
+							int a_id = Configuration.getExperiment().getAptamerPool().getIdentifier(entry.getKey());
+							affinities.put(m_id, affinities.get(a_id));
+						}
+						else
+						{
+							cycle.addToSelectionCycle(entry.getKey());
+							progress.totalSampledReads.getAndIncrement();
+						}
+					}
+					else{
+						progress.totalDiscardedReads.getAndIncrement();
+					}
+					progress.totalProcessedReads.getAndIncrement();
+					progress.totalPoolSize.set(cycle.getSize());
+				}
+			}
+		}
+	}	
+	
+	
+	/**
+	 * Creates a sequence based on the specified distribution 
+	 * @param size
+	 * @return
+	 */
+	private byte[] generateSequence(int size)
+	{
+		StringBuilder sb = new StringBuilder(size);
+		
+		for(int i=0; i<size; i++)
+		{
+			double p = rand.nextDouble();
+			double cumsum = 0.0;
+			for ( Entry<Character, Double> item : nucleotide_distribution.entrySet())
+			{
+				cumsum += item.getValue();
+				if (cumsum >= p)
+				{
+					sb.append(item.getKey());
+					break;
+				}
+			}
+		}
+		return sb.toString().getBytes();		
+	}
+	
+	/**
+	 * Create instances of those selection cycles between round 0
+	 * and the largest cycle as specified in the configuration file
+	 * which the user does not which to retain but are required as 
+	 * intermediate steps for the simulation. These cycles will 
+	 * deleted from the experiment upon completion of the simulation.
+	 */
+	private void createTemporarySelectionCycles(){
+		
+		// Get a list of all selection cycles
+		ArrayList<SelectionCycle> cycles = Configuration.getExperiment().getSelectionCycles();
+		AptaLogger.log(Level.CONFIG, this.getClass(), "Found a total of " + cycles.size() + " selection cycles in the configuration");
+		
+		// Create a temporary cycle if not specified in the configuration
+		for (int x=0; x<cycles.size(); x++){
+
+			SelectionCycle cycle = Configuration.getExperiment().getSelectionCycles().get(x);
+			
+			// If this cycle was not specified by the user, we create a temporary cycle and
+			// flag it for removal.
+			if (cycle == null){
+				cycle = Configuration.getExperiment().registerSelectionCycle("Temp"+x, x, false, false, true);			
+				temporary_cycles.add(cycle);
+				AptaLogger.log(Level.CONFIG, this.getClass(), "Created temporary cycle for round " + x);
+			}
+		}
+		
+	}
+	
+	/**
+	 * Deletes the temporary instances of SelectionCycle required for the simulation
+	 * from the experiment
+	 */
+	private void removeTemporarySelectionCycles(){
+		
+		for (SelectionCycle c : this.temporary_cycles){
+			Configuration.getExperiment().unregisterSelectionCycle(c);
+		}
+		
+		temporary_cycles.clear();
+		
+	}
 }

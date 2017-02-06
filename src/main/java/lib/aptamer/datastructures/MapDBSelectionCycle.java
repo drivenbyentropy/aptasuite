@@ -195,18 +195,21 @@ public class MapDBSelectionCycle implements SelectionCycle{
 	}
 
 
-	public synchronized void addToSelectionCycle(byte[] a) {
+	public synchronized int addToSelectionCycle(byte[] a, int count) {
 		
 		// Check if the aptamer is already present in the pool and add it if not
 		int id_a = Configuration.getExperiment().getAptamerPool().registerAptamer(a);
 		
 		// Update the pool size
-		size++;
+		size+=count;
 				
 		// Fast membership checking due to bloom filter
 		if (! poolContent.contains(id_a)){ // this is always accurate, no false negatives
+			
 			unique_size++;
-			poolContentCounts.put(id_a, 1);
+			poolContentCounts.put(id_a, count);
+			poolContent.add(id_a);
+			
 		}
 		else{ // we need to update the count...
 			
@@ -214,17 +217,28 @@ public class MapDBSelectionCycle implements SelectionCycle{
 			
 			if (current_count == null){ // catch false positives
 				current_count = 0;
+				poolContent.add(id_a);
 			}
-			poolContentCounts.put(id_a, current_count+1);
+			poolContentCounts.put(id_a, current_count+count);
 			
 		}
 		
+		return id_a;
+		
+	}
+	
+	public synchronized int addToSelectionCycle(byte[] a) {
+		return addToSelectionCycle(a,1);
+	}
+	
+	public synchronized int addToSelectionCycle(String a){
+		return addToSelectionCycle(a.getBytes(),1);
 	}
 
-	public void addToSelectionCycle(String a){
-		addToSelectionCycle(a.getBytes());
+	public synchronized int addToSelectionCycle(String a, int count){
+		return addToSelectionCycle(a.getBytes(),count);
 	}
-
+	
 	public boolean containsAptamer(byte[] a) {
 		
 		// Get the corresponding aptamer id from the pool
@@ -378,7 +392,34 @@ public class MapDBSelectionCycle implements SelectionCycle{
 				.valueSerializer(Serializer.INTEGER)
 		        .createOrOpen();
 		
+		AptaLogger.log(Level.CONFIG, this.getClass(), "Reopened as read only file " + Paths.get(poolDataPath.toString(), cycleFileName).toString() );
+		
 	}
+	
+	@Override
+	public void setReadWrite() {
+		
+		poolContentCounts.close();
+		
+		Path projectPath = Paths.get(Configuration.getParameters().getString("Experiment.projectPath"));
+		Path poolDataPath = Paths.get(projectPath.toString(), "cycledata");
+		String cycleFileName = round + "_" + name + ".mapdb";
+		
+		DB db = DBMaker
+			    .fileDB(Paths.get(poolDataPath.toString(), cycleFileName).toFile())
+			    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
+			    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
+			    .executorEnable()
+			    .make();
+
+		poolContentCounts = db.treeMap("map")
+				.keySerializer(Serializer.INTEGER)
+				.valueSerializer(Serializer.INTEGER)
+		        .createOrOpen();
+		
+		AptaLogger.log(Level.CONFIG, this.getClass(), "Reopened as read/write file " + Paths.get(poolDataPath.toString(), cycleFileName).toString() );
+	}
+	
 	
 	/**
 	 * Since MapDB objects are not serializable in itself, we need to 

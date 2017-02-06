@@ -33,6 +33,6 @@ public interface Parser {
 	/**
 	 * Produces an estimate of the progress of the parser implementation
 	 */
-	public AptaPlexProgress getProgress();
+	public ParserProgress Progress();
 	
 }

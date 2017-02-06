@@ -30,7 +30,7 @@ public class Aptasuite {
 	        // print the help if requested
 	        if (line.hasOption("help") || args.length == 0){
 	        	HelpFormatter formatter = new HelpFormatter();
-	        	formatter.printHelp( "AptaSUITE", CLIOptions.parameters );
+	        	formatter.printHelp( "AptaSUITE", "", CLIOptions.parameters, "Please report issues at https://github.com/drivenbyentropy/aptasuite", true );
 	        	System.exit(1);
 	        }
 	        
@@ -49,9 +49,10 @@ public class Aptasuite {
 	    }
 	    catch( ParseException exp ) {
 	        // oops, something went wrong
-	        System.err.println( "Parsing failed.  Reason: " + exp.getMessage() );
+	        System.err.println( "Parameter Error.  Reason: " + exp.getMessage() );
+	        System.out.println("\n");
 	        HelpFormatter formatter = new HelpFormatter();
-        	formatter.printHelp( "AptaSUITE", CLIOptions.parameters );
+	        formatter.printHelp( "AptaSUITE", "", CLIOptions.parameters, "Please report issues at https://github.com/drivenbyentropy/aptasuite", true );
 	    }
 	    
 		

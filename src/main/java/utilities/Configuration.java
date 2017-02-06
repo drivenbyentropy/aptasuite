@@ -112,6 +112,21 @@ public class Configuration {
 			     put("AptaplexParser.BarcodeTolerance", 1); // Maximal number of mutations allowed in the barcodes
 			     put("AptaplexParser.PrimerTolerance", 3); // Maximal number of mutations allowed in the primers
 			     
+			     // AptaSIM Options
+			     put("Aptasim.HmmDegree", 2); // Degree of the Markov model
+			     put("Aptasim.RandomizedRegionSize", 40); // Length of the randomized region in the aptamers
+			     put("Aptasim.NumberOfSequences", 1000000); // Number of sequences in the initial pool
+			     put("Aptasim.NumberOfSeeds", 100); // Number of high affinity sequences in the initial pool
+			     put("Aptasim.MinSeedAffinity", 80); // The minimal affinity for seed sequences (INT range: 0-100)
+			     put("Aptasim.MaxSequenceCount", 10); // Maximal count of remaining sequences
+			     put("Aptasim.MaxSequenceAffinity", 25); // The maximal sequence affinity for non-seeds (INT range: 0-100)
+			     put("Aptasim.NucleotideDistribution", "0.25, 0.25, 0.25, 0.25"); // If no training data is specified, create pool based on this distribution (order A,C,G,T)
+			     put("Aptasim.SelectionPercentage", 0.20); // The percentage of sequences that remain after selection (DOUBLE range: 0-1)
+			     put("Aptasim.BaseMutationRates", "0.25, 0.25, 0.25, 0.25"); // Mutation rates for individual nucleotides (order A,C,G,T)
+			     put("Aptasim.MutationProbability", 0.05); // Mutation probability during PCR (DOUBLE range: 0-1)
+			     put("Aptasim.AmplificationEfficiency", 0.995); // PCR amplification efficiency (DOUBLE range: 0-1)
+				 
+			     
 			     // Performance Options
 			     put("Performance.maxNumberOfCores", 30); // if larger than available, min of both is taken
 			     

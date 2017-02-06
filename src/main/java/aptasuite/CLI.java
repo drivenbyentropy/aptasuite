@@ -19,6 +19,7 @@ import exceptions.InvalidConfigurationException;
 import lib.aptamer.datastructures.Experiment;
 import lib.aptamer.datastructures.SelectionCycle;
 import lib.parser.aptaplex.AptaPlexParser;
+import lib.parser.aptasim.AptaSimParser;
 import lib.structure.capr.CapR;
 import lib.structure.capr.CapRFactory;
 import lib.structure.capr.CapROriginal;
@@ -98,6 +99,23 @@ public class CLI {
 			createDatabase( line.getOptionValue("config") );
 		}
 		
+		// Case for AptaSIM, create a database or overwrite an existing one
+		if (line.hasOption("simulate")){
+			
+			// clean up old data if required
+			try {
+				FileUtils.deleteDirectory(Paths.get(projectPath.toString(), "pooldata").toFile());
+				FileUtils.deleteDirectory(Paths.get(projectPath.toString(), "cycledata").toFile());
+				FileUtils.deleteDirectory(Paths.get(projectPath.toString(), "structuredata").toFile());
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			// call data input logic
+			runAptaSim( line.getOptionValue("config") );
+		}
+		
 		// Case for AptaTRACE
 		if (line.hasOption("structures")){
 			
@@ -175,33 +193,21 @@ public class CLI {
 		});
 
 		// Update user about parsing progress
-		String spacing = "%1$-23s %2$-23s %3$-23s %4$-23s %5$-23s %6$-23s %7$-23s %8$-23s";
+		
 
 		AptaLogger.log(Level.INFO, this.getClass(), "Parsing...");
-		System.out.println(
-				String.format(spacing, "Total Reads:", "Accepted Reads:", "Contig Assembly Fails:", "Invalid Alphabet:",
-						"5' Primer Error:", "3' Primer Error:", "Invalid Cycle", "Total Primer Overlaps:"));
+		System.out.println( parser.Progress().getHeader() );
 		System.out.flush();
 		while (parserThread.isAlive() && !parserThread.isInterrupted()) {
 			try {
-				System.out.print(String.format(spacing + "\r", parser.getProgress().totalProcessedReads.get(),
-						parser.getProgress().totalAcceptedReads.get(),
-						parser.getProgress().totalContigAssemblyFails.get(),
-						parser.getProgress().totalInvalidContigs.get(),
-						parser.getProgress().totalUnmatchablePrimer5.get(),
-						parser.getProgress().totalUnmatchablePrimer3.get(),
-						parser.getProgress().totalInvalidCycle.get(), parser.getProgress().totalPrimerOverlaps.get()));
+				System.out.print(parser.Progress().getProgress() + "\r");
 				// Once every second should suffice
 				Thread.sleep(1000);
 			} catch (InterruptedException ie) {
 			}
 		}
 		// final update
-		System.out.println(String.format(spacing + "\r", parser.getProgress().totalProcessedReads.get(),
-				parser.getProgress().totalAcceptedReads.get(), parser.getProgress().totalContigAssemblyFails.get(),
-				parser.getProgress().totalInvalidContigs.get(), parser.getProgress().totalUnmatchablePrimer5.get(),
-				parser.getProgress().totalUnmatchablePrimer3.get(), parser.getProgress().totalInvalidCycle.get(),
-				parser.getProgress().totalPrimerOverlaps.get()));
+		System.out.println(parser.Progress().getProgress() + "\r");
 
 		// now that we have the data set any file backed implementations of the
 		// pools and cycles to read only
@@ -229,6 +235,85 @@ public class CLI {
 
 	}
 
+	
+	/**
+	 * Implements the logic for calling AptaTrace
+	 */
+	private void runAptaSim(String configFile){
+		
+		AptaLogger.log(Level.INFO, this.getClass(), "Creating Database");
+		
+		// Initialize the experiment
+		this.experiment = new Experiment(configFile, true);
+
+		// Initialize the parser and run it in a thread
+		AptaLogger.log(Level.INFO, this.getClass(), "Initializing AptaSIM");
+		AptaSimParser parser = new AptaSimParser();
+
+		parserThread = new Thread(parser);
+
+		AptaLogger.log(Level.INFO, this.getClass(), "Starting Simulation:");
+		long tParserStart = System.currentTimeMillis();
+		parserThread.start();
+
+		// we need to add a shutdown hook for the parserThread in case the
+		// user presses ctl-c
+		Runtime.getRuntime().addShutdownHook(new Thread() {
+			@Override
+			public void run() {
+				try {
+					if (parserThread != null) {
+
+						parserThread.interrupt();
+						parserThread.join();
+
+					}
+				} catch (InterruptedException e) {
+					AptaLogger.log(Level.SEVERE, this.getClass(), "User interrupt on parserThread");
+				}
+			}
+		});
+
+		// Update progress to user
+		while (parserThread.isAlive() && !parserThread.isInterrupted()) {
+			try {
+				System.out.print(parser.Progress().getProgress() + "\r");
+				
+				// Once every half second should suffice
+				Thread.sleep(500);
+			} catch (InterruptedException ie) {
+			}
+		}
+		
+		AptaLogger.log(Level.INFO, this.getClass(), String.format("Simulation Completed in %s seconds.\n",
+				((System.currentTimeMillis() - tParserStart) / 1000.0)));
+		
+		// Print Simulation Statistics
+		AptaLogger.log(Level.INFO, this.getClass(), "Simulation Statistics:");
+		for (SelectionCycle c : Configuration.getExperiment().getSelectionCycles()){
+			AptaLogger.log(Level.INFO, this.getClass(), 
+					String.format("%-20s: Total Pool Size: %s\t Unique Pool Size: %s\t Diversity: %.4f %", 
+							c.getName(), 
+							c.getSize(), 
+							c.getUniqueSize(), 
+							(c.getUniqueSize()/ new Double (c.getSize()) * 100 ) ));
+		}
+		
+		
+		// now that we have the data set any file backed implementations of the
+		// pools and cycles to read only
+		experiment.getAptamerPool().setReadOnly();
+		for (SelectionCycle cycle : experiment.getAllSelectionCycles()) {
+			if (cycle != null) {
+				cycle.setReadOnly();
+			}
+		}
+		
+		// clean up
+		parserThread = null;
+		parser = null;
+	}
+	
 	
 	private void runStructurePrediction(String configFile){
 		
