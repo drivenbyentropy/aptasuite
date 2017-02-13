@@ -390,7 +390,7 @@ public class MapDBSelectionCycle implements SelectionCycle{
 		poolContentCounts = db.treeMap("map")
 				.keySerializer(Serializer.INTEGER)
 				.valueSerializer(Serializer.INTEGER)
-		        .createOrOpen();
+		        .open();
 		
 		AptaLogger.log(Level.CONFIG, this.getClass(), "Reopened as read only file " + Paths.get(poolDataPath.toString(), cycleFileName).toString() );
 		
@@ -415,11 +415,15 @@ public class MapDBSelectionCycle implements SelectionCycle{
 		poolContentCounts = db.treeMap("map")
 				.keySerializer(Serializer.INTEGER)
 				.valueSerializer(Serializer.INTEGER)
-		        .createOrOpen();
+		        .open();
 		
 		AptaLogger.log(Level.CONFIG, this.getClass(), "Reopened as read/write file " + Paths.get(poolDataPath.toString(), cycleFileName).toString() );
 	}
 	
+	
+	public void close(){
+		this.poolContentCounts.close();
+	}
 	
 	/**
 	 * Since MapDB objects are not serializable in itself, we need to 

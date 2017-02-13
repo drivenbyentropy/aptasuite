@@ -378,6 +378,8 @@ public class Experiment implements Serializable{
 	public void unregisterSelectionCycle(SelectionCycle cycle){
 		//TODO: Implement deletion routines for AptamerPool Selection Cycle, StruturePool etc
 		// and call them from here. For now we just remove it from the experiment 
+		cycle.close();
+		
 		
 		// Locate the selection cycle and remove from the corresponding data structure
 		if (cycle.isControlSelection()){
@@ -414,6 +416,8 @@ public class Experiment implements Serializable{
 		}
 		
 		//TODO: cycle.clear()
+		
+		AptaLogger.log(Level.CONFIG, this.getClass(), "Removed selection cycle " + cycle.getName() + " from experiment.");
 	}
 	
 	/**
@@ -431,20 +435,20 @@ public class Experiment implements Serializable{
 				continue;
 			}
 			
-			if (c.getName().equals("id")){
+			if (c.getName().equals(id)){
 				return c;
 			}
 			
 			// if not found, we also have to go though the counter and control selections
 			else{
 				for(SelectionCycle d : c.getControlCycles()){
-					if (d.getName().equals("id")){
+					if (d.getName().equals(id)){
 						return d;
 					}
 				}
 				
 				for(SelectionCycle d : c.getCounterSelectionCycles()){
-					if (d.getName().equals("id")){
+					if (d.getName().equals(id)){
 						return d;
 					}
 				}

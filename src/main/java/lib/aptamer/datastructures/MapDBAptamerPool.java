@@ -163,6 +163,9 @@ public class MapDBAptamerPool implements AptamerPool {
 	    			// Open and read the TreeMap, skip the inverse file
 	    			if (Files.isRegularFile(file) && !file.getFileName().toString().equals("data_inverse.mapdb") ){
 	    				
+	    				AptaLogger.log(Level.INFO, this.getClass(), "Processing " + file.getFileName().toString());
+	    				long tParserStart = System.currentTimeMillis();
+	    		
 	    				DB db = DBMaker
 	    					    .fileDB(file.toFile())
 	    					    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
@@ -181,11 +184,12 @@ public class MapDBAptamerPool implements AptamerPool {
 	    				BloomFilter<String> localBloomFilter = new FilterBuilder(maxTreeMapCapacity, bloomFilterCollisionProbability).buildBloomFilter();
 	    				poolDataBloomFilter.add(localBloomFilter);
 	    				
+	    				
 	    				// Update values
 	    				int currentDBmapSize = dbmap.size();
 	    				poolSize += currentDBmapSize;
 	    				currentTreeMapSize = currentDBmapSize;
-	    				
+
 	    				// Update bloom filter content
 	    				Iterator<byte[]> dbmapIterator = dbmap.getKeys().iterator();
 	    				while (dbmapIterator.hasNext()){
@@ -197,7 +201,8 @@ public class MapDBAptamerPool implements AptamerPool {
 	    				AptaLogger.log(Level.CONFIG, this.getClass(), 
 	    						"Found and loaded file " + file.toString() + "\n" +
 	    						"Total number of aptamers in file: " + currentTreeMapSize + "\n" +
-	    						"Total number of aptamers: " + poolSize
+	    						"Total number of aptamers: " + poolSize + "\n" + 
+	    						"Processed in " + ((System.currentTimeMillis() - tParserStart) / 1000.0) + " seconds."
 	    						);
 	    			}
 	                
@@ -205,7 +210,6 @@ public class MapDBAptamerPool implements AptamerPool {
 	        } catch (IOException ex) {}
 			
 			// Now load and initialize the inverse view of the data
-			
 			AptaLogger.log(Level.CONFIG, this.getClass(), "Reading inverse view.");
 			
 			DB db_inverse = DBMaker
@@ -601,6 +605,23 @@ public class MapDBAptamerPool implements AptamerPool {
 			}
             
         }
+		
+		// do the same for the inverse view
+		DB db_inverse = DBMaker
+			    .fileDB(Paths.get(poolDataPath.toString(), "data_inverse" + ".mapdb").toFile())
+			    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
+			    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
+			    .executorEnable()
+			    .readOnly()
+			    .make();
+
+		poolDataInverse = db_inverse.treeMap("map")
+				.valuesOutsideNodesEnable()
+				.keySerializer(Serializer.INTEGER)
+				.valueSerializer(new SerializerCompressionWrapper(Serializer.BYTE_ARRAY))
+		        .open();
+		
+		AptaLogger.log(Level.CONFIG, this.getClass(), "Reopened as read only file " + Paths.get(poolDataPath.toString(), "data_inverse" + ".mapdb").toString() );
     }	
 	
 	@Override
@@ -636,6 +657,22 @@ public class MapDBAptamerPool implements AptamerPool {
 			}
             
         }
+		
+		// and the inverse view
+		DB db_inverse = DBMaker
+			    .fileDB(Paths.get(poolDataPath.toString(), "data_inverse" + ".mapdb").toFile())
+			    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
+			    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
+			    .executorEnable()
+			    .make();
+
+		poolDataInverse = db_inverse.treeMap("map")
+				.valuesOutsideNodesEnable()
+				.keySerializer(Serializer.INTEGER)
+				.valueSerializer(new SerializerCompressionWrapper(Serializer.BYTE_ARRAY))
+		        .open();
+		
+		AptaLogger.log(Level.CONFIG, this.getClass(), "Reopened as read only file " + Paths.get(poolDataPath.toString(), "data_inverse" + ".mapdb").toString() );
     }		 
 	 
 	 

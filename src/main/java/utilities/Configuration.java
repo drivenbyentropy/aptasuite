@@ -77,13 +77,16 @@ public class Configuration {
 			// Define default parameters
 			HashMap<String, Object> defaults= new HashMap<String,Object>()
 			{{
+				 // Default Experiment Name, required for data export
+				put("Experiment.name", "Sample Experiment");
+				
 			     // PoolBackend
 			     put("AptamerPool.backend", "MapDBAptamerPool");
 				
 				 // PoolMapDB Options
 			     put("MapDBAptamerPool.bloomFilterCapacity", 500000000);
 			     put("MapDBAptamerPool.bloomFilterCollisionProbability", 0.001);
-			     put("MapDBAptamerPool.maxTreeMapCapacity", 7500000); 
+			     put("MapDBAptamerPool.maxTreeMapCapacity", 7500000);  
 			     
 
 			     // SelectionCycle Backend
@@ -126,6 +129,11 @@ public class Configuration {
 			     put("Aptasim.MutationProbability", 0.05); // Mutation probability during PCR (DOUBLE range: 0-1)
 			     put("Aptasim.AmplificationEfficiency", 0.995); // PCR amplification efficiency (DOUBLE range: 0-1)
 				 
+			     // Export
+			     put("Export.compress", true); // Whether the resulting files should be gzip compressed or not
+			     put("Export.SequenceFormat", "fastq"); // The output format for nucleotide data [Fastq, Fasta, Raw]
+			     put("Export.IncludePrimerRegions", true); // If false, the 5' and 3' primers will not be exported 
+
 			     
 			     // Performance Options
 			     put("Performance.maxNumberOfCores", 30); // if larger than available, min of both is taken

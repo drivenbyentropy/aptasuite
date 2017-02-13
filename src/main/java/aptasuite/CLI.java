@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
@@ -18,6 +19,7 @@ import org.apache.commons.lang3.time.DateUtils;
 import exceptions.InvalidConfigurationException;
 import lib.aptamer.datastructures.Experiment;
 import lib.aptamer.datastructures.SelectionCycle;
+import lib.export.Export;
 import lib.parser.aptaplex.AptaPlexParser;
 import lib.parser.aptasim.AptaSimParser;
 import lib.structure.capr.CapR;
@@ -138,6 +140,13 @@ public class CLI {
 
 		}
 		
+		// Case for data export
+		if (line.hasOption("export")){
+
+			exportData( line.getOptionValue("config"), line.getOptionValue("export") );
+
+		}
+		
 		//TODO: Remove this for production
 		System.out.println("Final Wait");
 		try {
@@ -168,7 +177,7 @@ public class CLI {
 		AptaLogger.log(Level.INFO, this.getClass(), "Initializing parser " + Configuration.getParameters().getString("Parser.backend"));
 		AptaPlexParser parser = new AptaPlexParser();
 
-		parserThread = new Thread(parser);
+		parserThread = new Thread(parser, "AptaPlex Main");
 
 		AptaLogger.log(Level.INFO, this.getClass(), "Starting Parser:");
 		long tParserStart = System.currentTimeMillis();
@@ -250,7 +259,7 @@ public class CLI {
 		AptaLogger.log(Level.INFO, this.getClass(), "Initializing AptaSIM");
 		AptaSimParser parser = new AptaSimParser();
 
-		parserThread = new Thread(parser);
+		parserThread = new Thread(parser, "AptaSIM Main");
 
 		AptaLogger.log(Level.INFO, this.getClass(), "Starting Simulation:");
 		long tParserStart = System.currentTimeMillis();
@@ -280,13 +289,10 @@ public class CLI {
 				System.out.print(parser.Progress().getProgress() + "\r");
 				
 				// Once every half second should suffice
-				Thread.sleep(500);
+				Thread.sleep(100);
 			} catch (InterruptedException ie) {
 			}
 		}
-		
-		AptaLogger.log(Level.INFO, this.getClass(), String.format("Simulation Completed in %s seconds.\n",
-				((System.currentTimeMillis() - tParserStart) / 1000.0)));
 		
 		// Print Simulation Statistics
 		AptaLogger.log(Level.INFO, this.getClass(), "Simulation Statistics:");
@@ -312,6 +318,9 @@ public class CLI {
 		// clean up
 		parserThread = null;
 		parser = null;
+		
+		AptaLogger.log(Level.INFO, this.getClass(), String.format("Simulation completed in %s seconds.\n",
+				((System.currentTimeMillis() - tParserStart) / 1000.0)));
 	}
 	
 	
@@ -427,6 +436,99 @@ public class CLI {
 		}
 		AptaLogger.log(Level.INFO, this.getClass(), String.format("Iterated %s sequences in %s seconds.\n",
 				counter, ((System.currentTimeMillis() - tParserStart) / 1000.0)));
+	}
+	
+	/**
+	 * Implements the logic concerning the export of the data to text files as
+	 * specified in the configuration
+	 */
+	private void exportData( String configFile, String items ){
+		
+		
+		
+		// Make sure we have prior data or load it from disk
+		if (experiment == null) {
+			AptaLogger.log(Level.INFO, this.getClass(), "Loading data from disk");
+			this.experiment = new Experiment(configFile, false);
+		}
+		else{
+			AptaLogger.log(Level.INFO, this.getClass(), "Using existing sequencing data");
+		}
+		
+		AptaLogger.log(Level.INFO, this.getClass(), "Starting Data Export");
+		
+		// Make sure the export folder exists and create it if not
+		Path exportPath = Paths.get(Configuration.getParameters().getString("Experiment.projectPath"), "export");
+		if (Files.notExists(exportPath)){
+				AptaLogger.log(Level.INFO, this.getClass(), "The export path does not exist on the file system. Creating folder " + exportPath);
+				try {
+					Files.createDirectories(Paths.get(exportPath.toString()));
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+		}
+		
+		Export export = new Export();
+		Boolean compress = Configuration.getParameters().getBoolean("Export.compress");
+		String extension = Configuration.getParameters().getString("Export.SequenceFormat") + (compress ? ".gz" : "");
+		
+		// Get the tokens we need to export
+		String[] tokens = items.split(",");
+		
+		// Handle the different cases for each token
+		for (String token : tokens){
+			
+			switch(token){
+				case "pool":
+					Path poolexportpath = Paths.get(exportPath.toString(), "pool." + extension);
+					AptaLogger.log(Level.INFO, this.getClass(), "Exporting pool data to file " + poolexportpath.toString());
+					export.Pool(Configuration.getExperiment().getAptamerPool(), poolexportpath);
+					break;
+					
+				case "cycles":
+					
+					AptaLogger.log(Level.INFO, this.getClass(), "Exporting selection cycle data");
+					
+					// Determine which cycles need to be exported
+					ArrayList<SelectionCycle> cycles_to_export = null;
+					if (Configuration.getParameters().getStringArray("Export.Cycles").length == 0){
+						cycles_to_export = Configuration.getExperiment().getAllSelectionCycles();
+					}
+					else{
+						cycles_to_export = new ArrayList<SelectionCycle>();
+						for (String cycle_id : Configuration.getParameters().getStringArray("Export.Cycles")){
+							SelectionCycle sc = Configuration.getExperiment().getSelectionCycleById(cycle_id);
+							
+							if(sc == null){ //Something went wrong here
+								AptaLogger.log(Level.SEVERE, this.getClass(), "Could not find cycle with id " + cycle_id + " for export. Exiting.");
+								throw new InvalidConfigurationException("Could not find cycle with id " + cycle_id + " for export.");
+							}
+							
+							cycles_to_export.add(sc);
+						}
+						
+						// Now run the export
+						for (SelectionCycle sc : cycles_to_export){
+							Path cycleexportpath = Paths.get(exportPath.toString(), sc.getName() + ".fastq" + extension);
+							AptaLogger.log(Level.INFO, this.getClass(), "Exporting selection cycle " + sc.getName() + " to file " + cycleexportpath.toString());
+							export.Cycle(sc, cycleexportpath );
+						}
+						
+					}
+					break;
+					
+				case "structures":
+					export.Structures(Configuration.getExperiment().getStructurePool(), Paths.get(exportPath.toString(), "structures.txt." + (compress ? ".gz" : "")));
+					break;
+					
+				default:
+					AptaLogger.log(Level.SEVERE, this.getClass(), "Export option " + token + " not recognized. Exiting.");
+					throw new InvalidConfigurationException("Export option " + token + " not recognized.");
+			}
+			
+		}
+		
 	}
 	
 }

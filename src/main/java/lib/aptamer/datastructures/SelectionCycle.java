@@ -190,6 +190,12 @@ public interface SelectionCycle extends Serializable{
 	public void setReadWrite();	
 	
 	/**
+	 * Optional. Closes the underlying data structure, freeing any resources attached
+	 * to it.
+	 */
+	public void close();
+	
+	/**
 	 * Provides an iterator over every aptamer id (key) in this selection cycle  
 	 * together with its count (value).
 	 * Note that the order of iteration is dependent on the implementing class

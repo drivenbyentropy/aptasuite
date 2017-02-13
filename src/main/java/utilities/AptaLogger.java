@@ -97,6 +97,8 @@ public class AptaLogger {
     		// Only certain levels should make it to the user screen
     		if (level.equals(Level.INFO) || level.equals(Level.SEVERE)){
         		System.out.println(msg);
+        		// Make sure we get it right away on screen
+        		System.out.flush();
         	}
     	}
     }

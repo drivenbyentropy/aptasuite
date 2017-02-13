@@ -232,6 +232,8 @@ public class AptaSimParser implements Parser, Runnable{
 	 */
 	private HMMSequenceGenerator trainModel(){
 		
+		long tStart = System.currentTimeMillis();
+		
 		// Read sequences from file and train the model
 		AptaLogger.log(Level.CONFIG, this.getClass(), "Training Markov Model with data from " + filename);
 		HMMSequenceGenerator hmm = new HMMSequenceGenerator(hmm_degree);
@@ -251,7 +253,8 @@ public class AptaSimParser implements Parser, Runnable{
 		{
 			e.printStackTrace();
 		}
-		AptaLogger.log(Level.CONFIG, this.getClass(), "Training completed.");
+		AptaLogger.log(Level.CONFIG, this.getClass(), String.format("Training Completed in %s seconds.\n",
+				((System.currentTimeMillis() - tStart) / 1000.0)));
 
 		return hmm;
 	}
@@ -263,6 +266,8 @@ public class AptaSimParser implements Parser, Runnable{
 	 */
 	private void generatePoolWithModel(HMMSequenceGenerator hmm)	{
 		
+		long tStart = System.currentTimeMillis();
+		
 		AptaLogger.log(Level.CONFIG, this.getClass(), "Creating inital pool");
 		
 		SelectionCycle cycle = Configuration.getExperiment().getSelectionCycles().get(0);
@@ -300,7 +305,8 @@ public class AptaSimParser implements Parser, Runnable{
 			progress.totalPoolSize.getAndIncrement();
 		}
 		
-		AptaLogger.log(Level.CONFIG, this.getClass(), "Sequence generation completed. Pool size: " + total);
+		AptaLogger.log(Level.CONFIG, this.getClass(), String.format("Sequence generation completed in %s seconds. Pool size: %s",
+				((System.currentTimeMillis() - tStart) / 1000.0), total ));
 		
 	}
 	
@@ -309,6 +315,8 @@ public class AptaSimParser implements Parser, Runnable{
 	 */
 	private void generatePoolWithoutModel() {
 		
+		long tStart = System.currentTimeMillis();
+		
 		AptaLogger.log(Level.CONFIG, this.getClass(), "Creating inital pool");
 		
 		SelectionCycle cycle = Configuration.getExperiment().getSelectionCycles().get(0);
@@ -347,7 +355,8 @@ public class AptaSimParser implements Parser, Runnable{
 			
 		}
 		
-		AptaLogger.log(Level.CONFIG, this.getClass(), "Sequence generation completed. Pool size: " + total);
+		AptaLogger.log(Level.CONFIG, this.getClass(), String.format("Sequence generation completed in %s seconds. Pool size: %s",
+				((System.currentTimeMillis() - tStart) / 1000.0), total ));
 		
 	}
 	
@@ -359,6 +368,10 @@ public class AptaSimParser implements Parser, Runnable{
 	 */
 	private void selectBinders(SelectionCycle current, SelectionCycle next)
 	{
+		long tStart = System.currentTimeMillis();
+		
+		AptaLogger.log(Level.CONFIG, this.getClass(), "Selecting binders for cycle " + next.getName());
+		
 		int sequences_total = current.getSize();
 		
 		// Temporary data structure for fast weighted sampling
@@ -375,6 +388,8 @@ public class AptaSimParser implements Parser, Runnable{
 				counter++;
 			}
 		}
+		
+		AptaLogger.log(Level.CONFIG, this.getClass(), String.format("Created temporary array for fast weighted sampling. Number of items: %s", sampler.length ));
 		
 		int number_of_sequences_to_sample = new Double (number_of_sequences * selection_percentage).intValue();
 		int sample_total = 0;
@@ -413,6 +428,12 @@ public class AptaSimParser implements Parser, Runnable{
 			
 		}
 	
+		AptaLogger.log(Level.CONFIG, this.getClass(), 
+				String.format("Binder selection completed in %s seconds. Total Processed: %s  Accepted: %s  Discarded: %s",
+				((System.currentTimeMillis() - tStart) / 1000.0), 
+				progress.totalProcessedReads.get(), 
+				progress.totalSampledReads.get(),
+				progress.totalDiscardedReads.get()));
 	}	
 	
 	
@@ -423,6 +444,10 @@ public class AptaSimParser implements Parser, Runnable{
 	 */
 	public void amplifyPool(SelectionCycle cycle)
 	{
+		long tStart = System.currentTimeMillis();
+	
+		AptaLogger.log(Level.CONFIG, this.getClass(), "Amplifying binders for cycle " + cycle.getName());
+		
 		//compute number of pcr_cycles
 		int pcr_cycles = (int) Math.ceil(Math.log( ((double)number_of_sequences)/((double)cycle.getSize())) / Math.log(1.0+amplification_efficiency) );
 		
@@ -473,6 +498,16 @@ public class AptaSimParser implements Parser, Runnable{
 				}
 			}
 		}
+		
+		AptaLogger.log(Level.CONFIG, this.getClass(), 
+				String.format("Amplification completed in %s seconds. %s  %s  %s  %s  %s",
+				((System.currentTimeMillis() - tStart) / 1000.0), 
+				("Processed: " + progress.totalProcessedReads.get()), 
+				("Selected: " + progress.totalSampledReads.get()), 
+				("Discarded: " + progress.totalDiscardedReads.get()), 
+				("Mutated: " + progress.totalMutatedReads.get()), 
+				("Pool Size: " + progress.totalPoolSize.get())));
+		
 	}	
 	
 	

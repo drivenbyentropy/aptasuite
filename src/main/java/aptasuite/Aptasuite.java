@@ -30,7 +30,7 @@ public class Aptasuite {
 	        // print the help if requested
 	        if (line.hasOption("help") || args.length == 0){
 	        	HelpFormatter formatter = new HelpFormatter();
-	        	formatter.printHelp( "AptaSUITE", "", CLIOptions.parameters, "Please report issues at https://github.com/drivenbyentropy/aptasuite", true );
+	        	formatter.printHelp( "AptaSUITE", "", CLIOptions.parameters, "\nPlease report issues at https://github.com/drivenbyentropy/aptasuite", true );
 	        	System.exit(1);
 	        }
 	        
@@ -52,7 +52,7 @@ public class Aptasuite {
 	        System.err.println( "Parameter Error.  Reason: " + exp.getMessage() );
 	        System.out.println("\n");
 	        HelpFormatter formatter = new HelpFormatter();
-	        formatter.printHelp( "AptaSUITE", "", CLIOptions.parameters, "Please report issues at https://github.com/drivenbyentropy/aptasuite", true );
+	        formatter.printHelp( "AptaSUITE", "", CLIOptions.parameters, "\nPlease report issues at https://github.com/drivenbyentropy/aptasuite", true );
 	    }
 	    
 		
