@@ -59,18 +59,6 @@ public class CapRFactoryConsumer implements Runnable {
 	private Entry<byte[], Integer> item = null;
 	
 	/**
-	 * Used to build the aptamer with primers 
-	 */
-	private StringBuilder sb = new StringBuilder();
-	
-	
-	/**
-	 * Forward and reverse primers
-	 */
-	private String p5 = Configuration.getParameters().getString("Experiment.primer5");
-	private String p3 = Configuration.getParameters().getString("Experiment.primer3");
-	
-	/**
 	 * The progress of the CapR instances. Writable to the consumers and
 	 * thread-safe
 	 */
@@ -118,15 +106,11 @@ public class CapRFactoryConsumer implements Runnable {
 				// process queueElement
 				item = (Entry<byte[], Integer>) queueElement;
 
-				sb.append(p5).append(new String(item.getKey())).append(p3);
-				
-				capr.ComputeStructuralProfile(sb.toString().getBytes(), sb.length());
+				capr.ComputeStructuralProfile(item.getKey(), item.getKey().length);
 				
 				// add item to storage
 				pool.registerStructure(item.getValue(), capr.getStructuralProfile());
 				
-				sb = new StringBuilder();
-
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
