@@ -195,10 +195,10 @@ public class MapDBSelectionCycle implements SelectionCycle{
 	}
 
 
-	public synchronized int addToSelectionCycle(byte[] a, int count) {
+	public synchronized int addToSelectionCycle(byte[] a, int rr_start, int rr_end, int count) {
 		
 		// Check if the aptamer is already present in the pool and add it if not
-		int id_a = Configuration.getExperiment().getAptamerPool().registerAptamer(a);
+		int id_a = Configuration.getExperiment().getAptamerPool().registerAptamer(a, rr_start, rr_end);
 		
 		// Update the pool size
 		size+=count;
@@ -227,16 +227,16 @@ public class MapDBSelectionCycle implements SelectionCycle{
 		
 	}
 	
-	public synchronized int addToSelectionCycle(byte[] a) {
-		return addToSelectionCycle(a,1);
+	public synchronized int addToSelectionCycle(byte[] a, int rr_start, int rr_end) {
+		return addToSelectionCycle(a, rr_start, rr_end, 1);
 	}
 	
-	public synchronized int addToSelectionCycle(String a){
-		return addToSelectionCycle(a.getBytes(),1);
+	public synchronized int addToSelectionCycle(String a, int rr_start, int rr_end){
+		return addToSelectionCycle(a.getBytes(), rr_start, rr_end, 1);
 	}
 
-	public synchronized int addToSelectionCycle(String a, int count){
-		return addToSelectionCycle(a.getBytes(),count);
+	public synchronized int addToSelectionCycle(String a, int rr_start, int rr_end, int count){
+		return addToSelectionCycle(a.getBytes(), rr_start, rr_end, count);
 	}
 	
 	public boolean containsAptamer(byte[] a) {

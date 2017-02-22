@@ -42,6 +42,16 @@ public class AptaSimParser implements Parser, Runnable{
 	private String filename = Configuration.getParameters().getString("Aptasim.HmmFile");
 	
 	/**
+	 * The 5 prime primer in the Experiment
+	 */
+	private String primer5 = Configuration.getParameters().getString("Experiment.primer5");
+	
+	/**
+	 * The 3 prime primer in the Experiment
+	 */
+	private String primer3 = Configuration.getParameters().getString("Experiment.primer3");
+	
+	/**
 	 * Number of sequences in the initial pool
 	 */
 	private int number_of_sequences = Configuration.getParameters().getInt("Aptasim.NumberOfSequences");
@@ -236,7 +246,7 @@ public class AptaSimParser implements Parser, Runnable{
 		
 		// Read sequences from file and train the model
 		AptaLogger.log(Level.CONFIG, this.getClass(), "Training Markov Model with data from " + filename);
-		HMMSequenceGenerator hmm = new HMMSequenceGenerator(hmm_degree);
+		HMMSequenceGenerator hmm = new HMMSequenceGenerator(hmm_degree, primer5, primer3);
 		try(BufferedReader br = new BufferedReader(new FileReader(new File(filename)))) 
 		{
 			int i = 0;
@@ -276,12 +286,12 @@ public class AptaSimParser implements Parser, Runnable{
 		int total = 0;
 		for (int x=0; x<number_of_seeds; x++)
 		{
-			byte[] n = hmm.generateSequence(randomized_region_size);
+			byte[] n = hmm.generateSequence(randomized_region_size, true);
 			int c = rand.nextInt(max_sequence_count); 
 			int a = min_seed_affinity + rand.nextInt(21);
 			
 			// Add aptamer to pool and update affinity 
-			int a_id = cycle.addToSelectionCycle(n,c);
+			int a_id = cycle.addToSelectionCycle(n, primer5.length(), randomized_region_size+primer5.length(),  c);
 			affinities.put(a_id, a);
 			
 			total += c;
@@ -292,12 +302,12 @@ public class AptaSimParser implements Parser, Runnable{
 		//add remaining sequences
 		for (int x=number_of_seeds; x<number_of_sequences; x++)
 		{
-			byte[] n = hmm.generateSequence(randomized_region_size);
+			byte[] n = hmm.generateSequence(randomized_region_size, true);
 			int c = rand.nextInt(max_sequence_count);
 			int a = rand.nextInt(max_sequence_affinity);
 			
 			// Add aptamer to pool and update affinity 
-			int a_id = cycle.addToSelectionCycle(n,c);
+			int a_id = cycle.addToSelectionCycle(n, primer5.length(), randomized_region_size+primer5.length(),  c);
 			affinities.put(a_id, a);
 			
 			total += c;
@@ -325,12 +335,12 @@ public class AptaSimParser implements Parser, Runnable{
 		int total = 0;
 		for (int x=0; x<number_of_seeds; x++)
 		{
-			byte[] n = generateSequence(randomized_region_size);
+			byte[] n = generateSequence(randomized_region_size, true);
 			int c = rand.nextInt(max_sequence_count); 
 			int a = min_seed_affinity + rand.nextInt(21);
 			
 			// Add aptamer to pool and update affinity 
-			int a_id = cycle.addToSelectionCycle(n,c);
+			int a_id = cycle.addToSelectionCycle(n, primer5.length(), randomized_region_size+primer5.length(),  c);
 			affinities.put(a_id, a);
 			
 			total += c;
@@ -341,12 +351,12 @@ public class AptaSimParser implements Parser, Runnable{
 		//add remaining sequences
 		for (int x=number_of_seeds; x<number_of_sequences; x++)
 		{
-			byte[] n = generateSequence(randomized_region_size);
+			byte[] n = generateSequence(randomized_region_size, true);
 			int c = rand.nextInt(max_sequence_count);
 			int a = rand.nextInt(max_sequence_affinity);
 			
 			// Add aptamer to pool and update affinity 
-			int a_id = cycle.addToSelectionCycle(n,c);
+			int a_id = cycle.addToSelectionCycle(n, primer5.length(), randomized_region_size+primer5.length(),  c);
 			affinities.put(a_id, a);
 			
 			total += c;
@@ -416,7 +426,7 @@ public class AptaSimParser implements Parser, Runnable{
 				bit.flip(pick);
 				
 				//add or update sample
-				next.addToSelectionCycle(Configuration.getExperiment().getAptamerPool().getAptamer(a_id));
+				next.addToSelectionCycle(Configuration.getExperiment().getAptamerPool().getAptamer(a_id), primer5.length(), randomized_region_size+primer5.length() );
 				progress.totalSampledReads.getAndIncrement();
 				
 				sample_total++;
@@ -477,7 +487,7 @@ public class AptaSimParser implements Parser, Runnable{
 							mutant[pos] = base_mutation_rates[rand.nextInt(base_mutation_rates.length)];
 													
 							//update
-							int m_id = cycle.addToSelectionCycle(mutant);
+							int m_id = cycle.addToSelectionCycle(mutant, primer5.length(), randomized_region_size+primer5.length());
 							progress.totalMutatedReads.getAndIncrement();
 							
 							// The mutant is set to the affinity of its parent sequence
@@ -486,7 +496,7 @@ public class AptaSimParser implements Parser, Runnable{
 						}
 						else
 						{
-							cycle.addToSelectionCycle(entry.getKey());
+							cycle.addToSelectionCycle(entry.getKey(), primer5.length(), randomized_region_size+primer5.length());
 							progress.totalSampledReads.getAndIncrement();
 						}
 					}
@@ -516,9 +526,11 @@ public class AptaSimParser implements Parser, Runnable{
 	 * @param size
 	 * @return
 	 */
-	private byte[] generateSequence(int size)
+	private byte[] generateSequence(int size, boolean withPrimers)
 	{
 		StringBuilder sb = new StringBuilder(size);
+		
+		sb.append(withPrimers ? primer5 : "");
 		
 		for(int i=0; i<size; i++)
 		{
@@ -534,6 +546,9 @@ public class AptaSimParser implements Parser, Runnable{
 				}
 			}
 		}
+		
+		sb.append(withPrimers ? primer3 : "");
+		
 		return sb.toString().getBytes();		
 	}
 	

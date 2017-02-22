@@ -114,10 +114,13 @@ public class Export {
 		ExportWriter writer = Configuration.getParameters().getBoolean("Export.compress") ? new CompressedExportWriter() : new UncompressedExportWriter();
 		writer.open(p);
 
+		// Load the formatter
+		ExportFormat<double[]> formatter= new StructureExportFormat();
+		
 		// Write structures 
 		for ( Map.Entry<Integer, double[]> entry : sp.iterator() ){
 			//ID and Sequence
-			writer.write(">Aptasuite_"+ entry.getKey() + " ");
+			writer.write(formatter.format(entry.getKey(), entry.getValue()));
 		}
 		
 		// Finalize

@@ -5,8 +5,6 @@ package lib.aptamer.datastructures;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -19,9 +17,6 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import org.apache.commons.io.FileUtils;
 import org.mapdb.BTreeMap;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
@@ -29,7 +24,6 @@ import org.mapdb.HTreeMap;
 import org.mapdb.Serializer;
 import org.mapdb.serializer.SerializerCompressionWrapper;
 
-import exceptions.InvalidConfigurationException;
 import orestes.bloomfilter.BloomFilter;
 import orestes.bloomfilter.FilterBuilder;
 import utilities.AptaLogger;
@@ -43,6 +37,11 @@ import utilities.Configuration;
  */
 public class MapDBAptamerPool implements AptamerPool {
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -1376976629428257697L;
+
 	/**
 	 * Path on file system for the current experiment
 	 */
@@ -87,6 +86,12 @@ public class MapDBAptamerPool implements AptamerPool {
 	 */
 	private transient List<HTreeMap<byte[], Integer>> poolData = new ArrayList<HTreeMap<byte[], Integer>>();
 
+	/**
+	 * HashMap backed by MapDB which stores aptamer boundary data on disk for
+	 * memory efficiency. Here, boundary stands for start (inclusive) and end (exclusive) index 
+	 * of the randomized region.
+	 */
+	private transient HTreeMap<Integer, int[]> boundsData = null;
 	
 	/**
 	 * The inverse view of the <code>poolData</code> mapping ids to aptamers
@@ -104,7 +109,7 @@ public class MapDBAptamerPool implements AptamerPool {
 	 * Stores the file locations of the mapdb instance in <code>poolData</code>.
 	 */
 	private List<Path> poolDataPaths = new ArrayList<Path>();
-	
+
 	
 	/**
 	 * The maximal number of unique aptamers to store in one TreeMap. The performance of TreeMap decreases
@@ -160,8 +165,10 @@ public class MapDBAptamerPool implements AptamerPool {
 				
 				for (Path file : directoryStream) {
 	                
-	    			// Open and read the TreeMap, skip the inverse file
-	    			if (Files.isRegularFile(file) && !file.getFileName().toString().equals("data_inverse.mapdb") ){
+	    			// Open and read the TreeMap, skip the inverse file, and the bounds data (will be loaded explicitly for each data file)
+	    			if (Files.isRegularFile(file) && 
+	    					!file.getFileName().toString().equals("data_inverse.mapdb") &&
+	    					!file.getFileName().toString().contains("bounds") ){
 	    				
 	    				AptaLogger.log(Level.INFO, this.getClass(), "Processing " + file.getFileName().toString());
 	    				long tParserStart = System.currentTimeMillis();
@@ -174,16 +181,16 @@ public class MapDBAptamerPool implements AptamerPool {
 	    					    .make();
 	
 	    				HTreeMap<byte[], Integer> dbmap = db.hashMap("map")
-	    						.keySerializer(new SerializerCompressionWrapper(Serializer.BYTE_ARRAY))
+	    						.keySerializer(new SerializerCompressionWrapper<byte[]>(Serializer.BYTE_ARRAY))
 	    						.valueSerializer(Serializer.INTEGER)
 	    						.open();
 	    				
 	    				poolData.add(dbmap);
 	    				poolDataPaths.add(file);
-	    				
+
+	    				// Setup helper variables	    				
 	    				BloomFilter<String> localBloomFilter = new FilterBuilder(maxTreeMapCapacity, bloomFilterCollisionProbability).buildBloomFilter();
 	    				poolDataBloomFilter.add(localBloomFilter);
-	    				
 	    				
 	    				// Update values
 	    				int currentDBmapSize = dbmap.size();
@@ -222,7 +229,7 @@ public class MapDBAptamerPool implements AptamerPool {
 			poolDataInverse = db_inverse.treeMap("map")
 					.valuesOutsideNodesEnable()
 					.keySerializer(Serializer.INTEGER)
-					.valueSerializer(new SerializerCompressionWrapper(Serializer.BYTE_ARRAY))
+					.valueSerializer(new SerializerCompressionWrapper<byte[]>(Serializer.BYTE_ARRAY))
 			        .open();
 			
 			// Update the filter content
@@ -231,13 +238,34 @@ public class MapDBAptamerPool implements AptamerPool {
 				poolDataInverseFilter.set(inverse_iterator.next());
 			}
 			
+			
+			// now load the corresponding Bounds file
+			Path boundsfile = Paths.get(poolDataPath.toString(), "bounds" + ".mapdb");
+
+			AptaLogger.log(Level.CONFIG, this.getClass(), "Reading bounds file " + boundsfile.toString());
+			
+			DB db_bounds = DBMaker
+				    .fileDB(boundsfile.toFile())
+				    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
+				    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
+				    .executorEnable()
+				    .make();
+
+			boundsData = db_bounds.hashMap("map")
+					.keySerializer(Serializer.INTEGER)
+					.valueSerializer(Serializer.INT_ARRAY)
+					.open();
+			
+			
 			AptaLogger.log(Level.INFO, this.getClass(), "Found and loaded a total of " + poolSize + " aptamers on disk.");
 			
 		}
-		else{ // Create an empty instance of the MapDB Container
-
+		else{ 
+			
+		// Create an empty instance of the MapDB Container...
+		Path file = Paths.get(poolDataPath.toString(), "data" + String.format("%04d", poolData.size()) + ".mapdb");
 		DB db = DBMaker
-			    .fileDB(Paths.get(poolDataPath.toString(), "data" + String.format("%04d", poolData.size()) + ".mapdb").toFile())
+			    .fileDB(file.toFile())
 			    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
 			    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
 			    .executorEnable()
@@ -248,15 +276,33 @@ public class MapDBAptamerPool implements AptamerPool {
 				.valueSerializer(Serializer.INTEGER)
 		        .create();
 		
-		poolDataPaths.add(Paths.get(poolDataPath.toString(), "data" + String.format("%04d", poolData.size()) + ".mapdb"));
+		poolDataPaths.add(file);
 		poolData.add(dbmap);
+		
+		AptaLogger.log(Level.CONFIG, this.getClass(), "Created new file " + file.toString());
 
+		// ... as well as a new bounds file
+		Path boundsfile = Paths.get(poolDataPath.toString(), "bounds" + ".mapdb");
+		
+		DB db_bounds = DBMaker
+			    .fileDB(boundsfile.toFile())
+			    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
+			    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
+			    .executorEnable()
+			    .make();
+
+		boundsData = db_bounds.hashMap("map")
+				.keySerializer(Serializer.INTEGER)
+				.valueSerializer(Serializer.INT_ARRAY)
+				.create();
+		
+		AptaLogger.log(Level.CONFIG, this.getClass(), "Created new bounds file " + boundsfile.toString());
+		
 		BloomFilter<String> localBloomFilter = new FilterBuilder(maxTreeMapCapacity, bloomFilterCollisionProbability).buildBloomFilter();
 		poolDataBloomFilter.add(localBloomFilter);
 		
 		currentTreeMapSize = 0;
 		
-		AptaLogger.log(Level.CONFIG, this.getClass(), "Created new file " + Paths.get(poolDataPath.toString(), "data" + String.format("%04d", poolData.size()) + ".mapdb").toString());
 	
 		// Create the inverse view files
 		DB db_inverse = DBMaker
@@ -269,10 +315,10 @@ public class MapDBAptamerPool implements AptamerPool {
 		poolDataInverse = db_inverse.treeMap("map")
 				.valuesOutsideNodesEnable()
 				.keySerializer(Serializer.INTEGER)
-				.valueSerializer(new SerializerCompressionWrapper(Serializer.BYTE_ARRAY))
+				.valueSerializer(new SerializerCompressionWrapper<byte[]>(Serializer.BYTE_ARRAY))
 		        .create();
 		
-		AptaLogger.log(Level.CONFIG, this.getClass(), "Created new file " + Paths.get(poolDataPath.toString(), "data_inverse" + ".mapdb").toFile());
+		AptaLogger.log(Level.CONFIG, this.getClass(), "Created new inverse file " + Paths.get(poolDataPath.toString(), "data_inverse" + ".mapdb").toFile());
 		
 		}
 	}
@@ -280,7 +326,7 @@ public class MapDBAptamerPool implements AptamerPool {
 	/* (non-Javadoc)
 	 * @see aptamer.pool.AptamerPool#registerAptamer(byte[] a)
 	 */
-	public synchronized int registerAptamer(byte[] a){
+	public synchronized int registerAptamer(byte[] a, int rr_start, int rr_end){
 		
 		// Check if the item is already registered, and if so, return its identifier
 		int identifier = this.getIdentifier(a);
@@ -291,13 +337,15 @@ public class MapDBAptamerPool implements AptamerPool {
 		// Check that the current map is not at max capacity and create a new map if that is the case
 		if (currentTreeMapSize == maxTreeMapCapacity){
 			
+			Path file = Paths.get(poolDataPath.toString(), "data" + String.format("%04d", poolData.size()) + ".mapdb");
+			
 			AptaLogger.log(Level.CONFIG, this.getClass(), 
-					"Current Map is at max capacity creating new file " + Paths.get(poolDataPath.toString(), "data" + String.format("%04d", poolData.size()) + ".mapdb").toString() + "\n" +
+					"Current Map is at max capacity creating new file " + file.toString() + "\n" +
 					"Total number of aptamers: " + poolSize 
 					);
 			
 			DB db = DBMaker
-				    .fileDB(Paths.get(poolDataPath.toString(), "data" + String.format("%04d", poolData.size()) + ".mapdb").toFile())
+				    .fileDB(file.toFile())
 				    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
 				    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
 				    .executorEnable()
@@ -308,7 +356,7 @@ public class MapDBAptamerPool implements AptamerPool {
 					.valueSerializer(Serializer.INTEGER)
 			        .create();
 
-			poolDataPaths.add(Paths.get(poolDataPath.toString(), "data" + String.format("%04d", poolData.size()) + ".mapdb"));
+			poolDataPaths.add(file);
 			poolData.add(dbmap);
 			
 			BloomFilter<String> localBloomFilter = new FilterBuilder(maxTreeMapCapacity, bloomFilterCollisionProbability).buildBloomFilter();
@@ -327,15 +375,18 @@ public class MapDBAptamerPool implements AptamerPool {
 		poolDataInverse.put(poolSize, a);
 		poolDataInverseFilter.set(poolSize);
 		
+		// and the bounds data
+		boundsData.put(identifier, new int[]{rr_start,rr_end});
+		
 		return poolSize;
 	}
 	
 	/* (non-Javadoc)
 	 * @see aptamer.pool.AptamerPool#registerAptamer(byte[] a)
 	 */
-	public int registerAptamer(String a){
+	public int registerAptamer(String a, int rr_start, int rr_end){
 		
-		return registerAptamer(a.getBytes());
+		return registerAptamer(a.getBytes(), rr_start, rr_end);
 	
 	}
 
@@ -399,6 +450,19 @@ public class MapDBAptamerPool implements AptamerPool {
 		
 	}
 	
+	/* (non-Javadoc)
+	 * @see aptamer.pool.AptamerPool#getAptamerBounds(int id)
+	 */
+	public AptamerBounds getAptamerBounds(int id) {
+		
+		// Check if the aptamer is present in the pool via fast lookup
+		if (!containsAptamer(id)){
+			return null;
+		}
+	
+		return new AptamerBounds(boundsData.get(id));
+		
+	}
 	
 	/* (non-Javadoc)
 	 * @see aptamer.pool.AptamerPool#hasAptamer(byte[])
@@ -442,6 +506,8 @@ public class MapDBAptamerPool implements AptamerPool {
 	 */
 	public void close(){
 		
+		AptaLogger.log(Level.CONFIG, this.getClass(), "Closing pool file handles.");
+		
 		// Iterate over each TreeMap instance and close it
 		ListIterator<HTreeMap<byte[], Integer>> li = poolData.listIterator(poolData.size());
 
@@ -451,7 +517,10 @@ public class MapDBAptamerPool implements AptamerPool {
 			li.previous().close();
 
 		}
-		
+
+		// Close the bounds data
+		boundsData.close();
+
 		// Close the inverse view
 		poolDataInverse.close();
 	}
@@ -479,6 +548,9 @@ public class MapDBAptamerPool implements AptamerPool {
 		// Reset the pool data
 		this.poolData.clear();
 		this.poolDataPaths.clear();
+
+		// Reset the bounds data
+		this.boundsData.clear();
 		
 		// Reset the inverse pool data
 		this.poolDataInverse.clear();
@@ -595,7 +667,7 @@ public class MapDBAptamerPool implements AptamerPool {
 					    .make();
 
 				HTreeMap<byte[], Integer> dbmap = db.hashMap("map")
-						.keySerializer(new SerializerCompressionWrapper(Serializer.BYTE_ARRAY))
+						.keySerializer(new SerializerCompressionWrapper<byte[]>(Serializer.BYTE_ARRAY))
 						.valueSerializer(Serializer.INTEGER)
 						.open();
 				
@@ -605,6 +677,23 @@ public class MapDBAptamerPool implements AptamerPool {
 			}
             
         }
+		
+		// same for the bounds data
+		DB db = DBMaker
+			    .fileDB(Paths.get(poolDataPath.toString(), "bounds" + ".mapdb").toFile())
+			    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
+			    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
+			    .executorEnable()
+			    .readOnly()
+			    .make();
+
+		boundsData = db.hashMap("map")
+				.keySerializer(Serializer.INTEGER)
+				.valueSerializer(Serializer.INT_ARRAY)
+				.open();
+		
+		
+		AptaLogger.log(Level.CONFIG, this.getClass(), "Reopened as read only file " + Paths.get(poolDataPath.toString(), "bounds" + ".mapdb").toString() );
 		
 		// do the same for the inverse view
 		DB db_inverse = DBMaker
@@ -618,7 +707,7 @@ public class MapDBAptamerPool implements AptamerPool {
 		poolDataInverse = db_inverse.treeMap("map")
 				.valuesOutsideNodesEnable()
 				.keySerializer(Serializer.INTEGER)
-				.valueSerializer(new SerializerCompressionWrapper(Serializer.BYTE_ARRAY))
+				.valueSerializer(new SerializerCompressionWrapper<byte[]>(Serializer.BYTE_ARRAY))
 		        .open();
 		
 		AptaLogger.log(Level.CONFIG, this.getClass(), "Reopened as read only file " + Paths.get(poolDataPath.toString(), "data_inverse" + ".mapdb").toString() );
@@ -647,7 +736,7 @@ public class MapDBAptamerPool implements AptamerPool {
 					    .make();
 
 				HTreeMap<byte[], Integer> dbmap = db.hashMap("map")
-						.keySerializer(new SerializerCompressionWrapper(Serializer.BYTE_ARRAY))
+						.keySerializer(new SerializerCompressionWrapper<byte[]>(Serializer.BYTE_ARRAY))
 						.valueSerializer(Serializer.INTEGER)
 						.open();
 				
@@ -657,6 +746,21 @@ public class MapDBAptamerPool implements AptamerPool {
 			}
             
         }
+		
+		// same for the bounds data
+		DB db = DBMaker
+			    .fileDB(Paths.get(poolDataPath.toString(), "bounds" + ".mapdb").toFile())
+			    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
+			    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
+			    .executorEnable()
+			    .make();
+
+		boundsData = db.hashMap("map")
+				.keySerializer(Serializer.INTEGER)
+				.valueSerializer(Serializer.INT_ARRAY)
+				.open();
+		
+		AptaLogger.log(Level.CONFIG, this.getClass(), "Reopened as read/write file " + Paths.get(poolDataPath.toString(), "bounds" + ".mapdb").toString() );
 		
 		// and the inverse view
 		DB db_inverse = DBMaker
@@ -669,93 +773,11 @@ public class MapDBAptamerPool implements AptamerPool {
 		poolDataInverse = db_inverse.treeMap("map")
 				.valuesOutsideNodesEnable()
 				.keySerializer(Serializer.INTEGER)
-				.valueSerializer(new SerializerCompressionWrapper(Serializer.BYTE_ARRAY))
+				.valueSerializer(new SerializerCompressionWrapper<byte[]>(Serializer.BYTE_ARRAY))
 		        .open();
 		
 		AptaLogger.log(Level.CONFIG, this.getClass(), "Reopened as read only file " + Paths.get(poolDataPath.toString(), "data_inverse" + ".mapdb").toString() );
     }		 
-	 
-	 
-	/**
-	 * Since MapDB objects are not serializable in itself, we need to 
-	 * handle storage and retrieval manually so we can use the java
-	 * Serializable interface with the main instance
-	 * 
-	 * Note: Calling this function will set the MapDB into read-only
-	 * mode
-	 * 
-	 * @param oos
-	 * @throws IOException
-	 */
-	private void writeObject(ObjectOutputStream oos) throws IOException {
-		
-		// default serialization 
-	    oos.defaultWriteObject();
-		
-	    // set into read-only mode
-	    this.setReadOnly();
-	}
-	
-	/**
-	 * Since MapDB objects are not serializable in itself, we need to 
-	 * handle storage and retrieval manually so we can use the java
-	 * Serializable interface with the main instance
-	 * 
-	 * Note: Calling this function will road the MapDB in read-only
-	 * mode
-	 * @param ois
-	 * @throws ClassNotFoundException
-	 * @throws IOException
-	 */
-	private void readObject(ObjectInputStream ois) throws ClassNotFoundException, IOException {
-
-		// default deserialization
-	    ois.defaultReadObject();
-
-    	// open as read only
-	    poolData = new ArrayList<HTreeMap<byte[], Integer>>();
-	    
-	    // since we are opening the maps as read-only, we can set the size of the bloom filters to exactly 
-	    // the number of aptamers in the corresponding mapdb contrainers
-		bloomFilter = new FilterBuilder(poolSize, bloomFilterCollisionProbability).buildBloomFilter(); 
-		poolDataBloomFilter = new ArrayList<BloomFilter<String>>();
-		
-	    
-		for (Path file : poolDataPaths) {
-            
-			// Open and read the TreeMap
-			if (Files.isRegularFile(file)){
-				
-				DB db = DBMaker
-					    .fileDB(file.toFile())
-					    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
-					    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
-					    .executorEnable()
-					    .readOnly()
-					    .make();
-
-				HTreeMap<byte[], Integer> dbmap = db.hashMap("map")
-						.keySerializer(new SerializerCompressionWrapper(Serializer.BYTE_ARRAY))
-						.valueSerializer(Serializer.INTEGER)
-						.open();
-				
-				poolData.add(dbmap);
-				
-//				update counts
-				BloomFilter<String> localBloomFilter = new FilterBuilder(maxTreeMapCapacity, bloomFilterCollisionProbability).buildBloomFilter();
-				poolDataBloomFilter.add(localBloomFilter);
-				
-				for ( Entry<byte[], Integer> entry : dbmap.getEntries()){
-					bloomFilter.add(entry.getKey());
-					localBloomFilter.add(entry.getKey());
-				}
-				
-				AptaLogger.log(Level.CONFIG, this.getClass(),  "Reopened as read only file " + file.toString() );
-			}
-        }
-	}
-	
-	
 
 	/**
 	 * @author Jan Hoinka
@@ -851,4 +873,6 @@ public class MapDBAptamerPool implements AptamerPool {
 		return new IdIterator();
 		
 	}
+
+
 }

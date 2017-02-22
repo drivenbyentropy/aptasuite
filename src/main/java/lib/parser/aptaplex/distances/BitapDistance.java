@@ -3,9 +3,7 @@
  */
 package lib.parser.aptaplex.distances;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -40,15 +38,6 @@ public class BitapDistance implements Distance{
 		
 		Result result = null;
 
-		// Is there an exact match? (speedup)
-//		int exactIndex = new String(text).indexOf(patternstring);
-//		if (exactIndex != -1) {
-//			result = new Result();
-//			result.index = exactIndex;
-//			result.errors = 0;
-//			return result;
-//		}
-		
 		// Initialize the alphabet.
         Map<Byte, Integer> alphabet = initAlphabet(pattern);
 

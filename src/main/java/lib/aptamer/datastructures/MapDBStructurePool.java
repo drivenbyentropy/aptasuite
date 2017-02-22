@@ -183,6 +183,12 @@ public class MapDBStructurePool implements StructurePool {
 				}
         	} catch (IOException ex) {}
 			
+			// If no structure data exists on disk, we need to fail here
+			if (structureData.isEmpty()){
+				AptaLogger.log(Level.SEVERE, this.getClass(), "No structure data was found on disk but is required for this operation.");
+				throw new IllegalStateException("No structure data was found on disk but is required for this operation.");
+			}
+			
 			AptaLogger.log(Level.INFO, this.getClass(), "Found and loaded a total of " + structureDataSize + " structures on disk.");
 			
 		}

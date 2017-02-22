@@ -510,7 +510,7 @@ public class CLI {
 						
 						// Now run the export
 						for (SelectionCycle sc : cycles_to_export){
-							Path cycleexportpath = Paths.get(exportPath.toString(), sc.getName() + ".fastq" + extension);
+							Path cycleexportpath = Paths.get(exportPath.toString(), sc.getName() + "." + extension);
 							AptaLogger.log(Level.INFO, this.getClass(), "Exporting selection cycle " + sc.getName() + " to file " + cycleexportpath.toString());
 							export.Cycle(sc, cycleexportpath );
 						}
@@ -519,6 +519,15 @@ public class CLI {
 					break;
 					
 				case "structures":
+					
+					AptaLogger.log(Level.INFO, this.getClass(), "Exporting structure data");
+					
+					//Make sure we have structures
+					if (experiment.getStructurePool() == null)
+					{
+						experiment.instantiateStructurePool(false);
+					}	
+					
 					export.Structures(Configuration.getExperiment().getStructurePool(), Paths.get(exportPath.toString(), "structures.txt." + (compress ? ".gz" : "")));
 					break;
 					

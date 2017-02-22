@@ -3,6 +3,9 @@
  */
 package lib.export;
 
+import java.util.Arrays;
+
+import lib.aptamer.datastructures.AptamerBounds;
 import utilities.Configuration;
 
 /**
@@ -31,21 +34,6 @@ public class FastqExportFormat implements ExportFormat<byte[]> {
 	 */
 	Boolean withPrimers = Configuration.getParameters().getBoolean("Export.IncludePrimerRegions");
 	
-	/**
-	 * The total size of the primers, required to 
-	 * compute the overall aptamer length to be exported 
-	 */
-	Integer primerLengths = Configuration.getParameters().getString("Experiment.primer5").length() + Configuration.getParameters().getString("Experiment.primer3").length(); 
-	
-	/**
-	 * The 5' primer sequence 
-	 */
-	String primer5 = Configuration.getParameters().getString("Experiment.primer5");
-
-	/**
-	 * The 3' primer sequence 
-	 */
-	String primer3 = Configuration.getParameters().getString("Experiment.primer3");
 	
 	/**
 	 * Constructor
@@ -62,17 +50,20 @@ public class FastqExportFormat implements ExportFormat<byte[]> {
 	@Override
 	public String format(int id, byte[] sequence) {
 		
-		// compute length depending whether primers should be exported or not
-		int length = withPrimers ? sequence.length + primerLengths : sequence.length;
+		// Compute bounds depending on the settings in the configuration file
+		AptamerBounds bounds = withPrimers ? new AptamerBounds(0, sequence.length) : Configuration.getExperiment().getAptamerPool().getAptamerBounds(id);
+		
+		// Compute length depending whether primers should be exported or not
+		int length = withPrimers ? sequence.length : bounds.endIndex - bounds.startIndex;
 		
 		// make sure the qualityScore is at least as long as the sequence
-		while (qualityScores.length() < sequence.length+primerLengths){
+		while (qualityScores.length() < sequence.length){
 			qualityScores.append('B');
 		}
 		
 		return String.format("@%s\n%s\n+\n%s\n", 
 				"AptaSuite_" + id + " " + name + " length=" + length,
-				(withPrimers ? primer5 + new String(sequence) + primer3 : new String(sequence)),
+				(withPrimers ? new String(sequence) : new String(Arrays.copyOfRange(sequence, bounds.startIndex, bounds.startIndex))),
 				qualityScores.subSequence(0, length)
 				);
 		

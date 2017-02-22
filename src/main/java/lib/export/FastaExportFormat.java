@@ -1,5 +1,6 @@
 package lib.export;
 
+import lib.aptamer.datastructures.AptamerBounds;
 import utilities.Configuration;
 
 /**
@@ -20,22 +21,6 @@ public class FastaExportFormat implements ExportFormat<byte[]> {
 	 * Whether to include primers in the export or not
 	 */
 	Boolean withPrimers = Configuration.getParameters().getBoolean("Export.IncludePrimerRegions");
-	
-	/**
-	 * The total size of the primers, required to 
-	 * compute the overall aptamer length to be exported 
-	 */
-	Integer primerLengths = Configuration.getParameters().getString("Experiment.primer5").length() + Configuration.getParameters().getString("Experiment.primer3").length(); 
-	
-	/**
-	 * The 5' primer sequence 
-	 */
-	String primer5 = Configuration.getParameters().getString("Experiment.primer5");
-
-	/**
-	 * The 3' primer sequence 
-	 */
-	String primer3 = Configuration.getParameters().getString("Experiment.primer3");
 	
 	/**
 	 * The maximum number of characters per line.  It is recommended that all 
@@ -59,12 +44,14 @@ public class FastaExportFormat implements ExportFormat<byte[]> {
 	@Override
 	public String format(int id, byte[] sequence) {  
 		
+		// Compute bounds depending on the settings in the configuration file
+		AptamerBounds bounds = withPrimers ? new AptamerBounds(0, sequence.length) : Configuration.getExperiment().getAptamerPool().getAptamerBounds(id);
+		
 		// Compute length depending whether primers should be exported or not
-		int length = withPrimers ? sequence.length + primerLengths : sequence.length;
+		int length = withPrimers ? sequence.length : bounds.endIndex - bounds.startIndex;
 		
 		// Build the sequence with newline if the total lengths exceeds the specification
-		String rawSequence = (withPrimers ? primer5 + new String(sequence) + primer3 : new String(sequence));
-		StringBuilder formattedSequence = new StringBuilder(length);
+		StringBuilder formattedSequence = new StringBuilder(length + new Double(length/80.).intValue());
 		int breakCounter = 0;
 		for (int x = 0; x<length; x++,breakCounter++){
 
@@ -73,7 +60,7 @@ public class FastaExportFormat implements ExportFormat<byte[]> {
 				breakCounter = 0;
 			}
 			
-			formattedSequence.append(rawSequence.charAt(x));
+			formattedSequence.append(sequence[x]);
 		}
 	
 		return String.format(">%s\n%s\n", 

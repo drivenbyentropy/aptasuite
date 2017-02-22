@@ -38,7 +38,7 @@ public interface SelectionCycle extends Serializable{
 	 * @param a the aptamer in question
 	 * @return the unique id assigned to aptamer <code>a</code>
 	 */
-	public int addToSelectionCycle(String a);
+	public int addToSelectionCycle(String a, int rr_start, int rr_end);
 	
 	/**
 	 * Adds aptamer <code>a</code> to this selection cycle. If the aptamer is already present
@@ -47,7 +47,7 @@ public interface SelectionCycle extends Serializable{
 	 * @param a the aptamer in question
 	 * @return the unique id assigned to aptamer <code>a</code>
 	 */
-	public int addToSelectionCycle(byte[] a);
+	public int addToSelectionCycle(byte[] a, int rr_start, int rr_end);
 	
 	/**
 	 * Adds aptamer <code>a</code> to this selection cycle. If the aptamer is already present
@@ -57,7 +57,7 @@ public interface SelectionCycle extends Serializable{
 	 * @param the number by which the current count of <code>a</code> should be increased with
 	 * @return the unique id assigned to aptamer <code>a</code> 
 	 */
-	public int addToSelectionCycle(byte[] a, int count);
+	public int addToSelectionCycle(byte[] a, int rr_start, int rr_end, int count);
 	
 	/**
 	 * Adds aptamer <code>a</code> to this selection cycle. If the aptamer is already present
@@ -67,7 +67,7 @@ public interface SelectionCycle extends Serializable{
 	 * @param the number by which the current count of <code>a</code> should be increased with
 	 * @return the unique id assigned to aptamer <code>a</code> 
 	 */
-	public int addToSelectionCycle(String a, int count);
+	public int addToSelectionCycle(String a, int rr_start, int rr_end, int count);
 	
 	/**
 	 * Checks whether an aptamer is part of this selection cycle

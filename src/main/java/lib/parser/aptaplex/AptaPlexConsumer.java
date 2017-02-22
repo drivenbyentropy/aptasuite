@@ -260,7 +260,11 @@ public class AptaPlexConsumer implements Runnable {
 				 // if the sequence was exacted successfully, we can finally
 				 // add it to to the selection cycle
 				 if (randomized_region_start_index < randomized_region_end_index && randomized_region_end_index <= contig.length){
-					 read.selection_cycle.addToSelectionCycle(Arrays.copyOfRange(contig, randomized_region_start_index, randomized_region_end_index));
+					 read.selection_cycle.addToSelectionCycle(
+							 Arrays.copyOfRange(contig, randomized_region_start_index-primer5.length, randomized_region_end_index+primer3.length)
+							 ,randomized_region_start_index
+							 ,randomized_region_end_index
+							 );
 					 progress.totalAcceptedReads.incrementAndGet();
 				 }
 
@@ -517,7 +521,7 @@ public class AptaPlexConsumer implements Runnable {
 
 	/**
 	 * Given the alignment of 2 sequences onto the same contig, check if their
-	 * alinment positions overlap.
+	 * alignment positions overlap.
 	 * 
 	 * @param al1
 	 * @param al2

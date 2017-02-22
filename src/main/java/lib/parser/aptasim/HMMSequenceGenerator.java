@@ -17,7 +17,10 @@ public class HMMSequenceGenerator
 	private Random rand = new Random();
 	private Map<String, Double> dist = new HashMap<String, Double>();
 	private static final DecimalFormat df = new DecimalFormat("0.00000000");
+	private String p5 = null;
+	private String p3 = null;
 	
+
 	/**
 	 * Degree of the Markov Chain
 	 */
@@ -28,8 +31,12 @@ public class HMMSequenceGenerator
 	 */
 	private Integer[] counts;
 	
-	public HMMSequenceGenerator(int degree)
+	public HMMSequenceGenerator(int degree, String p5, String p3)
 	{
+		
+		this.p3 = p3;
+		this.p5 = p5;
+		
 		this.degree = degree;
 		
 		counts = new Integer[degree];
@@ -70,14 +77,18 @@ public class HMMSequenceGenerator
 		}
 	}
 	
-	public byte[] generateSequence(int sequence_length)
+	public byte[] generateSequence(int sequence_length, boolean withPrimers)
 	{
 		StringBuilder sequence = new StringBuilder(sequence_length);
+		
+		sequence.append(withPrimers ? p5 : "");
 		
 		for (int x=0; x<sequence_length; x++)
 		{
 			sequence.append(generateNucleotide(sequence));
 		}
+		
+		sequence.append(withPrimers ? p3 : "");
 		
 		return sequence.toString().getBytes();
 	}
@@ -108,14 +119,6 @@ public class HMMSequenceGenerator
 	{
 		Double total_counts = data.getTotalCounts();
 		int num = rand.nextInt(total_counts.intValue());
-		
-//		System.out.println(total_counts);
-//		System.out.println(num);
-//		for (  Entry<Character, HMMData> c : data.getEntrySet())
-//		{
-//			System.out.print(c.getKey() + " : " + c.getValue().getValue() + " ");
-//		}
-//		System.out.println();
 		
 		Double comulative = 0.0; 
 		Character n = 'N';

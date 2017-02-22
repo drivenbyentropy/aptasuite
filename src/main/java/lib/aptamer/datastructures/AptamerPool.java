@@ -31,15 +31,17 @@ public interface AptamerPool extends Serializable{
 	 * the alphabet validation, i.e. only A C G and T are allowed in all capital letters
 	 * 
 	 * @param a The aptamer sequence to be added to the pool
-	 * @return A unique integer for that sequence
+	 * @param rr_start the index (inclusive) in <code>a</code> at which the randomized region begins  
+	 * @param rr_end the index (exclusive) in <code>a</code> at which the randomized region ends
+	 * @return A unique integer for sequence <code>a</code>
 	 */
-	public int registerAptamer(byte[] a);
+	public int registerAptamer(byte[] a, int rr_start, int rr_end);
 	
 	
 	/**
 	 * @see AptamerPool#registerAptamer(byte[] a)
 	 */
-	public int registerAptamer(String a);
+	public int registerAptamer(String a, int rr_start, int rr_end);
 	
 	
 	/**
@@ -56,11 +58,20 @@ public interface AptamerPool extends Serializable{
 	public int getIdentifier(String a);
 
 	/**
-	 * Returns the aptamer corresponding to <code>id</>
+	 * Returns the aptamer (including flanking primer regions) corresponding to <code>id</>
 	 * @param id the unique identifier of an aptamer in the pool
 	 * @return aptamer sequence or null if no key with <code>id</code> could be found
 	 */
 	public byte[] getAptamer(int id);
+	
+	/**
+	 * Returns the start index (inclusive) and end index (exclusive)
+	 * of the randomized region for aptamer with unique identifier <code>id</code>.
+	 * @param id
+	 * @return bounds such that <code>Arrays.copyOfRange(getAptamer(id), getAptamerBounds(id).startIndex, getAptamerBounds(id).endIndex)</code>
+	 * returns the randomized region of the aptamer
+	 */
+	public AptamerBounds getAptamerBounds(int id); 
 	
 	/**
 	 * Checks for the existence of a specific aptamer <code>a</code> in the pool.

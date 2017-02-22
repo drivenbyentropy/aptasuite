@@ -193,7 +193,7 @@ public class MapDB {
 				for (int i = 0; i < 100; i++) {
 					sb[i] = alphabet[r.nextInt(4)];
 				}
-				p.registerAptamer(new String(sb));
+				p.registerAptamer(new String(sb), 0 ,0);
 				// bf.add(new String(sb));
 				current++;
 			}
@@ -402,7 +402,7 @@ public class MapDB {
 		    for(String line; (line = br.readLine()) != null; ) {
 		        line = line.trim();
 		        
-		        p.registerAptamer(line);
+		        p.registerAptamer(line, 0, 1);
 		    }
 		    // line is not visible here.
 		} catch (FileNotFoundException e) {
