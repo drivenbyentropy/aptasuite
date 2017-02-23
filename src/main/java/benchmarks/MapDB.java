@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -417,26 +418,29 @@ public class MapDB {
 
 	public static void main(String[] args) {
 		
-		CapR capr = new CapR();
+//		CapR capr = new CapR();
+//		
+//		
+//		String sequence = "ACGCTGTCTGTACTTGTATCAGTACACTGACGAGTCCCTAAAGGACGAAACAGCGC";
+//		System.out.println(sequence.length());
+//		capr.ComputeStructuralProfile(sequence.getBytes(), sequence.length());
+//		System.out.println(Arrays.toString(capr.getStructuralProfile()));
+//
+//		System.out.println();
+//		
+//		String sequence2 = "ACGCTGTCTGTACTTGTATCAGTACACAGTAGCTAGCATCGATGACGAGTCCCTAAAGGACGAAACAGCGC";
+//		System.out.println(sequence2.length());
+//		capr.ComputeStructuralProfile(sequence2.getBytes(), sequence2.length());
+//		System.out.println(Arrays.toString(capr.getStructuralProfile()));
+//		
+//		
+//		//testBTreeMap();
+////		generatePairedEndDataset(); 
+////		testRandomSequences();
 		
+		Path wintest = Paths.get("Z:\\tmp\\aptasuitesim\\");
 		
-		String sequence = "ACGCTGTCTGTACTTGTATCAGTACACTGACGAGTCCCTAAAGGACGAAACAGCGC";
-		System.out.println(sequence.length());
-		capr.ComputeStructuralProfile(sequence.getBytes(), sequence.length());
-		System.out.println(Arrays.toString(capr.getStructuralProfile()));
-
-		System.out.println();
-		
-		String sequence2 = "ACGCTGTCTGTACTTGTATCAGTACACAGTAGCTAGCATCGATGACGAGTCCCTAAAGGACGAAACAGCGC";
-		System.out.println(sequence2.length());
-		capr.ComputeStructuralProfile(sequence2.getBytes(), sequence2.length());
-		System.out.println(Arrays.toString(capr.getStructuralProfile()));
-		
-		
-		//testBTreeMap();
-//		generatePairedEndDataset(); 
-//		testRandomSequences();
-		
+		System.out.println(Files.isWritable(wintest));
 
 	}
 

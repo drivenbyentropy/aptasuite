@@ -3,6 +3,7 @@
  */
 package lib.aptamer.datastructures;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
@@ -146,9 +147,16 @@ public class MapDBAptamerPool implements AptamerPool {
 		AptaLogger.log(Level.INFO, this.getClass(), "Instantiating MapDBAptamerPool");
 		
 		// Make sure the folder is writable
-		if (!Files.isWritable(projectPath)){
-			AptaLogger.log(Level.SEVERE, this.getClass(),"The project path is not writable.");
-			throw (new IllegalStateException("The project path is not writable.") );
+		// Files.isWritable() might fail on different platforms and permission combinations,
+		// hence we need to check it manually.
+		try{
+			File sample = new File(projectPath.toFile(), "deleteme.txt");
+			sample.createNewFile();
+			sample.delete();
+		}
+		catch (IOException e){
+			AptaLogger.log(Level.SEVERE, this.getClass(),"The project path " + projectPath.toString() + " is not writable.");
+			throw (new IllegalStateException("The project path " + projectPath.toString() + " is not writable.") );
 		}
 		
 		// Set the project path and pool data path

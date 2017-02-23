@@ -528,7 +528,7 @@ public class CLI {
 						experiment.instantiateStructurePool(false);
 					}	
 					
-					export.Structures(Configuration.getExperiment().getStructurePool(), Paths.get(exportPath.toString(), "structures.txt." + (compress ? ".gz" : "")));
+					export.Structures(Configuration.getExperiment().getStructurePool(), Paths.get(exportPath.toString(), "structures.txt" + (compress ? ".gz" : "")));
 					break;
 					
 				default:
