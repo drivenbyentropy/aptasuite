@@ -402,7 +402,13 @@ public class AptaPlexConsumer implements Runnable {
 				int mismatches = 0;
 				for (int x = best_match.index, y = 0; y < primer.length; x++, y++) {
 
-					if (c[x] != primer[y]) {
+					try{
+						if (c[x] != primer[y]) {
+							mismatches++;
+						}
+					}
+					// if the primer only overlaps the contig, we count it as a mismatch too
+					catch(ArrayIndexOutOfBoundsException e){
 						mismatches++;
 					}
 				}
@@ -418,8 +424,14 @@ public class AptaPlexConsumer implements Runnable {
 				for (int t = 1; t < primerTolerance; t++) {
 					mismatches = 0;
 					for (int x = best_match.index - t, y = 0; y < primer.length; x++, y++) {
-						if (c[x] != primer[y]) {
-							mismatches++;
+						
+						try{
+							if (c[x] != primer[y]) {
+								mismatches++;
+							}
+						}
+						catch(ArrayIndexOutOfBoundsException e){
+							mismatches++;							
 						}
 					}
 

@@ -86,7 +86,7 @@ public class Configuration {
 				 // PoolMapDB Options
 			     put("MapDBAptamerPool.bloomFilterCapacity", 500000000);
 			     put("MapDBAptamerPool.bloomFilterCollisionProbability", 0.001);
-			     put("MapDBAptamerPool.maxTreeMapCapacity", 7500000);  
+			     put("MapDBAptamerPool.maxTreeMapCapacity", 1000000);  
 			     
 
 			     // SelectionCycle Backend

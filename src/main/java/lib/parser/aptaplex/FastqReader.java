@@ -31,6 +31,16 @@ public class FastqReader implements Reader {
 	BufferedReader reverse_reader = null;
 	
 	/**
+	 * The path for the forward file 
+	 */
+	Path forward_file = null;
+
+	/**
+	 * The path for the reverse file 
+	 */
+	Path reverse_file = null;
+	
+	/**
 	 * Buffers for forward and reverse lines
 	 */
 	String buffer;
@@ -47,6 +57,9 @@ public class FastqReader implements Reader {
 	 */
 	public FastqReader(Path forward_file, Path reverse_file) {
 
+		this.forward_file = forward_file;
+		this.reverse_file = reverse_file;
+		
 		// Initialize the file reader depending on whether the files are gzip
 		// compressed or not
 		
@@ -146,12 +159,19 @@ public class FastqReader implements Reader {
 		
 		try {
 			this.forward_reader.close();
-			this.reverse_reader.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		} catch (Exception e) {
+			AptaLogger.log(Level.CONFIG, this.getClass(), "Error on closing forward file " + this.forward_file.toString());
 		}
 		
+		if (this.reverse_reader != null){
+		
+			try {
+				this.reverse_reader.close();
+			} catch (Exception e) {
+				AptaLogger.log(Level.CONFIG, this.getClass(), "Error on closing reverse file " + this.reverse_file.toString());
+			}
+		
+		}
 		
 	}
 }

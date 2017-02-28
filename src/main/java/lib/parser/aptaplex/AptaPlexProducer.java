@@ -30,6 +30,11 @@ public class AptaPlexProducer implements Runnable{
 	 */
 	BlockingQueue<Object> queue = null;
 	
+	/**
+	 * Defines whether this instance is concerned with multiplexing the data, or if it has
+	 * previously been demultiplexed
+	 */
+	Boolean isPerFile = Configuration.getParameters().getBoolean("AptaplexParser.isPerFile");
 	
 	public AptaPlexProducer(BlockingQueue<Object> queue){
 		
@@ -73,7 +78,7 @@ public class AptaPlexProducer implements Runnable{
 				current_reverse_file_path = Paths.get(reverse_files[x]);
 			}
 			
-			// Create a new SelectionCycle instance. Use reflection so we can define the backend in the configuration
+			// Create a new Reader instance. Use reflection so we can define the backend in the configuration
 			Reader reader = null;
 			Class reader_class = null;
 			try {
@@ -119,7 +124,7 @@ public class AptaPlexProducer implements Runnable{
 				while (read != null){
 					
 					// are we multiplexing?
-					if(Configuration.getParameters().getBoolean("AptaplexParser.isPerFile")){
+					if(isPerFile){
 						
 						// add cycle information to read
 						read.selection_cycle = Configuration.getExperiment().getAllSelectionCycles().get(x);

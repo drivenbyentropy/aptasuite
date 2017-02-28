@@ -178,16 +178,21 @@ public class MapDBAptamerPool implements AptamerPool {
 	    					!file.getFileName().toString().equals("data_inverse.mapdb") &&
 	    					!file.getFileName().toString().contains("bounds") ){
 	    				
-	    				AptaLogger.log(Level.INFO, this.getClass(), "Processing " + file.getFileName().toString());
+	    				AptaLogger.log(Level.INFO, this.getClass(), "Processing " + file.toString());
 	    				long tParserStart = System.currentTimeMillis();
 	    		
+	    				AptaLogger.log(Level.INFO, this.getClass(), "DB ");
+	    				
 	    				DB db = DBMaker
 	    					    .fileDB(file.toFile())
 	    					    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
+	    					    .fileMmapPreclearDisable() // Make mmap file faster
 	    					    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
 	    					    .executorEnable()
 	    					    .make();
 	
+	    				AptaLogger.log(Level.INFO, this.getClass(), "MAPDB ");
+	    				
 	    				HTreeMap<byte[], Integer> dbmap = db.hashMap("map")
 	    						.keySerializer(new SerializerCompressionWrapper<byte[]>(Serializer.BYTE_ARRAY))
 	    						.valueSerializer(Serializer.INTEGER)
@@ -205,6 +210,8 @@ public class MapDBAptamerPool implements AptamerPool {
 	    				poolSize += currentDBmapSize;
 	    				currentTreeMapSize = currentDBmapSize;
 
+	    				AptaLogger.log(Level.INFO, this.getClass(), "ITERATING");
+	    				
 	    				// Update bloom filter content
 	    				Iterator<byte[]> dbmapIterator = dbmap.getKeys().iterator();
 	    				while (dbmapIterator.hasNext()){

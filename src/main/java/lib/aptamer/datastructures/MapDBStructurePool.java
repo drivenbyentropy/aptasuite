@@ -142,6 +142,8 @@ public class MapDBStructurePool implements StructurePool {
 	    			// Open and read the TreeMap, skip the inverse file
 	    			if (Files.isRegularFile(file)){
 	    				
+	    				AptaLogger.log(Level.INFO, this.getClass(), "Processing file " + file.toString());
+	    				
 	    				DB db_structure = DBMaker
 					    .fileDB(file.toFile())
 					    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
