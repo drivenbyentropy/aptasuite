@@ -51,7 +51,8 @@ public class LogoBarPainter extends StandardBarPainter{
 	private static Font f = null;
 	static
 	{
-		InputStream istream = LogoBarPainter.class.getResourceAsStream("SourceCodePro-Regular.ttf");
+		//InputStream istream = LogoBarPainter.class.getResourceAsStream("SourceCodePro-Regular.ttf");
+		InputStream istream = Thread.currentThread().getContextClassLoader().getResourceAsStream("SourceCodePro-Regular.ttf");
 		try {
 			f = Font.createFont(Font.TRUETYPE_FONT, istream);
 		} catch (FontFormatException e) {

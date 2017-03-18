@@ -321,9 +321,9 @@ public class CapR {
 		// fill the array
 		double pf = _Alpha_outer.get(_seq_length);
 		if (pf >= -690 && pf <= 690) {
-			CalcBulgeAndInternalProbability2(profile, 2*_seq_length,1*_seq_length);
+			CalcBulgeAndInternalProbability2(profile, 1*_seq_length,2*_seq_length);
 		} else {
-			CalcLogSumBulgeAndInternalProbability2(profile, 2*_seq_length,1*_seq_length);
+			CalcLogSumBulgeAndInternalProbability2(profile, 1*_seq_length,2*_seq_length);
 		}
 
 		CalcHairpinProbability2(profile, 0*_seq_length);
