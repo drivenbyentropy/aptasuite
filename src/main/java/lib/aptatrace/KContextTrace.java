@@ -47,10 +47,9 @@ public class KContextTrace implements Comparable<KContextTrace> {
 			strongPresence=false;
 		
 		if (getKmer().equals("GTGTAC")||getKmer().equals("GGAGCG")||getKmer().equals("GTTAAG")||getKmer().equals("GGAACT")){
-			System.out.println(getKmer()+" "+totalCount[totalCount.length-1]+" "+lastRoundCount+" "+strongPresence);
+			System.out.println(getKmer()+" occurs in #aptatmers "+totalCount[totalCount.length-1]+" and >= 1% of the last pool "+strongPresence);
 		}
-
-
+		
 		setProportion(totalCount[totalCount.length-1]/(lastRoundCount*1.00f));
 	}
 	

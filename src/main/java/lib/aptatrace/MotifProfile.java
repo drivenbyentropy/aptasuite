@@ -150,18 +150,10 @@ public class MotifProfile {
 		for (int k : occSet) {
 			if (another.contains(k)){
 				totalO+=id2Count.get(k);
-				if (totalO>15000000){
-					System.out.println("wrong "+totalO+" "+id2Count.get(k));
-					System.exit(0);
-				}
-				if (id2Count.get(k)<0){
-					System.out.println("wrong count");
-					System.exit(0);
-				}
 			}
 		}		
 		
-		System.out.println(totalOccs+" overlapping :"+totalO/((totalOccs)*1.0f));
+		System.out.println("cluster with seed "+getSeed()+" overlaps with chosen clusters with proportion "+totalO/((totalOccs)*1.0f));
 		
 		return (totalO/((totalOccs)*1.0f));
 	}

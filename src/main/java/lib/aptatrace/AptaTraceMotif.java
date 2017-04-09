@@ -555,6 +555,8 @@ public class AptaTraceMotif {
 							for (int l=0;l<numOR;l++){
 								mkc[id].addTotalCount(occRArr[l],occCArr[l]);
 							}	
+							if ((mkc[id].getKmer().equals("GGAACT"))&&(occRArr[numOR-1]==roundArr.size()-1))
+								System.out.println("GGAACT could be found in "+aptamer+ " with count "+occCArr[occRArr.length-1]+" "+mkc[id].getLastCount());
 						}
 						for (int l=0;l<numOR;l++){
 							if (singletonThres>0){
@@ -755,9 +757,7 @@ public class AptaTraceMotif {
 		ArrayList<KContextTrace> sorted=new ArrayList<KContextTrace>();
 		for (int i=0;i<numk;i++)
 		if (mkc[i].hasEnoughOccurrences())
-		if ((mkc[i].isSignificant(singletonKLScoreArr,topThetaValue,pvalue)) || ( (mkc[i].isSignificant(singletonKLScoreArr,-10.0,pvalue)) && (mkc[i].hasStrongPresence())))
-		//if ( (mkc[i].isSignificant(singletonKLScoreArr,topThetaValue,pvalue)) && (mkc[i].getProportion()>=topThetaProportion) &&(sorted.get(i).hasStrongPresence()))
-		//if (mkc[i].isSignificant(singletonKLScoreArr,topThetaValue,pvalue)) 	
+		if ((mkc[i].isSignificant(singletonKLScoreArr,topThetaValue,pvalue)) || ((mkc[i].getProportion()>=topThetaProportion) && (mkc[i].isSignificant(singletonKLScoreArr,-3.0,pvalue)) && (mkc[i].hasStrongPresence())))
 			sorted.add(mkc[i]);
 		
 		Collections.sort(sorted);
@@ -795,7 +795,7 @@ public class AptaTraceMotif {
 		System.out.println("\nSIGNIFICANT KMERS:");
 		for (int i=sorted.size()-1;i>=0;i--)
 			if (sorted.get(i).getKmer().equals("GTGTAC")||sorted.get(i).getKmer().equals("GGAGCG")||sorted.get(i).getKmer().equals("GTTAAG")||sorted.get(i).getKmer().equals("GGAACT"))
-				System.out.println(sorted.get(i).getKmer()+" "+sorted.get(i).getKLScore()+" "+sorted.get(i).hasStrongPresence());
+				System.out.println(sorted.get(i).getKmer()+" with context shifting score "+sorted.get(i).getKLScore()+" with >=1% in last pool ? "+sorted.get(i).hasStrongPresence());
 		
 		
 	    ArrayList<Pair<Integer,Double>> sortedClus=new ArrayList<Pair<Integer,Double>>();
@@ -816,6 +816,7 @@ public class AptaTraceMotif {
 			double seedProportion=sorted.get(i).getProportion();
 			double seedPValue=sorted.get(i).getPValue();
 			
+			System.out.println(sorted.get(i).getKmer()+" selected as seed with proportion "+sorted.get(i).getProportion()+" and p-value "+seedPValue);
 			
 			numClus+=1;
 			sortedClus.add(new Pair<Integer,Double>(numClus,seedPValue));
@@ -824,8 +825,13 @@ public class AptaTraceMotif {
 			got[i]=true;
 			clus.add(sorted.get(i).getKmer());
 			
-			if (sorted.get(i).getKmer().equals("GTGTAC")||sorted.get(i).getKmer().equals("GGAGCG")||sorted.get(i).getKmer().equals("GTTAAG")||sorted.get(i).getKmer().equals("GGAACT"))
-				System.out.println(sorted.get(i).getKmer()+" as seed ");
+			//GGGGCG as seed and GGGGCG
+			//GTTAGG as seed and GTTAGG
+			
+			if (sorted.get(i).getKmer().equals("GTTAGG")||sorted.get(i).getKmer().equals("GGGGCG")||sorted.get(i).getKmer().equals("GTGTAC")||sorted.get(i).getKmer().equals("GGAGCG")||sorted.get(i).getKmer().equals("GTTAAG")||sorted.get(i).getKmer().equals("GGAACT")){
+				System.out.println(sorted.get(i).getKmer()+" selected as seed with proportion "+sorted.get(i).getProportion()+" with context shifting score "+sorted.get(i).getKLScore());
+				sorted.get(i).printOut();
+			}
 
 			
 			
@@ -836,7 +842,10 @@ public class AptaTraceMotif {
 			for (int j=i-1;j>=0;j--)
 			if ((!got[j])&&(hasGoodOverlap(sorted.get(i).getKmer(),sorted.get(j).getKmer()))&&(sorted.get(j).getSelectionContext()==sorted.get(i).getSelectionContext()))
 			{
-				clus.add(sorted.get(j).getKmer());				
+				
+				if (sorted.get(j).getKmer().equals("GTGTAC")||sorted.get(j).getKmer().equals("GGAGCG")||sorted.get(j).getKmer().equals("GTTAAG")||sorted.get(j).getKmer().equals("GGAACT"))
+					System.out.println(sorted.get(j).getKmer()+" with proportion "+sorted.get(j).getProportion()+" merged with seed "+sorted.get(i).getKmer()+" with proportion "+sorted.get(i).getProportion());
+				clus.add(sorted.get(j).getKmer());
 				kmer2Clus.put(calculateId(sorted.get(j).getKmer()), numClus-1);
 				got[j]=true;
 				//sorted.get(j).printOut();
@@ -847,6 +856,7 @@ public class AptaTraceMotif {
 			
 			MotifSeedIDArr.add(i);
 			outputMotifs.add(new MotifProfile(clusAlignment[0].length(),numR));
+			outputMotifs.get(numClus-1).setSeed(sorted.get(i).getKmer());
 			for (int j=0;j<clus.size();j++){
 				outputMotifs.get(numClus-1).addKmer(sorted.get(j).getKmer());
 			}
@@ -955,10 +965,10 @@ public class AptaTraceMotif {
 						if (occRArr[numOR-1]==roundArr.size()-1){
 							if (occCArr[numOR-1]>singletonThres){
 
-									outputMotifs.get(mid).addToPWM(fillBlanks(outputMotifs.get(mid).getKmerAlignment(kmer),aptamer,k-klength+1), occCArr[numOR-1]);
+								outputMotifs.get(mid).addToPWM(fillBlanks(outputMotifs.get(mid).getKmerAlignment(kmer),aptamer,k-klength+1), occCArr[numOR-1]);
 									//if (mid==42)
 										//outputMotifs.get(mid).printPWM();									
-									outputMotifs.get(mid).addOccId(aptamerId, occCArr[numOR-1]);
+									
 									/*
 									if (mid==1){
 										System.out.println(mid+" "+aptamerId+" "+outputMotifs.get(mid).getLastRoundCount()+" total Occs "+outputMotifs.get(mid).getTotalOccs());
@@ -970,10 +980,12 @@ public class AptaTraceMotif {
 							else{
 								outputMotifs.get(mid).addToSingletonPWM(fillBlanks(outputMotifs.get(mid).getKmerAlignment(kmer),aptamer,k-klength+1), occCArr[numOR-1]);
 							}
+							/*
 							if (occCArr[numOR-1]<0){
 								System.out.println(aptamer+" "+occCArr[numOR-1]+" "+aptamerId);
 								System.exit(0);
 							}
+							*/
 							id2Count.put(aptamerId, occCArr[numOR-1]);
 						}
 						
@@ -984,6 +996,8 @@ public class AptaTraceMotif {
 							seen.add(mid);
 							for (int l=0;l<numOR;l++)
 								outputMotifs.get(mid).addTotalCount(occRArr[l],occCArr[l]);
+							if ((occRArr[numOR-1]==roundArr.size()-1)&&(occCArr[numOR-1]>singletonThres))
+								outputMotifs.get(mid).addOccId(aptamerId, occCArr[numOR-1]);
 						}
 						
 						for (int l=0;l<numOR;l++){
@@ -1122,6 +1136,7 @@ public class AptaTraceMotif {
 			
 			// prints out the aptamers in the last selection round that have frequency more than singleton threshold and contain the motifs
 			if (outputClusters){
+				/*
 				HashSet<Integer> test=new HashSet<Integer>();
 				for (int i=lastRoundPool.size()-1;i>=0;i--){
 					if (test.contains(lastRoundPool.get(i).getFirst())){
@@ -1141,6 +1156,7 @@ public class AptaTraceMotif {
 					else
 						test.add(lastRoundPool.get(i).getFirst());
 				}
+				*/
 				
 				
 				AptaLogger.log(Level.INFO, this.getClass(),"\nOutputing aptamers in the last cycle where the motifs occur...");
