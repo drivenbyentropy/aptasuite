@@ -475,12 +475,6 @@ public class AptaTraceMotif {
 				//startTime=System.nanoTime();
 				startTime=System.nanoTime();
 				for (Entry<byte[], Integer> aptamerArr : experiment.getAptamerPool().iterator()){
-					/*
-					numDone++;
-					if ((numDone==poolSize)||(numDone%1000==0)){
-						System.out.print("Finished reading "+numDone+"/"+poolSize+" structures\r");
-					}
-					*/
 					seen.clear();
 					//aptamer=arr[1];
 					//aptamer=fivePrime+new String(aptamerArr.getKey())+threePrime;
