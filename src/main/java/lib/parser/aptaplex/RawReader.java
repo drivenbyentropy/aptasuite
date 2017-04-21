@@ -169,4 +169,8 @@ public class RawReader implements Reader {
 		}
 		
 	}
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> refs/remotes/origin/AptaTRACE2

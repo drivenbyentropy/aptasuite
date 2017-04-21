@@ -29,7 +29,7 @@ import lib.structure.capr.InitLoops;
 import utilities.AptaLogger;
 import utilities.CLIOptions;
 import utilities.Configuration;
-
+import lib.aptatrace.AptaTraceMotif;
 /**
  * @author Jan Hoinka Implements the command line interface version of
  *         aptasuite.
@@ -418,6 +418,9 @@ public class CLI {
 			experiment.instantiateStructurePool(false);
 		}	
 		
+		AptaTraceMotif motifFinder=new AptaTraceMotif(experiment);
+		
+		/*
 		// TEMP print aptamer and counts
 		long tParserStart = System.currentTimeMillis();
 		int counter = 0;
@@ -436,6 +439,7 @@ public class CLI {
 		}
 		AptaLogger.log(Level.INFO, this.getClass(), String.format("Iterated %s sequences in %s seconds.\n",
 				counter, ((System.currentTimeMillis() - tParserStart) / 1000.0)));
+		*/
 	}
 	
 	/**

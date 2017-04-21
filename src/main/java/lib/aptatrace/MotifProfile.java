@@ -57,6 +57,10 @@ public class MotifProfile {
 	public double getSeedpValue(){
 		return this.seedpValue;
 	}
+	
+	public int getLastRoundCount(){
+		return totalCount[totalCount.length-1];
+	}
 		
 	private static String getContext(int c){
 		if (c==0)
@@ -91,6 +95,10 @@ public class MotifProfile {
 		if (!occSet.contains(id)){
 			occSet.add(id);
 			totalOccs+=num;
+			if (totalOccs>100000000){
+				System.out.println(occSet.size()+" something wrong here "+totalOccs);
+				System.exit(0);
+			}
 		}
 	}
 	
@@ -140,9 +148,13 @@ public class MotifProfile {
 		int totalO=0;
 				
 		for (int k : occSet) {
-			if (another.contains(k))
+			if (another.contains(k)){
 				totalO+=id2Count.get(k);
+			}
 		}		
+		
+		System.out.println("cluster with seed "+getSeed()+" overlaps with chosen clusters with proportion "+totalO/((totalOccs)*1.0f));
+		
 		return (totalO/((totalOccs)*1.0f));
 	}
 	
@@ -235,6 +247,8 @@ public class MotifProfile {
 	// calculates the PWM matrix for singleton and non-singleton occurrences of the motif 
 	// and the context trace by dividing the total probability by the frequency for singleton and non-singleton occurrences
 	public void normalizeProfile(){				
+		//printPWM();
+		
 		for (int i=0;i<nonSingletonCount.length;i++)
 	    if ((nonSingletonCount[i])<100){
 	    	if ((singletonCount[i]+nonSingletonCount[i])>=100){
@@ -251,6 +265,8 @@ public class MotifProfile {
 	    	}
 	    }
 		
+		//printPWM();
+		
 		// calculates the context trace for non-singleton counts		
 		for (int i=0;i<nonSingletonCount.length;i++){
 			for (int c=0;c<structProbArr[i].length;c++){
@@ -259,11 +275,17 @@ public class MotifProfile {
 			}
 		}
 		
+		double totalSum=0.0;
 		for (int i=0;i<pwm.length;i++){
-			for (int j=0;j<4;j++){
-				pwm[i][j]/=nonSingletonCount[nonSingletonCount.length-1]*1.0;
-			}
+			totalSum=0.0;
+			for (int j=0;j<4;j++)
+				totalSum+=pwm[i][j];
+			for (int j=0;j<4;j++)
+				pwm[i][j]/=totalSum;
+				//pwm[i][j]/=nonSingletonCount[nonSingletonCount.length-1]*1.0;
+			
 		}
+		//printPWM();
 	}
 	
 	public int getAlignmentLen(){

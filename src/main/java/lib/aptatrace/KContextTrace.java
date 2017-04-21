@@ -45,7 +45,11 @@ public class KContextTrace implements Comparable<KContextTrace> {
 			strongPresence=true;
 		else 
 			strongPresence=false;
-
+		
+		if (getKmer().equals("GTGTAC")||getKmer().equals("GGAGCG")||getKmer().equals("GTTAAG")||getKmer().equals("GGAACT")){
+			System.out.println(getKmer()+" occurs in #aptatmers "+totalCount[totalCount.length-1]+" and >= 1% of the last pool "+strongPresence);
+		}
+		
 		setProportion(totalCount[totalCount.length-1]/(lastRoundCount*1.00f));
 	}
 	
@@ -235,8 +239,8 @@ public class KContextTrace implements Comparable<KContextTrace> {
 		}
 		for (int i=0;i<numOfRounds;i++){
 			for (int j=0;j<numOfContexts;j++){
-				structProbArr[i][j]=1.1f;
-				singletonStructProbArr[i][j]=1.1f;
+				structProbArr[i][j]=0.0f;					// bug fixed here
+				singletonStructProbArr[i][j]=0.0f;			// bug fixed here
 			}
 		}
 		
@@ -267,9 +271,28 @@ public class KContextTrace implements Comparable<KContextTrace> {
 	
 	// adds up the probability of being in a structural context r of the motif profile for singleton occurrences
 	public void addSingletonContextProb(int r,int count,double[] avgContextProbArr){
+		/*
+		if (kmer.equals("GGGAGC")){
+			System.out.println(kmer+" r "+r+" "+(singletonStructProbArr[r][0])+" "+count);
+		}
+		*/
+		
 		for (int c=0;c<5;c++)
 			singletonStructProbArr[r][c]+=avgContextProbArr[c]*count;
 		singletonCount[r]+=count;
+		
+		/*
+		if (kmer.equals("GGGAGC")){
+			System.out.println(kmer+" r "+r+" "+(singletonStructProbArr[r][0]+singletonStructProbArr[r][1]+singletonStructProbArr[r][2]+singletonStructProbArr[r][3]+singletonStructProbArr[r][4])+" "+singletonCount[r]);
+		}
+		*/
+		
+		/*
+		if (singletonStructProbArr[r][0]+singletonStructProbArr[r][1]+singletonStructProbArr[r][2]+singletonStructProbArr[r][3]+singletonStructProbArr[r][4]>singletonCount[r]){
+			System.out.println(kmer+" r "+r+" "+(singletonStructProbArr[r][0]+singletonStructProbArr[r][1]+singletonStructProbArr[r][2]+singletonStructProbArr[r][3]+singletonStructProbArr[r][4])+" "+singletonCount[r]);
+			System.exit(1);
+		}
+		*/
 	}
 	
 	
@@ -317,19 +340,68 @@ public class KContextTrace implements Comparable<KContextTrace> {
 			break;
 		}
 	}
-	
+		
 	// calculates the PWM matrix for singleton and non-singleton occurrences of the motif 
 	// and the context trace by dividing the total probability by the frequency for singleton and non-singleton occurrences	
 	public void normalizeProfile(){
+		/*
+		for (int i=0;i<nonSingletonCount.length;i++)
+			System.out.print(" RO "+singletonCount[i]+nonSingletonCount[i]);
+		System.out.println();
+		
+		for (int i=0;i<nonSingletonCount.length;i++)
+		for (int c=0;c<structProbArr[i].length;c++)
+		if  (structProbArr[i][c]+singletonStructProbArr[i][c]>singletonCount[i]+nonSingletonCount[i]){
+			System.out.println(structProbArr[i][c]+singletonStructProbArr[i][c]+" XXX "+singletonCount[i]+nonSingletonCount[i]);
+			//System.exit(1);
+		}
+		*/
+		
+		//System.out.println(minimalCount);
+		
+		/*
+		for (int i=0;i<nonSingletonCount.length;i++)
+		if  (structProbArr[i][0]+structProbArr[i][1]+structProbArr[i][2]+structProbArr[i][3]+structProbArr[i][4]>nonSingletonCount[i]){
+			System.out.println("k greater");
+			System.exit(1);
+		}
+		*/
+		
+		/*
+		System.out.println("sca "+singletonCount[0]+" "+singletonCount[1]+" "+singletonCount[2]+" "+singletonCount[3]);
+		System.out.println("nsca "+nonSingletonCount[0]+" "+nonSingletonCount[1]+" "+nonSingletonCount[2]+" "+nonSingletonCount[3]);
+		System.out.println("sstrucpa "+singletonStructProbArr[3][0]+" "+singletonStructProbArr[3][1]+" "+singletonStructProbArr[3][2]+" "+singletonStructProbArr[3][3]+" "+singletonStructProbArr[3][4]);
+		System.out.println("nsstrucpa "+structProbArr[0][0]+" "+structProbArr[0][1]+" "+structProbArr[0][2]+" "+structProbArr[0][3]+" "+structProbArr[0][4]);
+		*/
+		
+		/*
+		for (int i=0;i<nonSingletonCount.length;i++)
+			if  (singletonStructProbArr[i][0]+singletonStructProbArr[i][1]+singletonStructProbArr[i][2]+singletonStructProbArr[i][3]+singletonStructProbArr[i][4]>singletonCount[i]){
+				System.out.println(i+" s greater");
+				System.exit(1);
+			}
+		*/
+		
 			for (int i=0;i<nonSingletonCount.length;i++)
 		    if ((nonSingletonCount[i]<minimalCount)||(i==0)){
 		    	if ((singletonCount[i]+nonSingletonCount[i])>=minimalCount){
 		    		nonSingletonCount[i]=singletonCount[i]+nonSingletonCount[i];
 		    		
-		    		for (int c=0;c<structProbArr[i].length;c++)
-		    			structProbArr[i][c]+=(float)(structProbArr[i][c]+singletonStructProbArr[i][c]);
+		    		for (int c=0;c<structProbArr[i].length;c++){
+		    			//if (i==0)
+		    				//System.out.println("before "+structProbArr[i][c]+" "+singletonStructProbArr[i][c]);
+		    			structProbArr[i][c]=(float)(structProbArr[i][c]+singletonStructProbArr[i][c]);
+		    			//if (i==0)
+		    				//System.out.println("after "+structProbArr[i][c]+" "+singletonStructProbArr[i][c]);
+		    		}
 		    	}
 		    }
+			
+			/*
+			System.out.println("nsca "+nonSingletonCount[0]+" "+nonSingletonCount[1]+" "+nonSingletonCount[2]+" "+nonSingletonCount[3]);
+			System.out.println("sstrucpa1 "+singletonStructProbArr[0][0]+" "+singletonStructProbArr[0][1]+" "+singletonStructProbArr[0][2]+" "+singletonStructProbArr[0][3]+" "+singletonStructProbArr[0][4]);
+			System.out.println("nsstrucpa1 "+structProbArr[0][0]+" "+structProbArr[0][1]+" "+structProbArr[0][2]+" "+structProbArr[0][3]+" "+structProbArr[0][4]);
+			*/
 			
 			for (int i=0;i<nonSingletonCount.length;i++)
 			if (totalCount[i]>=minimalCount){
@@ -338,6 +410,21 @@ public class KContextTrace implements Comparable<KContextTrace> {
 					singletonStructProbArr[i][c]=(float)(singletonStructProbArr[i][c]/(1.0*singletonCount[i]));
 				}
 			}
+			
+			//System.out.println("nsstrucpa2 "+structProbArr[0][0]+" "+structProbArr[0][1]+" "+structProbArr[0][2]+" "+structProbArr[0][3]+" "+structProbArr[0][4]);
+			/*
+			for (int i=0;i<nonSingletonCount.length;i++){
+				if (singletonStructProbArr[i][0]+singletonStructProbArr[i][1]+singletonStructProbArr[i][2]+singletonStructProbArr[i][3]+singletonStructProbArr[i][4]>1.0){
+					System.out.println((singletonStructProbArr[i][0]+singletonStructProbArr[i][1]+singletonStructProbArr[i][2]+singletonStructProbArr[i][3]+singletonStructProbArr[i][4])+" s greater than 1 "+totalCount[i]);
+					System.exit(1);
+				}
+				
+				if (structProbArr[i][0]+structProbArr[i][1]+structProbArr[i][2]+structProbArr[i][3]+structProbArr[i][4]>1.0){
+					System.out.println("xxx "+i+" k greater than 1 "+(structProbArr[i][0]+structProbArr[i][1]+structProbArr[i][2]+structProbArr[i][3]+structProbArr[i][4]));
+					//System.exit(1);
+				}
+			}
+			*/
 	}
 	
 	// calculates the KL divergence of p from q
@@ -402,10 +489,25 @@ public class KContextTrace implements Comparable<KContextTrace> {
 						sumk+=singletonStructProbArr[k][l];
 					}
 					
+					/*
+					if (calculateRelativeEntropy(singletonStructProbArr[k],singletonStructProbArr[j])<0.0){
+						for (int l=0;l<numOfContexts;l++)
+							System.out.print(" S "+singletonStructProbArr[k][l]);
+						System.out.println();
+						for (int l=0;l<numOfContexts;l++)
+							System.out.print(" S "+singletonStructProbArr[j][l]);
+						System.out.println();
+						System.out.println(calculateRelativeEntropy(singletonStructProbArr[k],singletonStructProbArr[j]));
+						System.exit(1);
+					}
+					*/
+					
 					singletonContextShiftingScore+=calculateRelativeEntropy(singletonStructProbArr[k],singletonStructProbArr[j]);
 					
 				}
 		}
+		
+		//System.out.println("singletonContextSScore "+getSingletonKLScore());
 		
 		double thres=(singletonStructProbArr.length-1)*(singletonStructProbArr.length)/2.0f;
 		
@@ -532,7 +634,18 @@ public class KContextTrace implements Comparable<KContextTrace> {
 						sumj+=structProbArr[j][l];
 						sumk+=structProbArr[k][l];
 					}
-					
+					/*
+					if (calculateRelativeEntropy(structProbArr[k],structProbArr[j])<0.0){
+						for (int l=0;l<numOfContexts;l++)
+							System.out.print(" K "+structProbArr[k][l]);
+						System.out.println();
+						for (int l=0;l<numOfContexts;l++)
+							System.out.print(" K "+structProbArr[j][l]);
+						System.out.println();
+						System.out.println(calculateRelativeEntropy(structProbArr[k],structProbArr[j]));
+						System.exit(1);
+					}
+					*/
 					contextShiftingScore+=calculateRelativeEntropy(structProbArr[k],structProbArr[j]);
 				}
 							
@@ -598,6 +711,26 @@ public class KContextTrace implements Comparable<KContextTrace> {
 			sum=0.0f;
 			for (int j=0;j<numOfContexts;j++)
 				sum+=structProbArr[i][j];
+			System.out.print(" "+(1-sum));
+		}
+		System.out.println();
+	}
+	
+	public void printOutSingleton(){
+		System.out.println(kmer+" , score: "+getSingletonKLScore());
+		double sum=0.0f;
+		for (int j=0;j<numOfContexts;j++){
+			System.out.print(getContext(j));
+			for (int i=0;i<singletonStructProbArr.length;i++)
+				System.out.print(" "+singletonStructProbArr[i][j]);
+			System.out.println();
+		}
+		
+		System.out.print(getContext(numOfContexts));
+		for (int i=0;i<singletonStructProbArr.length;i++){
+			sum=0.0f;
+			for (int j=0;j<numOfContexts;j++)
+				sum+=singletonStructProbArr[i][j];
 			System.out.print(" "+(1-sum));
 		}
 		System.out.println();
