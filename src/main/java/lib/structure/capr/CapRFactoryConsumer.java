@@ -3,35 +3,11 @@
  */
 package lib.structure.capr;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Map.Entry;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import com.milaboratory.core.PairedEndReadsLayout;
-import com.milaboratory.core.alignment.AffineGapAlignmentScoring;
-import com.milaboratory.core.alignment.Aligner;
-import com.milaboratory.core.alignment.Alignment;
-import com.milaboratory.core.io.sequence.PairedRead;
-import com.milaboratory.core.io.sequence.SingleReadImpl;
-import com.milaboratory.core.merger.MismatchOnlyPairedReadMerger;
-import com.milaboratory.core.merger.PairedReadMergingResult;
-import com.milaboratory.core.merger.QualityMergingAlgorithm;
-import com.milaboratory.core.sequence.NSequenceWithQuality;
-import com.milaboratory.core.sequence.NucleotideSequence;
-
-import exceptions.InvalidConfigurationException;
-import lib.aptamer.datastructures.SelectionCycle;
 import lib.aptamer.datastructures.StructurePool;
-import lib.parser.aptaplex.distances.BitapDistance;
-import lib.parser.aptaplex.distances.Distance;
-import lib.parser.aptaplex.distances.EditDistance;
-import lib.parser.aptaplex.distances.Result;
 import utilities.AptaLogger;
 import utilities.Configuration;
 

@@ -9,20 +9,13 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.BlockingQueue;
 import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import com.milaboratory.core.PairedEndReadsLayout;
-import com.milaboratory.core.alignment.AffineGapAlignmentScoring;
-import com.milaboratory.core.alignment.Aligner;
-import com.milaboratory.core.alignment.Alignment;
 import com.milaboratory.core.io.sequence.PairedRead;
 import com.milaboratory.core.io.sequence.SingleReadImpl;
 import com.milaboratory.core.merger.MismatchOnlyPairedReadMerger;
 import com.milaboratory.core.merger.PairedReadMergingResult;
 import com.milaboratory.core.merger.QualityMergingAlgorithm;
 import com.milaboratory.core.sequence.NSequenceWithQuality;
-import com.milaboratory.core.sequence.NucleotideSequence;
-
 import exceptions.InvalidConfigurationException;
 import lib.aptamer.datastructures.SelectionCycle;
 import lib.parser.aptaplex.distances.BitapDistance;
@@ -254,7 +247,7 @@ public class AptaPlexConsumer implements Runnable {
 					 	randomized_region_end_index = randomized_region_start_index + randomizedRegionSize -1;
 				 }
 				 else{ // use the boundaries defined by the primer regions
-					 randomized_region_end_index = primer3_match.index-1;
+					 randomized_region_end_index = primer3_match.index;
 				 }
 				
 				 // if the sequence was exacted successfully, we can finally

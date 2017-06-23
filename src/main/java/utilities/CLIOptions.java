@@ -37,6 +37,9 @@ public class CLIOptions {
 		// Structure Prediction
 		parameters.addOption("structures", false, "Predicts the structural ensamble of all aptamers in the pool and stores them on disk");
 		
+		// AptaCLUSTER
+		parameters.addOption("cluster", false, "Applies AptaCLUSTER to the dataset using the parameters as specified in the configuration file");
+		
 		// AptaTRACE
 		parameters.addOption("trace", false, "Applies AptaTRACE to the dataset using the parameters as specified in the configuration file");
 		
@@ -47,7 +50,7 @@ public class CLIOptions {
 //				.hasArgs()
 //				.argName("pool> <cycles> <structure")
 //				.build();
-		Option export = new Option("export", true, "Writes the specified <data> to file. Multiple arguments must be comma-separated with not spaces in between. Arguments: \npool: every unique aptamer of the selection\ncycles: the aptamers sequences as present in the specified selection cycles. Each aptamer will be writen to file as many times as its cardinality in the pool.\nstructures: writes the structural data for the aptamer pool to file.");
+		Option export = new Option("export", true, "Writes the specified <data> to file. Multiple arguments must be comma-separated with not spaces in between. Arguments: \npool: every unique aptamer of the selection\ncycles: the aptamers sequences as present in the specified selection cycles. Each aptamer will be written to file as many times as its cardinality in the pool.\nstructures: writes the structural data for the aptamer pool to file.");
 		export.setArgName("pool,cycles,structure");
 		
 		parameters.addOption(export);

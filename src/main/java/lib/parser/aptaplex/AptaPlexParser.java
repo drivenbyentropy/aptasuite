@@ -4,13 +4,8 @@
 package lib.parser.aptaplex;
 
 import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Map.Entry;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.SynchronousQueue;
-
 import lib.parser.Parser;
 import lib.parser.ParserProgress;
 import utilities.Configuration;

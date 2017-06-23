@@ -17,7 +17,12 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.time.DateUtils;
 
 import exceptions.InvalidConfigurationException;
+import lib.aptacluster.AptaCluster;
+import lib.aptacluster.HashAptaCluster;
+import lib.aptacluster.LocalitySensitiveHash;
+import lib.aptamer.datastructures.ClusterContainer;
 import lib.aptamer.datastructures.Experiment;
+import lib.aptamer.datastructures.MapDBClusterContainer;
 import lib.aptamer.datastructures.SelectionCycle;
 import lib.export.Export;
 import lib.parser.aptaplex.AptaPlexParser;
@@ -92,6 +97,7 @@ public class CLI {
 				FileUtils.deleteDirectory(Paths.get(projectPath.toString(), "pooldata").toFile());
 				FileUtils.deleteDirectory(Paths.get(projectPath.toString(), "cycledata").toFile());
 				FileUtils.deleteDirectory(Paths.get(projectPath.toString(), "structuredata").toFile());
+				FileUtils.deleteDirectory(Paths.get(projectPath.toString(), "clusterdata").toFile());
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -109,6 +115,7 @@ public class CLI {
 				FileUtils.deleteDirectory(Paths.get(projectPath.toString(), "pooldata").toFile());
 				FileUtils.deleteDirectory(Paths.get(projectPath.toString(), "cycledata").toFile());
 				FileUtils.deleteDirectory(Paths.get(projectPath.toString(), "structuredata").toFile());
+				FileUtils.deleteDirectory(Paths.get(projectPath.toString(), "clusterdata").toFile());
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -118,7 +125,7 @@ public class CLI {
 			runAptaSim( line.getOptionValue("config") );
 		}
 		
-		// Case for AptaTRACE
+		// Case for Structure Prediction
 		if (line.hasOption("structures")){
 			
 			// clean up old data if required
@@ -132,6 +139,21 @@ public class CLI {
 			runStructurePrediction( line.getOptionValue("config") );
 
 		}		
+		
+		// Case for AptaCluster
+		if (line.hasOption("cluster")){
+
+			// clean up old data if required
+			try {
+				FileUtils.deleteDirectory(Paths.get(projectPath.toString(), "clusterdata").toFile());
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			runAptaCluster( line.getOptionValue("config") );
+
+		}
 		
 		// Case for AptaTRACE
 		if (line.hasOption("trace")){
@@ -395,6 +417,44 @@ public class CLI {
 		experiment.getStructurePool().setReadOnly();
 	}
 	
+
+	/**
+	 * Implements the logic for calling AptaTrace
+	 */
+	private void runAptaCluster(String configFile) {
+		
+		AptaLogger.log(Level.INFO, this.getClass(), "Starting AptaCluster");
+		
+		// Make sure we have data prior or load it from disk
+		if (experiment == null) {
+			AptaLogger.log(Level.INFO, this.getClass(), "Loading data from disk");
+			this.experiment = new Experiment(configFile, false);
+		}
+		else{
+			AptaLogger.log(Level.INFO, this.getClass(), "Using existing data");
+		}
+		
+		// Create a new instance of the ClusterContainer
+		experiment.instantiateClusterContainer(true);
+
+		// Create AptaCluster instance
+		AptaCluster ac = new HashAptaCluster(
+				Configuration.getParameters().getInt("Aptacluster.RandomizedRegionSize"),
+				Configuration.getParameters().getInt("Aptacluster.LSHDimension"),
+				Configuration.getParameters().getInt("Aptacluster.LSHIterations"),
+				Configuration.getParameters().getInt("Aptacluster.EditDistance"),
+				Configuration.getParameters().getInt("Aptacluster.KmerSize"),
+				Configuration.getParameters().getInt("Aptacluster.KmerCutoffIterations"),
+				experiment
+				);
+		
+		// Run
+		ac.performLSH();
+		
+		AptaLogger.log(Level.INFO, this.getClass(), "AptaCluster Comleted");
+		
+	}	
+	
 	
 	/**
 	 * Implements the logic for calling AptaTrace
@@ -418,28 +478,8 @@ public class CLI {
 			experiment.instantiateStructurePool(false);
 		}	
 		
-		AptaTraceMotif motifFinder=new AptaTraceMotif(experiment);
+		AptaTraceMotif motifFinder=new AptaTraceMotif(experiment); //TODO: SEPARATE INTO CONSTRUCTOR AND RUN LOGIC
 		
-		/*
-		// TEMP print aptamer and counts
-		long tParserStart = System.currentTimeMillis();
-		int counter = 0;
-		StringBuilder sb = new StringBuilder();
-		for (Entry<byte[], Integer> aptamer : experiment.getAptamerPool().iterator()){
-			counter++;
-			sb.append(new String(aptamer.getKey()));
-			sb.append("\t");
-			for (SelectionCycle sc : experiment.getAllSelectionCycles()){
-				sb.append(sc.getAptamerCardinality(aptamer.getValue()));
-				sb.append("\t");
-			}
-			sb.append("\t");
-//			System.out.println(sb.toString());
-			sb.setLength(0);
-		}
-		AptaLogger.log(Level.INFO, this.getClass(), String.format("Iterated %s sequences in %s seconds.\n",
-				counter, ((System.currentTimeMillis() - tParserStart) / 1000.0)));
-		*/
 	}
 	
 	/**
@@ -517,6 +557,43 @@ public class CLI {
 							Path cycleexportpath = Paths.get(exportPath.toString(), sc.getName() + "." + extension);
 							AptaLogger.log(Level.INFO, this.getClass(), "Exporting selection cycle " + sc.getName() + " to file " + cycleexportpath.toString());
 							export.Cycle(sc, cycleexportpath );
+						}
+						
+					}
+					break;
+					
+				case "clusters":
+					AptaLogger.log(Level.INFO, this.getClass(), "Exporting clusters");
+					
+					// Get the instance of the StructurePool
+					if (experiment.getClusterContainer() == null)
+					{
+						experiment.instantiateClusterContainer(false);
+					}	
+					
+					// Determine which cycles need to be exported
+					cycles_to_export = null;
+					if (Configuration.getParameters().getStringArray("Export.Cycles").length == 0){
+						cycles_to_export = Configuration.getExperiment().getAllSelectionCycles();
+					}
+					else{
+						cycles_to_export = new ArrayList<SelectionCycle>();
+						for (String cycle_id : Configuration.getParameters().getStringArray("Export.Cycles")){
+							SelectionCycle sc = Configuration.getExperiment().getSelectionCycleById(cycle_id);
+							
+							if(sc == null){ //Something went wrong here
+								AptaLogger.log(Level.SEVERE, this.getClass(), "Could not find cycle with id " + cycle_id + " for export. Exiting.");
+								throw new InvalidConfigurationException("Could not find cycle with id " + cycle_id + " for export.");
+							}
+							
+							cycles_to_export.add(sc);
+						}
+						
+						// Now run the export
+						for (SelectionCycle sc : cycles_to_export){
+							Path cycleexportpath = Paths.get(exportPath.toString(), "clusters_" + sc.getName() + "." + extension);
+							AptaLogger.log(Level.INFO, this.getClass(), "Exporting clusters of selection cycle " + sc.getName() + " to file " + cycleexportpath.toString());
+							export.Clusters(sc, experiment.getClusterContainer(), cycleexportpath );
 						}
 						
 					}

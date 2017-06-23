@@ -3,7 +3,6 @@
  */
 package lib.structure.capr;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 
 /**

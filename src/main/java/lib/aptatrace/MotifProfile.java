@@ -3,8 +3,6 @@ package lib.aptatrace;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-
 import gui.aptatrace.logo.Logo;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
@@ -152,8 +150,6 @@ public class MotifProfile {
 				totalO+=id2Count.get(k);
 			}
 		}		
-		
-		System.out.println("cluster with seed "+getSeed()+" overlaps with chosen clusters with proportion "+totalO/((totalOccs)*1.0f));
 		
 		return (totalO/((totalOccs)*1.0f));
 	}

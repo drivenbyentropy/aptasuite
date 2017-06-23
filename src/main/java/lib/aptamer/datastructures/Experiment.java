@@ -3,20 +3,14 @@
  */
 package lib.aptamer.datastructures;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import exceptions.DuplicateSelectionCycleException;
-import exceptions.InvalidConfigurationException;
 import exceptions.InvalidSelectionCycleException;
 import utilities.AptaLogger;
 import utilities.Configuration;
@@ -37,6 +31,11 @@ import utilities.Configuration;
 public class Experiment implements Serializable{
 	
 	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -8897258365542742275L;
+
+	/**
 	 * A unique name of this experiment
 	 */
 	private String name = null;
@@ -56,6 +55,12 @@ public class Experiment implements Serializable{
 	 * Stores all structural data regarding this experiment 
 	 */
 	private StructurePool structures = null;
+	
+	
+	/**
+	 * Stores all cluster information for the data of this experiment
+	 */
+	private ClusterContainer clusters = null;
 
 	/**
 	 * The main selection cycles, sorted in increasing order.
@@ -258,6 +263,53 @@ public class Experiment implements Serializable{
 			}
 		}
 	}
+
+	
+	/**
+	 * Instantiates an implementation of <code>ClusterContainer</code>
+	 * @param newdb if <code>true</code>, a new instance is created. if <code>false</code>, 
+	 *  an existing instance is loaded from disk
+	 */
+	public void instantiateClusterContainer(boolean newdb){
+		
+		// Create a new ClusterContainer instance. Use reflection so we can define the backend
+		// in the configuration file
+		Class s = null;
+		try {
+			s = Class.forName("lib.aptamer.datastructures." + Configuration.getParameters().getString("ClusterContainer.backend"));
+		} catch (ClassNotFoundException e) {
+
+			AptaLogger.log(Level.SEVERE, this.getClass(), "Error, the backend for the ClusterContainer could not be found.");
+			e.printStackTrace();
+			System.exit(0);
+		}
+		
+		// Try to instantiate the class...
+		boolean instanceSuccess = false;
+		try {
+			clusters = (ClusterContainer)s.getConstructor(boolean.class).newInstance(newdb);
+			instanceSuccess = true;
+		} catch (InstantiationException e) {
+			AptaLogger.log(Level.SEVERE, this.getClass(), "Error, could not instantiate the backend for the ClusterContainer");
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			e.printStackTrace();
+		} catch (IllegalArgumentException e) {
+			e.printStackTrace();
+		} catch (InvocationTargetException e) {
+			AptaLogger.log(Level.SEVERE, this.getClass(), "Error invoking construtor of ClusterContainer backend");
+			e.printStackTrace();
+		} catch (NoSuchMethodException e) {
+			e.printStackTrace();
+		} catch (SecurityException e) {
+			e.printStackTrace();
+		} finally{ // ... we cannot continue if this fails 
+			if (!instanceSuccess){
+				AptaLogger.log(Level.SEVERE, this.getClass(), "Error invoking ClusterContainer backend");
+				System.exit(0);
+			}
+		}
+	}	
 	
 	/**
 	 * Retrieves the AptamerPool instance of this Experiment
@@ -582,4 +634,13 @@ public class Experiment implements Serializable{
 	public StructurePool getStructurePool(){
 		return this.structures;
 	}
+	
+	/**
+	 * Get the structural pool instance of this experiment
+	 * @return
+	 */
+	public ClusterContainer getClusterContainer(){
+		return this.clusters;
+	}
+	
 }

@@ -4,7 +4,6 @@ import java.io.PrintWriter;
 
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.apache.commons.math3.util.MathUtils;
-import org.apache.commons.math3.distribution.NormalDistribution;
 
 public class KContextTrace implements Comparable<KContextTrace> {
 	
@@ -45,10 +44,6 @@ public class KContextTrace implements Comparable<KContextTrace> {
 			strongPresence=true;
 		else 
 			strongPresence=false;
-		
-		if (getKmer().equals("GTGTAC")||getKmer().equals("GGAGCG")||getKmer().equals("GTTAAG")||getKmer().equals("GGAACT")){
-			System.out.println(getKmer()+" occurs in #aptatmers "+totalCount[totalCount.length-1]+" and >= 1% of the last pool "+strongPresence);
-		}
 		
 		setProportion(totalCount[totalCount.length-1]/(lastRoundCount*1.00f));
 	}

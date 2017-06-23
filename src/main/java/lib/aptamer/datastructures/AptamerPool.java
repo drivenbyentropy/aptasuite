@@ -144,4 +144,10 @@ public interface AptamerPool extends Serializable{
 	 * Provides an iterator over every id in the pool
 	 */
 	public Iterable<Integer> id_iterator();
+	
+	
+	/**
+	 * Provides public access to the iterator of the bounds data
+	 */
+	public Iterable<Entry<Integer,int[]>> bounds_iterator();
 }

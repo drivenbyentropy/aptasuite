@@ -12,21 +12,14 @@ import java.nio.file.Paths;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 import java.util.ListIterator;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import org.mapdb.BTreeMap;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.mapdb.Serializer;
-import org.mapdb.serializer.SerializerCompressionWrapper;
-
 import orestes.bloomfilter.BloomFilter;
-import orestes.bloomfilter.CountingBloomFilter;
 import orestes.bloomfilter.FilterBuilder;
 import utilities.AptaLogger;
 import utilities.Configuration;
@@ -131,6 +124,8 @@ public class MapDBSelectionCycle implements SelectionCycle{
 	private int unique_size = 0;
 	
 	public MapDBSelectionCycle(String name, int round, boolean isControlSelection, boolean isCounterSelection, boolean newdb) throws IOException{
+		
+		AptaLogger.log(Level.INFO, this.getClass(), "Processing selection cycle " + name );
 		
 		// Set basic information
 		this.name = name;

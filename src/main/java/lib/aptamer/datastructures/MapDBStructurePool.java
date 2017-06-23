@@ -11,7 +11,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.BitSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
@@ -21,7 +20,6 @@ import java.util.logging.Level;
 import org.mapdb.BTreeMap;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
-import org.mapdb.HTreeMap;
 import org.mapdb.Serializer;
 import org.mapdb.serializer.SerializerCompressionWrapper;
 
@@ -118,6 +116,9 @@ public class MapDBStructurePool implements StructurePool {
 		
 		AptaLogger.log(Level.INFO, this.getClass(), "Instantiating MapDBStructurePool");
 		
+		// Time it for logging purposes
+		long tReadFromDisk = System.currentTimeMillis();
+		
 		// Make sure the folder is writable
 		if (!Files.isWritable(projectPath)){
 			AptaLogger.log(Level.SEVERE, this.getClass(),"The project path is not writable.");
@@ -133,6 +134,7 @@ public class MapDBStructurePool implements StructurePool {
 		
 		// If we are reading an existing database, iterate over the folder and open the individual MapDB instances
 		if (! newdb){ 
+			
 			AptaLogger.log(Level.INFO, this.getClass(), "Searching for existing datasets in " + structureDataPath.toString());
 
 			try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(Paths.get(structureDataPath.toString()))) {
@@ -147,6 +149,8 @@ public class MapDBStructurePool implements StructurePool {
 	    				DB db_structure = DBMaker
 					    .fileDB(file.toFile())
 					    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
+					    .fileMmapPreclearDisable() // Make mmap file faster
+					    .cleanerHackEnable() // Unmap (release resources) file when its closed.
 					    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
 					    .executorEnable()
 					    .make();
@@ -193,12 +197,15 @@ public class MapDBStructurePool implements StructurePool {
 			
 			AptaLogger.log(Level.INFO, this.getClass(), "Found and loaded a total of " + structureDataSize + " structures on disk.");
 			
+			
 		}
 		else{ // Create an empty instance of the MapDB Container
 
 			DB db_structure = DBMaker
 				    .fileDB(Paths.get(structureDataPath.toString(), "data" + String.format("%04d", structureData.size()) + ".mapdb").toFile())
 				    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
+				    .fileMmapPreclearDisable() // Make mmap file faster
+				    .cleanerHackEnable() // Unmap (release resources) file when its closed.
 				    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
 				    .executorEnable()
 				    .make();
@@ -220,6 +227,8 @@ public class MapDBStructurePool implements StructurePool {
 			AptaLogger.log(Level.CONFIG, this.getClass(), "Created new file " + Paths.get(structureDataPath.toString(), "data" + String.format("%04d", structureData.size()) + ".mapdb").toFile());
 		
 		}
+		
+		AptaLogger.log(Level.CONFIG, this.getClass(), "StructurePool instantiation took " + ((System.currentTimeMillis() - tReadFromDisk) / 1000.0) + " seconds");
 		
 	}
 	
@@ -243,6 +252,8 @@ public class MapDBStructurePool implements StructurePool {
 			
 			DB db_structure = DBMaker
 				    .fileDB(Paths.get(structureDataPath.toString(), "data" + String.format("%04d", structureData.size()) + ".mapdb").toFile())
+				    .fileMmapPreclearDisable() // Make mmap file faster
+				    .cleanerHackEnable() // Unmap (release resources) file when its closed.
 				    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
 				    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
 				    .executorEnable()
@@ -347,6 +358,8 @@ public class MapDBStructurePool implements StructurePool {
 				DB db = DBMaker
 					    .fileDB(file.toFile())
 					    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
+					    .fileMmapPreclearDisable() // Make mmap file faster
+					    .cleanerHackEnable() // Unmap (release resources) file when its closed.
 					    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
 					    .executorEnable()
 					    .readOnly()
@@ -388,6 +401,8 @@ public class MapDBStructurePool implements StructurePool {
 				DB db = DBMaker
 					    .fileDB(file.toFile())
 					    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
+					    .fileMmapPreclearDisable() // Make mmap file faster
+					    .cleanerHackEnable() // Unmap (release resources) file when its closed.
 					    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
 					    .executorEnable()
 					    .make();

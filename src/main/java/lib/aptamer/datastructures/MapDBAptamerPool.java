@@ -100,7 +100,7 @@ public class MapDBAptamerPool implements AptamerPool {
 	 * memory efficiency. Here, boundary stands for start (inclusive) and end (exclusive) index 
 	 * of the randomized region.
 	 */
-	private transient HTreeMap<Integer, int[]> boundsData = null;
+	private transient List<BTreeMap<Integer, int[]>> boundsData = new ArrayList<BTreeMap<Integer, int[]>>();
 	
 	/**
 	 * The inverse view of the <code>poolData</code> mapping ids to aptamers
@@ -154,6 +154,9 @@ public class MapDBAptamerPool implements AptamerPool {
 		
 		AptaLogger.log(Level.INFO, this.getClass(), "Instantiating MapDBAptamerPool");
 		
+		// Time it for logging purposes
+		long tReadFromDisk = System.currentTimeMillis();
+		
 		// Make sure the folder is writable
 		// Files.isWritable() might fail on different platforms and 
 		// permission combinations, hence we need to check it manually.
@@ -189,6 +192,7 @@ public class MapDBAptamerPool implements AptamerPool {
     					    .fileDB(file.toFile())
     					    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
     					    .fileMmapPreclearDisable() // Make mmap file faster
+    					    .cleanerHackEnable() // Unmap (release resources) file when its closed.
     					    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
     					    .executorEnable()
     					    .make();
@@ -213,11 +217,13 @@ public class MapDBAptamerPool implements AptamerPool {
     				// Now load and initialize the inverse view of the data
     				Path inverseFile = Paths.get(file.getParent().toString(), "inverse_" + file.getFileName().toString());
     				
-    				AptaLogger.log(Level.CONFIG, this.getClass(), "Reading inverse view from " + file.toString());
+    				AptaLogger.log(Level.CONFIG, this.getClass(), "Reading inverse view from " + inverseFile.toString());
     				
     				DB db_inverse = DBMaker
     					    .fileDB(inverseFile.toFile())
     					    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
+    					    .fileMmapPreclearDisable() // Make mmap file faster
+    					    .cleanerHackEnable() // Unmap (release resources) file when its closed.
     					    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
     					    .executorEnable()
     					    .make();
@@ -246,6 +252,29 @@ public class MapDBAptamerPool implements AptamerPool {
     					localBitSet.set(current_element.getValue());
     				}
     				
+    				// And finally load the bounds data
+    				Path boundsFile = Paths.get(file.getParent().toString(), "bounds_" + file.getFileName().toString());
+    				
+    				AptaLogger.log(Level.CONFIG, this.getClass(), "Reading bounds data from " + boundsFile.toString());
+    				
+    				DB db_bounds = DBMaker
+    					    .fileDB(boundsFile.toFile())
+    					    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
+    					    .fileMmapPreclearDisable() // Make mmap file faster
+    					    .cleanerHackEnable() // Unmap (release resources) file when its closed.
+    					    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
+    					    .executorEnable()
+    					    .make();
+
+    				BTreeMap<Integer, int[]> bounds_dbmap = db_bounds.treeMap("map")
+    						.valuesOutsideNodesEnable()
+    						.keySerializer(Serializer.INTEGER)
+    						.valueSerializer(Serializer.INT_ARRAY)
+    				        .open();
+    				
+    				boundsData.add(bounds_dbmap);
+    				
+    				
     				AptaLogger.log(Level.CONFIG, this.getClass(), 
     						"Total number of aptamers in file: " + currentTreeMapSize + "\n" +
     						"Total number of aptamers: " + poolSize + "\n" + 
@@ -255,25 +284,8 @@ public class MapDBAptamerPool implements AptamerPool {
 	            }
 	        } catch (IOException ex) {}
 			
-			// now load the corresponding Bounds file
-			Path boundsfile = Paths.get(poolDataPath.toString(), "bounds" + ".mapdb");
+			AptaLogger.log(Level.INFO, this.getClass(), "Found and loaded a total of " + poolSize + " aptamers from disk.");
 
-			AptaLogger.log(Level.CONFIG, this.getClass(), "Reading bounds file " + boundsfile.toString());
-			
-			DB db_bounds = DBMaker
-				    .fileDB(boundsfile.toFile())
-				    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
-				    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
-				    .executorEnable()
-				    .make();
-
-			boundsData = db_bounds.hashMap("map")
-					.keySerializer(Serializer.INTEGER)
-					.valueSerializer(Serializer.INT_ARRAY)
-					.open();
-			
-			
-			AptaLogger.log(Level.INFO, this.getClass(), "Found and loaded a total of " + poolSize + " aptamers on disk.");
 			
 		}
 		else{ 
@@ -283,6 +295,8 @@ public class MapDBAptamerPool implements AptamerPool {
 		DB db = DBMaker
 			    .fileDB(file.toFile())
 			    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
+			    .fileMmapPreclearDisable() // Make mmap file faster
+			    .cleanerHackEnable() // Unmap (release resources) file when its closed.
 			    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
 			    .executorEnable()
 			    .make();
@@ -295,29 +309,37 @@ public class MapDBAptamerPool implements AptamerPool {
 		poolDataPaths.add(file);
 		poolData.add(dbmap);
 		
-		AptaLogger.log(Level.CONFIG, this.getClass(), "Created new file " + file.toString());
-
-		// ... as well as a new bounds file
-		Path boundsfile = Paths.get(poolDataPath.toString(), "bounds" + ".mapdb");
-		
-		DB db_bounds = DBMaker
-			    .fileDB(boundsfile.toFile())
-			    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
-			    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
-			    .executorEnable()
-			    .make();
-
-		boundsData = db_bounds.hashMap("map")
-				.keySerializer(Serializer.INTEGER)
-				.valueSerializer(Serializer.INT_ARRAY)
-				.create();
-		
-		AptaLogger.log(Level.CONFIG, this.getClass(), "Created new bounds file " + boundsfile.toString());
-		
 		BloomFilter<String> localBloomFilter = new FilterBuilder(maxTreeMapCapacity, bloomFilterCollisionProbability).buildBloomFilter();
 		poolDataBloomFilter.add(localBloomFilter);
 		
 		currentTreeMapSize = 0;
+		
+		AptaLogger.log(Level.CONFIG, this.getClass(), "Created new file " + file.toString());
+
+		
+		
+		// ... as well as a new bounds file
+		Path boundsfile = Paths.get(file.getParent().toString(), "bounds_" + file.getFileName().toString());
+		
+		DB db_bounds = DBMaker
+			    .fileDB(boundsfile.toFile())
+			    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
+			    .fileMmapPreclearDisable() // Make mmap file faster
+			    .cleanerHackEnable() // Unmap (release resources) file when its closed.
+			    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
+			    .executorEnable()
+			    .make();
+
+		BTreeMap<Integer, int[]> dbmap_bounds = db_bounds.treeMap("map")
+				.valuesOutsideNodesEnable()
+				.keySerializer(Serializer.INTEGER)
+				.valueSerializer(Serializer.INT_ARRAY)
+				.create();
+		
+		boundsData.add(dbmap_bounds);
+		
+		AptaLogger.log(Level.CONFIG, this.getClass(), "Created new bounds file " + boundsfile.toString());
+		
 		
 	
 		// Create the inverse view files
@@ -325,6 +347,8 @@ public class MapDBAptamerPool implements AptamerPool {
 		DB db_inverse = DBMaker
 			    .fileDB(inverse_file.toFile())
 			    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
+			    .fileMmapPreclearDisable() // Make mmap file faster
+			    .cleanerHackEnable() // Unmap (release resources) file when its closed.
 			    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
 			    .executorEnable()
 			    .make();
@@ -343,6 +367,9 @@ public class MapDBAptamerPool implements AptamerPool {
 		AptaLogger.log(Level.CONFIG, this.getClass(), "Created new inverse file " + Paths.get(poolDataPath.toString(), "data_inverse" + ".mapdb").toFile());
 		
 		}
+		
+		AptaLogger.log(Level.CONFIG, this.getClass(), "AptamerPool instantiation took " + ((System.currentTimeMillis() - tReadFromDisk) / 1000.0) + " seconds");
+		
 	}
 		
 	/* (non-Javadoc)
@@ -370,6 +397,8 @@ public class MapDBAptamerPool implements AptamerPool {
 			DB db = DBMaker
 				    .fileDB(file.toFile())
 				    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
+				    .fileMmapPreclearDisable() // Make mmap file faster
+				    .cleanerHackEnable() // Unmap (release resources) file when its closed.
 				    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
 				    .executorEnable()
 				    .make();
@@ -391,6 +420,8 @@ public class MapDBAptamerPool implements AptamerPool {
 			DB db_inverse = DBMaker
 				    .fileDB(inverse_file.toFile())
 				    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
+				    .fileMmapPreclearDisable() // Make mmap file faster
+				    .cleanerHackEnable() // Unmap (release resources) file when its closed.
 				    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
 				    .executorEnable()
 				    .make();
@@ -400,10 +431,32 @@ public class MapDBAptamerPool implements AptamerPool {
 					.keySerializer(Serializer.INTEGER)
 					.valueSerializer(new SerializerCompressionWrapper<byte[]>(Serializer.BYTE_ARRAY))
 			        .create();
-			
+
 			// Add and create filters
 			poolDataInverse.add(dbmap_inverse);
 			this.poolDataInverseFilters.add(new BitSet(maxTreeMapCapacity));
+			
+			
+			// Bounds
+			Path bounds_file = Paths.get(file.getParent().toString(), "bounds_" + file.getFileName().toString());
+			
+			DB db_bounds = DBMaker
+				    .fileDB(bounds_file.toFile())
+				    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
+				    .fileMmapPreclearDisable() // Make mmap file faster
+				    .cleanerHackEnable() // Unmap (release resources) file when its closed.
+				    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
+				    .executorEnable()
+				    .make();
+
+			BTreeMap<Integer, int[]> dbmap_bounds = db_bounds.treeMap("map")
+					.valuesOutsideNodesEnable()
+					.keySerializer(Serializer.INTEGER)
+					.valueSerializer(Serializer.INT_ARRAY)
+			        .create();
+			
+			// Add
+			boundsData.add(dbmap_bounds);
 			
 			// Reset current capacity
 			currentTreeMapSize = 0;
@@ -421,7 +474,7 @@ public class MapDBAptamerPool implements AptamerPool {
 		poolDataInverseFilters.get(poolData.size()-1).set(poolSize);
 		
 		// and the bounds data
-		boundsData.put(identifier, new int[]{rr_start,rr_end});
+		boundsData.get(boundsData.size()-1).put(poolSize, new int[]{rr_start,rr_end});
 		
 		return poolSize;
 	}
@@ -522,9 +575,25 @@ public class MapDBAptamerPool implements AptamerPool {
 		if (!containsAptamer(id)){
 			return null;
 		}
-	
-		return new AptamerBounds(boundsData.get(id));
 		
+		ListIterator<BTreeMap<Integer, int[]>> lim = boundsData.listIterator(boundsData.size());
+		ListIterator<BitSet> lib = poolDataInverseFilters.listIterator(poolDataInverse.size());
+		AptamerBounds bounds = null;		
+		
+		// Iterate in reverse
+		while(lim.hasPrevious()) {
+			
+			// Prevent expensive disk lookups by using the bloom filters...
+			if(! lib.previous().get(id) ){
+				lim.previous();
+				continue;
+			}
+			
+			// ... and only look it up when we know where
+			bounds = new AptamerBounds(lim.previous().get(id));
+		}
+		
+		return bounds; 
 	}
 	
 	/* (non-Javadoc)
@@ -576,7 +645,8 @@ public class MapDBAptamerPool implements AptamerPool {
 		while(li.hasPrevious()) { li.previous().close(); }
 
 		// Close the bounds data
-		boundsData.close();
+		ListIterator<BTreeMap<Integer, int[]>> bi = boundsData.listIterator(boundsData.size());
+		while(bi.hasPrevious()) { bi.previous().close(); }
 
 		// Close the inverse view
 		ListIterator<BTreeMap<Integer, byte[]>> lii = poolDataInverse.listIterator(poolDataInverse.size());
@@ -720,6 +790,8 @@ public class MapDBAptamerPool implements AptamerPool {
 				DB db = DBMaker
 					    .fileDB(file.toFile())
 					    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
+					    .fileMmapPreclearDisable() // Make mmap file faster
+					    .cleanerHackEnable() // Unmap (release resources) file when its closed.
 					    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
 					    .executorEnable()
 					    .readOnly()
@@ -740,6 +812,8 @@ public class MapDBAptamerPool implements AptamerPool {
 			DB db_inverse = DBMaker
 				    .fileDB(inverse_file.toFile())
 				    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
+				    .fileMmapPreclearDisable() // Make mmap file faster
+				    .cleanerHackEnable() // Unmap (release resources) file when its closed.
 				    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
 				    .executorEnable()
 				    .readOnly()
@@ -754,25 +828,31 @@ public class MapDBAptamerPool implements AptamerPool {
 			poolDataInverse.add(dbmap_inverse);
 			
 			AptaLogger.log(Level.CONFIG, this.getClass(), "Reopened as read only file " + inverse_file.toString() );
+			
+			
+			// Do the same for the inverse files
+			Path bounds_file = Paths.get(file.getParent().toString(), "bounds_"+ file.getFileName().toString());
+			DB db_bounds = DBMaker
+				    .fileDB(bounds_file.toFile())
+				    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
+				    .fileMmapPreclearDisable() // Make mmap file faster
+				    .cleanerHackEnable() // Unmap (release resources) file when its closed.
+				    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
+				    .executorEnable()
+				    .readOnly()
+				    .make();
+
+			BTreeMap<Integer, int[]> dbmap_bounds = db_bounds.treeMap("map")
+					.valuesOutsideNodesEnable()
+					.keySerializer(Serializer.INTEGER)
+					.valueSerializer(Serializer.INT_ARRAY)
+			        .open();
+			
+			boundsData.add(dbmap_bounds);
+			
+			AptaLogger.log(Level.CONFIG, this.getClass(), "Reopened as read only file " + bounds_file.toString() );
 
         }
-		
-		// same for the bounds data
-		DB db = DBMaker
-			    .fileDB(Paths.get(poolDataPath.toString(), "bounds" + ".mapdb").toFile())
-			    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
-			    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
-			    .executorEnable()
-			    .readOnly()
-			    .make();
-
-		boundsData = db.hashMap("map")
-				.keySerializer(Serializer.INTEGER)
-				.valueSerializer(Serializer.INT_ARRAY)
-				.open();
-		
-		
-		AptaLogger.log(Level.CONFIG, this.getClass(), "Reopened as read only file " + Paths.get(poolDataPath.toString(), "bounds" + ".mapdb").toString() );
 		
     }	
 	
@@ -794,6 +874,8 @@ public class MapDBAptamerPool implements AptamerPool {
 				DB db = DBMaker
 					    .fileDB(file.toFile())
 					    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
+					    .fileMmapPreclearDisable() // Make mmap file faster
+					    .cleanerHackEnable() // Unmap (release resources) file when its closed.
 					    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
 					    .executorEnable()
 					    .make();
@@ -813,6 +895,8 @@ public class MapDBAptamerPool implements AptamerPool {
 			DB db_inverse = DBMaker
 				    .fileDB(inverse_file.toFile())
 				    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
+				    .fileMmapPreclearDisable() // Make mmap file faster
+				    .cleanerHackEnable() // Unmap (release resources) file when its closed.
 				    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
 				    .executorEnable()
 				    .make();
@@ -827,22 +911,29 @@ public class MapDBAptamerPool implements AptamerPool {
 			
 			AptaLogger.log(Level.CONFIG, this.getClass(), "Reopened as read/write file " + inverse_file.toString() );
             
-        }
-		
-		// same for the bounds data
-		DB db = DBMaker
-			    .fileDB(Paths.get(poolDataPath.toString(), "bounds" + ".mapdb").toFile())
-			    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
-			    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
-			    .executorEnable()
-			    .make();
+			
+			// Do the same for the bounds files
+			Path bounds_file = Paths.get(file.getParent().toString(), "bounds_"+ file.getFileName().toString());
+			DB db_bounds = DBMaker
+				    .fileDB(inverse_file.toFile())
+				    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
+				    .fileMmapPreclearDisable() // Make mmap file faster
+				    .cleanerHackEnable() // Unmap (release resources) file when its closed.
+				    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
+				    .executorEnable()
+				    .make();
 
-		boundsData = db.hashMap("map")
-				.keySerializer(Serializer.INTEGER)
-				.valueSerializer(Serializer.INT_ARRAY)
-				.open();
-		
-		AptaLogger.log(Level.CONFIG, this.getClass(), "Reopened as read/write file " + Paths.get(poolDataPath.toString(), "bounds" + ".mapdb").toString() );
+			BTreeMap<Integer, int[]> dbmap_bounds = db_bounds.treeMap("map")
+					.valuesOutsideNodesEnable()
+					.keySerializer(Serializer.INTEGER)
+					.valueSerializer(Serializer.INT_ARRAY)
+			        .open();
+			
+			boundsData.add(dbmap_bounds);
+			
+			AptaLogger.log(Level.CONFIG, this.getClass(), "Reopened as read/write file " + bounds_file.toString() );
+			
+        }
 		
     }		 
 
@@ -969,9 +1060,51 @@ public class MapDBAptamerPool implements AptamerPool {
 		
 	}
 
+	
+	/**
+	 * Internal class implementing the iterator of the aptamer bounds
+	 * i.e id->bounds
+	 */
+	private class BoundsIterator implements Iterable<Entry<Integer,int[]>> {
+		
+		@Override
+		public Iterator<Entry<Integer,int[]>> iterator(){
+	        Iterator<Map.Entry<Integer, int[]>> it = new Iterator<Map.Entry<Integer, int[]>>() {
+
+	            private int currentTreeMapIndex = 0;
+	            private Iterator<Entry<Integer, int[]>> currentTreeMapIterator= boundsData.get(currentTreeMapIndex).getEntries().iterator();
+	            
+	            @Override
+	            public boolean hasNext() {
+	                return currentTreeMapIterator.hasNext() || currentTreeMapIndex < boundsData.size()-1;
+	            }
+
+	            @Override
+	            public Entry<Integer, int[]> next() {
+	            	
+	            	// Move on to the next map if all items from the previous have been iterated over
+	                if (!currentTreeMapIterator.hasNext() && currentTreeMapIndex < poolData.size()-1)
+	                {
+	                	currentTreeMapIndex++;
+	                	currentTreeMapIterator= boundsData.get(currentTreeMapIndex).getEntries().iterator();
+	                }
+	                	
+	                return currentTreeMapIterator.next();
+	            }
+
+	            @Override
+	            public void remove() {
+	                throw new UnsupportedOperationException();
+	            }
+	        };
+	        return it;
+	    }
+		
+	}
+	
         
     /**
-     * Provide public access to the iterator, since <code>PoolCollection</code> implements 
+     * Provides public access to the iterator, since <code>PoolCollection</code> implements 
      * <code>Iterable</code>.
      * @return Instance of <code>PoolCollection</code>.
      */
@@ -980,19 +1113,30 @@ public class MapDBAptamerPool implements AptamerPool {
     }
     
     /**
-     * Provide public access to the iterator of the inverse view of the pool.
+     * Provides public access to the iterator of the inverse view of the pool.
      * @return Instance of <code>PoolCollectionInverse</code>
      */
     public Iterable<Entry<Integer,byte[]>> inverse_view_iterator(){
     	return new InverseViewPoolIterator();
     }
 
+    /**
+     * Provides public access to the iterator of the bounds data
+     * @return Instance of <code>BoundsIterator</code>
+     */
+	@Override
+	public Iterable<Entry<Integer, int[]>> bounds_iterator() {
+		return new BoundsIterator();
+	}
+
+    
 	@Override
 	public Iterable<Integer> id_iterator() {
 		
 		return new IdIterator();
 		
 	}
+
 
 
 }

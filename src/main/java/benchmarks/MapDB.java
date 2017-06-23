@@ -15,11 +15,16 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
+import org.eclipse.collections.api.list.primitive.MutableIntList;
+import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.mapdb.BTreeMap;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
@@ -27,9 +32,15 @@ import org.mapdb.HTreeMap;
 import org.mapdb.Serializer;
 import org.mapdb.serializer.SerializerCompressionWrapper;
 
+import com.koloboke.collect.map.hash.HashIntIntMaps;
+import com.koloboke.compile.KolobokeMap;
+
+import lib.aptacluster.LocalitySensitiveHash;
 import lib.aptamer.datastructures.AptamerPool;
 import lib.aptamer.datastructures.Experiment;
 import lib.aptamer.datastructures.MapDBAptamerPool;
+import lib.aptamer.datastructures.SelectionCycle;
+import lib.parser.aptaplex.distances.Distance;
 import lib.structure.capr.CapR;
 import lib.structure.capr.CapROriginal;
 import lib.structure.capr.EnergyPar;
@@ -37,6 +48,10 @@ import lib.structure.capr.InitLoops;
 import orestes.bloomfilter.CountingBloomFilter;
 import orestes.bloomfilter.FilterBuilder;
 import utilities.Configuration;
+import utilities.Quicksort;
+
+import lib.aptacluster.Buckets;
+import lib.aptacluster.Distances;
 
 public class MapDB {
 
@@ -418,30 +433,46 @@ public class MapDB {
 
 	public static void main(String[] args) {
 		
-//		CapR capr = new CapR();
+//		String s1 = "GGGAGGACGATGCGGAAAGCACGGTCAAGTACTGAAGCGGACCGTCGCGATGCAGCAGACGACTCGCCCGA";
+//		String s2 = "GGGAGGACGATGCGGAAAGCACGGTCAAGTACTGCAGCGGACCGTCGCGATGCAGCAGACGACTCGCCCGA";
+//		String s3 = "GGGAGGACGATGCGGCACGGCACGTGGATAAGGCTTTCAGTGAAATCGCCTAGTGCAGACGACTCGCCCGA";
+//		String s4 = "GGGAGGACGATGCGGTTGGGTCCGTGCATCTATCCGGGGGGTTTATTTAGTGGCTCAGACGACTCGCCCGA";
 //		
+//		double d12 = Distances.KmerDistance(s1.getBytes(), s2.getBytes(), 3);
+//		double d13 = Distances.KmerDistance(s1.getBytes(), s3.getBytes(), 3);
+//		double d14 = Distances.KmerDistance(s1.getBytes(), s4.getBytes(), 3);
 //		
-//		String sequence = "ACGCTGTCTGTACTTGTATCAGTACACTGACGAGTCCCTAAAGGACGAAACAGCGC";
-//		System.out.println(sequence.length());
-//		capr.ComputeStructuralProfile(sequence.getBytes(), sequence.length());
-//		System.out.println(Arrays.toString(capr.getStructuralProfile()));
-//
-//		System.out.println();
-//		
-//		String sequence2 = "ACGCTGTCTGTACTTGTATCAGTACACAGTAGCTAGCATCGATGACGAGTCCCTAAAGGACGAAACAGCGC";
-//		System.out.println(sequence2.length());
-//		capr.ComputeStructuralProfile(sequence2.getBytes(), sequence2.length());
-//		System.out.println(Arrays.toString(capr.getStructuralProfile()));
-//		
-//		
-//		//testBTreeMap();
-////		generatePairedEndDataset(); 
-////		testRandomSequences();
+//		System.out.println(d12);
+//		System.out.println(d13);
+//		System.out.println(d14);
 		
-		Path wintest = Paths.get("Z:\\tmp\\aptasuitesim\\");
+		int[] one = {3,7,1,0,8,10};
+		int[] two = {0,1,2,3,4,5};
 		
-		System.out.println(Files.isWritable(wintest));
+		Quicksort.sort(two, one);
+		
+		System.out.println(Arrays.toString(two));
+		
+		class AptamerSizeComparator implements Comparator<Integer>{
 
+			private SelectionCycle sc = null;
+			
+			public AptamerSizeComparator(SelectionCycle sc){
+				
+				this.sc = sc;
+				
+			}
+
+			@Override
+			public int compare(Integer arg1, Integer arg2) {
+				Integer i = new Integer(4);
+				
+				return 0;
+				//return -Integer.compare(sc.getAptamerCardinality(arg1.intValue()), sc.getAptamerCardinality(arg2.intValue()));
+			}
+						
+	}
+		
 	}
 
 }

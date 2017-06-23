@@ -3,8 +3,6 @@
  */
 package lib.parser;
 
-import lib.parser.aptaplex.AptaPlexProgress;
-
 /**
  * @author Jan Hoinka
  * This interface defines the type which all classes which implement must

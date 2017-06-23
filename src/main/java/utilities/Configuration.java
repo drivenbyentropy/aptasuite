@@ -7,8 +7,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder;
 import org.apache.commons.configuration2.builder.fluent.Parameters;
@@ -78,7 +76,7 @@ public class Configuration {
 			HashMap<String, Object> defaults= new HashMap<String,Object>()
 			{{
 				 // Default Experiment Name, required for data export
-				put("Experiment.name", "Sample Experiment");
+				 put("Experiment.name", "Sample Experiment");
 				
 			     // PoolBackend
 			     put("AptamerPool.backend", "MapDBAptamerPool");
@@ -97,11 +95,17 @@ public class Configuration {
 			     
 			     // StructurePoolMapDB Options
 			     put("MapDBStructurePool.bloomFilterCollisionProbability", 0.001);
-			     put("MapDBStructurePool.maxTreeMapCapacity", 2000000); 
+			     put("MapDBStructurePool.maxTreeMapCapacity", 500000); 
 			     
 			     // BloomFilterSelectionCycle  Options
 			     put("MapDBSelectionCycle.bloomFilterCollisionProbability", 0.001); //the capacity must be the same as MapDBAptamerPool.bloomFilterCapacity
 			     
+			     // AptaCluster Option
+			     put("ClusterContainer.backend", "MapDBClusterContainer");
+			     put("Aptacluster.EditDistance", 5); // The maximal number of nucleodite differences between two sequences to be considered mememebers of the same cluster
+			     put("Aptacluster.LSHIterations", 10); // The number of LSH iterations to be performed
+			     put("Aptacluster.KmerSize", 3); // The kmer size used for the distance calculations
+			     put("Aptacluster.KmerCutoffIterations", 10000); // The number of iterations to be performed for computing the kmer cutoff for cluster formation
 			     
 			     // Parser Options
 			     put("Parser.backend", "AptaplexParser");
@@ -133,7 +137,7 @@ public class Configuration {
 			     put("Export.compress", true); // Whether the resulting files should be gzip compressed or not
 			     put("Export.SequenceFormat", "fastq"); // The output format for nucleotide data [Fastq, Fasta, Raw]
 			     put("Export.IncludePrimerRegions", true); // If false, the 5' and 3' primers will not be exported 
-
+			     put("Export.MinimalClusterSize", 1); // The smallest amount of members a cluster should contain in order to be exported
 			     
 			     // Performance Options
 			     put("Performance.maxNumberOfCores", 30); // if larger than available, min of both is taken

@@ -3,15 +3,11 @@
  */
 package lib.parser.aptaplex;
 
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.BlockingQueue;
 import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import exceptions.InvalidSequenceReadFileException;
 import utilities.AptaLogger;
 import utilities.Configuration;
