@@ -9,6 +9,9 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.BlockingQueue;
 import java.util.logging.Level;
+
+import org.apache.commons.lang3.ArrayUtils;
+
 import com.milaboratory.core.PairedEndReadsLayout;
 import com.milaboratory.core.io.sequence.PairedRead;
 import com.milaboratory.core.io.sequence.SingleReadImpl;
@@ -81,7 +84,8 @@ public class AptaPlexConsumer implements Runnable {
 	 * Access to the 5 prime primer
 	 */
 	private byte[] primer5 = Configuration.getParameters().getString("Experiment.primer5").getBytes();
-
+	private byte[] primer5reverse = Configuration.getParameters().getString("Experiment.primer5").getBytes();
+	
 	/**
 	 * Access to the 5 prime primer
 	 */
@@ -151,6 +155,8 @@ public class AptaPlexConsumer implements Runnable {
 					"Error. Neither the 3' primer nor a randomized region size was specified. Please add either of these parameters to the configuration.");
 		}
 
+		// compute the reverse of the 5 primer primer. This is required due to the inner workings of the Bitap algorithm
+		ArrayUtils.reverse(this.primer5reverse);
 	}
 
 	@Override
@@ -202,7 +208,15 @@ public class AptaPlexConsumer implements Runnable {
 				}
 
 				// Match the 5' primer
-				Result primer5_match = matchPrimer(contig, primer5);
+				// Since the bitab alrithms starts at the 3' end of the sequence
+				// and returns the first element which matches, we need to turn the search 
+				// problem around
+				byte[] contigreverse = contig.clone();
+				ArrayUtils.reverse(contigreverse);
+				Result primer5_match = matchPrimer(contigreverse, primer5reverse);
+				if (primer5_match != null){
+					primer5_match.index = contig.length - primer5_match.index - primer5reverse.length; 
+				}
 
 				if (primer5_match == null) { // no match
 					progress.totalUnmatchablePrimer3.incrementAndGet();
@@ -366,7 +380,7 @@ public class AptaPlexConsumer implements Runnable {
 	 * @return Result object containing the start index of the position and the
 	 *         score. null if no match was found
 	 */
-	private Result matchPrimer(byte[] c, byte[] primer) {
+	public Result matchPrimer(byte[] c, byte[] primer) { //TODO: Change to private
 		
 		if (primer.length > 32) { // we default to the slower edit distance
 			return editDistance.indexOf(c, primer, primerTolerance, 0, c.length);
@@ -473,7 +487,7 @@ public class AptaPlexConsumer implements Runnable {
 			for (int x = 0; x < barcodes5.size(); x++) {
 				// restrict the search space to the left side of the 5' primer
 				Result current_match = bitapDistance.indexOf(c, barcodes5.get(x), barcodeTolerance, 0,
-						primermatch5.index + primer5.length);
+						primermatch5.index);
 
 				if (current_match != null && (barcodeMatch5 == null || barcodeMatch5.errors > current_match.errors)
 						&& current_match.errors <= barcodeTolerance) {
@@ -489,7 +503,7 @@ public class AptaPlexConsumer implements Runnable {
 		if (barcodes3.size() != 0) {
 
 			for (int x = 0; x < barcodes3.size(); x++) {
-				// restrict the search space to the left side of the 5' primer
+				// restrict the search space to the right side of the 3' primer
 				Result current_match = bitapDistance.indexOf(c, barcodes3.get(x), barcodeTolerance,
 						primermatch3.index + primer3.length, c.length);
 
@@ -501,7 +515,7 @@ public class AptaPlexConsumer implements Runnable {
 			}
 		}
 		
-		// Differenciate between the different scenarios
+		// Differentiate between the different scenarios
 		
 		// If both barcodes are present, the identified cycles have to coincide
 		if (barcodes5.size() != 0 && barcodes3.size() != 0){

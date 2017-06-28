@@ -23,6 +23,7 @@ import java.util.Random;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.eclipse.collections.api.list.primitive.MutableIntList;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.mapdb.BTreeMap;
@@ -40,7 +41,9 @@ import lib.aptamer.datastructures.AptamerPool;
 import lib.aptamer.datastructures.Experiment;
 import lib.aptamer.datastructures.MapDBAptamerPool;
 import lib.aptamer.datastructures.SelectionCycle;
+import lib.parser.aptaplex.AptaPlexConsumer;
 import lib.parser.aptaplex.distances.Distance;
+import lib.parser.aptaplex.distances.Result;
 import lib.structure.capr.CapR;
 import lib.structure.capr.CapROriginal;
 import lib.structure.capr.EnergyPar;
@@ -433,45 +436,21 @@ public class MapDB {
 
 	public static void main(String[] args) {
 		
-//		String s1 = "GGGAGGACGATGCGGAAAGCACGGTCAAGTACTGAAGCGGACCGTCGCGATGCAGCAGACGACTCGCCCGA";
-//		String s2 = "GGGAGGACGATGCGGAAAGCACGGTCAAGTACTGCAGCGGACCGTCGCGATGCAGCAGACGACTCGCCCGA";
-//		String s3 = "GGGAGGACGATGCGGCACGGCACGTGGATAAGGCTTTCAGTGAAATCGCCTAGTGCAGACGACTCGCCCGA";
-//		String s4 = "GGGAGGACGATGCGGTTGGGTCCGTGCATCTATCCGGGGGGTTTATTTAGTGGCTCAGACGACTCGCCCGA";
-//		
-//		double d12 = Distances.KmerDistance(s1.getBytes(), s2.getBytes(), 3);
-//		double d13 = Distances.KmerDistance(s1.getBytes(), s3.getBytes(), 3);
-//		double d14 = Distances.KmerDistance(s1.getBytes(), s4.getBytes(), 3);
-//		
-//		System.out.println(d12);
-//		System.out.println(d13);
-//		System.out.println(d14);
+		Configuration.setConfiguration(args[0]);
+		Experiment experiment = new Experiment(args[0], true);
 		
-		int[] one = {3,7,1,0,8,10};
-		int[] two = {0,1,2,3,4,5};
+		AptaPlexConsumer apc = new AptaPlexConsumer(null, null);
 		
-		Quicksort.sort(two, one);
+		byte[] seq = new String("GGGAGGACGATGCGGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAATGCCGTCAGACGACTCGCCCGA").getBytes();
+		byte[] primer = new String("GGGAGGACGATGCGG").getBytes();
 		
-		System.out.println(Arrays.toString(two));
+		ArrayUtils.reverse(seq);
+		ArrayUtils.reverse(primer);
 		
-		class AptamerSizeComparator implements Comparator<Integer>{
-
-			private SelectionCycle sc = null;
-			
-			public AptamerSizeComparator(SelectionCycle sc){
-				
-				this.sc = sc;
-				
-			}
-
-			@Override
-			public int compare(Integer arg1, Integer arg2) {
-				Integer i = new Integer(4);
-				
-				return 0;
-				//return -Integer.compare(sc.getAptamerCardinality(arg1.intValue()), sc.getAptamerCardinality(arg2.intValue()));
-			}
-						
-	}
+		Result match = apc.matchPrimer(seq, primer);
+		
+		System.out.println(match.index);
+		System.out.println(seq.length - match.index - primer.length);
 		
 	}
 

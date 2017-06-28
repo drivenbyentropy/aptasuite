@@ -780,6 +780,8 @@ public class MapDBAptamerPool implements AptamerPool {
     	
     	// clear references
     	poolData.clear();
+    	poolDataInverse.clear();
+    	boundsData.clear();
     	
     	// reopen as read only
 		for (Path file : poolDataPaths) {
@@ -864,6 +866,8 @@ public class MapDBAptamerPool implements AptamerPool {
     	
     	// clear references
     	poolData.clear();
+    	poolDataInverse.clear();
+    	boundsData.clear();
     	
     	// reopen as read/write
 		for (Path file : poolDataPaths) {

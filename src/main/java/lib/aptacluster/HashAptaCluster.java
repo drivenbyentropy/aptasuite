@@ -12,6 +12,7 @@ import java.util.Map.Entry;
 import java.util.Random;
 import java.util.logging.Level;
 
+import org.eclipse.collections.api.list.primitive.MutableIntList;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
 
 import lib.aptamer.datastructures.AptamerBounds;
@@ -145,7 +146,7 @@ public class HashAptaCluster implements AptaCluster {
 		}
 		
 		clusters.setReadOnly();
-		
+
 	}	
 	
 	

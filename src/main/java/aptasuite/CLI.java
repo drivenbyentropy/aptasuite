@@ -478,8 +478,18 @@ public class CLI {
 			experiment.instantiateStructurePool(false);
 		}	
 		
-		AptaTraceMotif motifFinder=new AptaTraceMotif(experiment); //TODO: SEPARATE INTO CONSTRUCTOR AND RUN LOGIC
+		AptaTraceMotif aptatrace =new AptaTraceMotif(
+				experiment,
+				Configuration.getParameters().getString("Experiment.projectPath"),
+				Configuration.getParameters().getInt("Aptatrace.KmerLength"),
+				Configuration.getParameters().getBoolean("Aptatrace.FilterClusters"),
+				Configuration.getParameters().getBoolean("Aptatrace.OutputClusters"),
+				Configuration.getParameters().getInt("Aptatrace.Alpha")
+				
+				); 
 		
+		
+		aptatrace.run();
 	}
 	
 	/**

@@ -4,12 +4,17 @@
 package lib.export;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 
+import org.eclipse.collections.api.iterator.MutableIntIterator;
 import org.eclipse.collections.api.list.primitive.MutableIntList;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
+
+import com.itextpdf.text.log.SysoCounter;
 
 import exceptions.InvalidConfigurationException;
 import lib.aptacluster.Buckets;
@@ -43,28 +48,117 @@ public class Export {
 		// Load a writer instance depending on the configuration
 		ExportWriter writer = Configuration.getParameters().getBoolean("Export.compress") ? new CompressedExportWriter() : new UncompressedExportWriter();
 		writer.open(p);
-
-		// Do the same for the formatter
-		ExportFormat<byte[]> formatter = null;
-		switch (Configuration.getParameters().getString("Export.SequenceFormat")) {
 		
-			case "fastq": 
-				formatter = new FastqExportFormat(Configuration.getExperiment().getName());
-				break;
-				
-			case "fasta":
-				formatter = new FastaExportFormat(Configuration.getExperiment().getName());
-				break;
+		// we want to sort the output by the cumulative frequency of the aptamers 
+		int[] aptamer_ids = new int[ap.size()];
+		int[] aptamer_sums = new int[ap.size()];
 		
-			default:
-				AptaLogger.log(Level.SEVERE, this.getClass(), "Export format " + Configuration.getParameters().getString("Export.SequenceFormat") + " not recognized. Exiting");
-				throw new InvalidConfigurationException("Export format " + Configuration.getParameters().getString("Export.SequenceFormat") + " not recognized.");
+		int counter = 0;
+		for ( Integer item : ap.id_iterator()){
+			
+			aptamer_ids[counter] = item;
+			counter++;
+			
 		}
+		
+		Quicksort.sort(aptamer_ids);
+		
+		for ( SelectionCycle cycle : Configuration.getExperiment().getAllSelectionCycles() ){
+			
+			counter = 0;
+			for ( Entry<Integer, Integer> cycle_it : cycle.iterator()){
+				
+				// this is guaranteed to terminate since cycle ids are a subset 
+				// of the aptamer pool ids
+				while (aptamer_ids[counter] != cycle_it.getKey()){
+					counter++;
+				}
+				aptamer_sums[counter] += cycle_it.getValue();
+			}
+			
+		}
+		
+		/**
+		 * @author Jan Hoinka
+		 * This comparator sorts in descending order
+		 */
+		class AptamerSizeQSComparator implements QSComparator{
+
+				@Override
+				public int compare(int a, int b) {
+					return -Integer.compare(a, b);
+				}
+							
+		}
+		Quicksort.sort(aptamer_ids, aptamer_sums, new AptamerSizeQSComparator());
+		
+		// Allow unused space to be garbadge collected
+		aptamer_sums = null;
+		
+		// Prepare the header
+		String[] buffer = new String[2+Configuration.getExperiment().getAllSelectionCycles().size()];
+		buffer[0] = "Aptamer Id";
+		buffer[1] = "Sequence";
+		counter = 2;
+		for ( SelectionCycle cycle : Configuration.getExperiment().getAllSelectionCycles() ){
+			
+			buffer[counter] = cycle.getName();
+			
+			counter++;
+		}
+		writer.write(String.join("\t",buffer)+"\n");
 		
 		// Write sequences
-		for ( Entry<byte[], Integer> entry : ap.iterator()){
-			writer.write(formatter.format(entry.getValue(), entry.getKey()));
+		boolean includer_primer_regions = Configuration.getParameters().getBoolean("Export.IncludePrimerRegions");
+		
+		int pool_size = ap.size();
+		int progress = 0;
+		for ( int aptamer_id : aptamer_ids){
+			
+			
+			progress++;
+			if (progress % 1000 == 0){
+				System.out.print(String.format("Progress %s/%s\r", progress,pool_size));
+			}
+			
+			// First id and and sequence
+			buffer[0] = String.format("%s", aptamer_id);
+			
+			byte[] sequence = ap.getAptamer(aptamer_id);
+			
+			if (includer_primer_regions){
+				
+				buffer[1] = new String(sequence);
+				
+			}
+			else{
+				AptamerBounds ab = ap.getAptamerBounds(aptamer_id);
+				try{
+					buffer[1] = new String(sequence, ab.startIndex, (ab.endIndex-ab.startIndex));
+				}
+				catch(Exception e){
+					System.out.println(new String(sequence));
+					System.out.println(ab.startIndex + "   "+ ab.endIndex  );
+					System.exit(0);
+				}
+			}
+			
+			// Now the counts
+			counter = 2;
+			for ( SelectionCycle cycle : Configuration.getExperiment().getAllSelectionCycles() ){
+				
+				buffer[counter] = String.format("%s", cycle.getAptamerCardinality(aptamer_id));
+				counter++;
+				
+			}
+			
+			// Finally write to file
+			writer.write(String.join("\t",buffer)+"\n");
 		}
+		
+		// Final update
+		System.out.print(String.format("Progress %s/%s\r", progress,pool_size));
+		System.out.println();
 		
 		// Finalize
 		writer.close();
@@ -170,9 +264,7 @@ public class Export {
 				
 			}
 			else {
-				
 				buckets.get(cluster_id).add(item.getKey());
-				
 			}
 			
 		}
@@ -180,15 +272,21 @@ public class Export {
 		
 		// Now remove all clusters which do not contain the specified minimal number of items
 		int minimal_cluster_size = Configuration.getParameters().getInt("Export.MinimalClusterSize");
-		
+
+		MutableIntList to_be_deleted = IntLists.mutable.empty();
 		for ( Entry<Integer, MutableIntList> bucket : buckets.entrySet() ){
 			
-			if( bucket.getValue().size() < minimal_cluster_size ){
+			if( bucket.getValue().size() <= minimal_cluster_size ){
 			
-				System.out.println("here");
-				buckets.justRemove(bucket.getKey());
+				to_be_deleted.add(bucket.getKey());
 			
 			}
+			
+		}
+		MutableIntIterator it = to_be_deleted.intIterator();
+		while (it.hasNext()){
+
+			buckets.justRemove(it.next());
 			
 		}
 		System.out.println(total_number_of_clusters + "   " + buckets.size());
@@ -200,6 +298,7 @@ public class Export {
 		for ( Entry<Integer, MutableIntList> bucket : buckets.entrySet() ){
 			
 			cluster_ids_by_size[counter] = bucket.getKey();
+			counter++;
 			
 		}
 		
@@ -282,6 +381,8 @@ public class Export {
 			
 			writer.write("\n");
 		}
+		
+		writer.close();
 		
 	}
 	

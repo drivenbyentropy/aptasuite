@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 
+import lib.aptamer.datastructures.AptamerBounds;
 import lib.aptamer.datastructures.Experiment;
 import utilities.AptaLogger;
 
@@ -24,6 +25,10 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import lib.aptamer.datastructures.SelectionCycle;
 import utilities.Configuration;
 
+/**
+ * @author Phoung Dao, modifications by Jan Hoinka
+ *
+ */
 public class AptaTraceMotif {
 
 	private Experiment experiment = null;
@@ -32,6 +37,42 @@ public class AptaTraceMotif {
 	private static int[] fourToPower = { 1, 4, 16, 64, 256, 1024, 4096, 16384, 65536, 262144, 1048576, 4194304,
 			16777216 };
 
+	private double theta = 10.0;
+
+	private String outputPrefix = "aptatrace";
+
+	private String outputPath;
+	
+	private int klength;
+	
+	private boolean filterClusters; 
+	
+	private boolean outputClusters; 
+	
+	private int singletonThres; 
+	
+	
+	public AptaTraceMotif(
+							Experiment exp, 
+							String outputPath, 
+							int klength, 
+							boolean filterClusters, 
+							boolean outputClusters, 
+							int singletonThres)
+	{
+		
+		// We need to be able to create graphical instances in pure console mode
+		System.setProperty("java.awt.headless", "true");
+		
+		this.experiment = exp;
+		this.outputPath = outputPath;
+		this.klength = klength;
+		this.filterClusters = filterClusters;
+		this.outputClusters = outputClusters;
+		this.singletonThres = singletonThres;
+		
+	}
+	
 	/**
 	 * Deletes a directory, possibly containing files and subfolders, from the
 	 * medium.
@@ -71,7 +112,11 @@ public class AptaTraceMotif {
 		}
 	}
 
-	// return an id of a character
+	/**
+	 * Return an id of a character
+	 * @param c the character
+	 * @return the correpsonding id
+	 */
 	private static int getNuId(char c) {
 		switch (c) {
 		case 'A':
@@ -89,7 +134,11 @@ public class AptaTraceMotif {
 		}
 	}
 
-	// return an id of a character provided character byte code
+	/**
+	 * return an id of a character provided character byte code
+	 * @param c the character
+	 * @return the correpsonding id
+	 */
 	private static int getNuId(byte c) {
 		switch (c) {
 		case 65:
@@ -107,6 +156,12 @@ public class AptaTraceMotif {
 		}
 	}
 
+	/**
+	 * @param alignment
+	 * @param aptamer
+	 * @param pos
+	 * @return
+	 */
 	private String fillBlanks(String alignment, String aptamer, int pos) {
 		String a = "";
 		int firstPos = 0;
@@ -146,8 +201,12 @@ public class AptaTraceMotif {
 		return (4 * (oldId - getNuId(lastNu) * fourToPower[klen - 1]) + getNuId(newNu));
 	}
 
-	// return the id of a given k-mer, the id will be the index of the given
-	// k-mer in kmersArr
+	/**
+	 * return the id of a given k-mer, the id will be the index of the given 
+	 * k-mer in kmersArr
+	 * @param kmer
+	 * @return
+	 */
 	private static int calculateId(String kmer) {
 		int id = 0;
 		for (int i = 0; i < kmer.length(); i++)
@@ -155,8 +214,13 @@ public class AptaTraceMotif {
 		return id;
 	}
 
-	// A recursive procedure to generate all possible number of k-mers given the
-	// length klength
+	/**
+	 * A recursive procedure to generate all possible number of k-mers given the length klength
+	 * @param k
+	 * @param current
+	 * @param arr
+	 * @param klength
+	 */
 	private void generateAllKmers(int k, String current, ArrayList<String> arr, int klength) {
 		if (k == klength)
 			arr.add(current);
@@ -168,7 +232,12 @@ public class AptaTraceMotif {
 		}
 	}
 
-	// pair alignment of two kmers a and b
+	/**
+	 * Pair alignment of two kmers a and b
+	 * @param a
+	 * @param b
+	 * @return
+	 */
 	private String[] pairAlignment(String a, String b) {
 		String savea = "";
 		String saveb = "";
@@ -228,8 +297,12 @@ public class AptaTraceMotif {
 		return ret;
 	}
 
-	// to compute alignment of all the kmers in a give cluster of kmers stored
-	// in sArr
+	/**
+	 * To compute alignment of all the kmers in a give cluster of kmers stored
+	 * in sArr
+	 * @param sArr
+	 * @return
+	 */
 	private String[] multipleAlignment(ArrayList<String> sArr) {
 		String seed = sArr.get(0);
 		String[] a = new String[sArr.size()];
@@ -361,24 +434,12 @@ public class AptaTraceMotif {
 		return false;
 	}
 
-	// public static void main(String[] args) {
-	public AptaTraceMotif(Experiment exp) {
+	/**
+	 * Performs the main computation
+	 */
+	public void run() {
 		long startTime, endTime, rms;
 		int rmh, rmm;
-		this.experiment = exp;
-
-		System.setProperty("java.awt.headless", "true");
-		String outputPrefix = "aptatrace";
-		String fivePrime = Configuration.getParameters().getString("Experiment.primer5");
-		String threePrime = Configuration.getParameters().getString("Experiment.primer3");
-
-		// change this
-		String outputPath = Configuration.getParameters().getString("Experiment.projectPath");
-		int klength = Configuration.getParameters().getInt("Aptatrace.KmerLength");
-		boolean filterClusters = Configuration.getParameters().getBoolean("Aptatrace.FilterClusters");
-		boolean outputClusters = Configuration.getParameters().getBoolean("Aptatrace.OutputClusters");
-		int singletonThres = Configuration.getParameters().getInt("Aptatrace.Alpha");
-		double theta = 10.0;
 
 		ArrayList<SelectionCycle> cycles = Configuration.getExperiment().getSelectionCycles();
 		ArrayList<String> roundArr = new ArrayList<String>();
@@ -440,17 +501,16 @@ public class AptaTraceMotif {
 			int cardinality;
 			int id = 0;
 			int startPos;
+			int endPos;
 			int rid;
 			int aptamerLen;
 			int aptamerId;
-			// String aptamer;
 			double[] contextLongArr;
 			double[][] contextProbArr = new double[5][];
 			double[] avgContextProbArr = new double[5];
 			boolean firstRead = true;
 			IntOpenHashSet seen = new IntOpenHashSet();
 
-			// experiment.getAptamerPool().size();
 			int poolSize = experiment.getAptamerPool().size();
 			int numDone = 0;
 			startTime = System.nanoTime();
@@ -459,6 +519,7 @@ public class AptaTraceMotif {
 				aptamer = new String(aptamerArr.getKey());
 				aptamerLen = aptamer.length();
 				aptamerId = aptamerArr.getValue();
+				AptamerBounds aptamerBounds= experiment.getAptamerPool().getAptamerBounds(aptamerId);
 				numOR = 0;
 				rid = 0;
 				for (SelectionCycle sc : experiment.getAllSelectionCycles()) {
@@ -491,7 +552,7 @@ public class AptaTraceMotif {
 					}
 
 					if (differentLength == 1)
-						AptaLogger.log(Level.INFO, this.getClass(), "\nWarnings: aptamers have different lengths!\n");
+						AptaLogger.log(Level.CONFIG, this.getClass(), "\nWarning: aptamers have different lengths!\n");
 				}
 
 				contextLongArr = experiment.getStructurePool().getStructure(aptamerId);
@@ -508,12 +569,14 @@ public class AptaTraceMotif {
 					}
 				}
 
-				startPos = (klength + fivePrime.length() - 1);
+				//startPos = (klength + fivePrime.length() - 1);
+				startPos = aptamerBounds.startIndex + klength - 1;
+				endPos = aptamerBounds.endIndex;
 
 				// iterate through every kmer of the aptamer under consideration
 				// and sum up its number of occurrences and the sums of the
 				// probabilities of being in various structural context
-				for (int k = startPos; k < (aptamerLen - threePrime.length()); k++) {
+				for (int k = startPos; k < endPos; k++) {
 					if (k == startPos)
 						id = calculateId(aptamer.substring(k - klength + 1, k + 1));
 					else
@@ -895,6 +958,7 @@ public class AptaTraceMotif {
 		int cardinality;
 		int id = 0;
 		int startPos;
+		int endPos;
 		int rid;
 		int aptamerLen;
 		int aptamerId;
@@ -914,6 +978,7 @@ public class AptaTraceMotif {
 			aptamer = new String(aptamerArr.getKey());
 			aptamerLen = aptamer.length();
 			aptamerId = aptamerArr.getValue();
+			AptamerBounds aptamerBounds = experiment.getAptamerPool().getAptamerBounds(aptamerId);
 			numOR = 0;
 			rid = 0;
 			for (SelectionCycle sc : experiment.getAllSelectionCycles()) {
@@ -946,7 +1011,8 @@ public class AptaTraceMotif {
 					contextProbArr[j][k] = contextLongArr[j * aptamerLen + k] + contextProbArr[j][k - 1];
 			}
 
-			startPos = (klength + fivePrime.length() - 1);
+			startPos = aptamerBounds.startIndex + klength - 1;
+			endPos = aptamerBounds.endIndex;
 
 			if (occRArr[numOR - 1] == roundArr.size() - 1)
 				lastRoundPool.add(new Pair(aptamerId, occCArr[numOR - 1]));
@@ -957,7 +1023,7 @@ public class AptaTraceMotif {
 			// if it is, summing the total number of occurrences and the sums of
 			// probabilities of being in various structural context of its
 			// motifs
-			for (int k = startPos; k < (aptamer.length() - threePrime.length()); k++) {
+			for (int k = startPos; k < endPos; k++) {
 				kmer = aptamer.substring(k - klength + 1, k + 1);
 				if (k == startPos)
 					id = calculateId(kmer);
@@ -1142,14 +1208,17 @@ public class AptaTraceMotif {
 				}
 
 				aptamer = new String(experiment.getAptamerPool().getAptamer(lastRoundPool.get(i).getFirst()));
+				AptamerBounds aptamerBounds = experiment.getAptamerPool().getAptamerBounds(lastRoundPool.get(i).getFirst());
 				aptamerCount = lastRoundPool.get(i).getSecond();
 
-				startPos = (klength + fivePrime.length() - 1);
+				startPos = aptamerBounds.startIndex + klength - 1;
+				endPos = aptamerBounds.endIndex;
+				
 				IntOpenHashSet seencid = new IntOpenHashSet();
 
 				// iterate through each kmer of the aptamer and decide whether
 				// the aptamer contains a motif
-				for (int k = startPos; k < (aptamer.length() - threePrime.length()); k++) {
+				for (int k = startPos; k < endPos; k++) {
 					kmer = aptamer.substring(k - klength + 1, k + 1);
 					if (k == startPos)
 						id = calculateId(kmer);
