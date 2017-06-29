@@ -63,7 +63,7 @@ public class FastqExportFormat implements ExportFormat<byte[]> {
 		
 		return String.format("@%s\n%s\n+\n%s\n", 
 				"AptaSuite_" + id + " " + name + " length=" + length,
-				(withPrimers ? new String(sequence) : new String(Arrays.copyOfRange(sequence, bounds.startIndex, bounds.startIndex))),
+				(withPrimers ? new String(sequence) : new String(Arrays.copyOfRange(sequence, bounds.startIndex, bounds.endIndex))),
 				qualityScores.subSequence(0, length)
 				);
 		

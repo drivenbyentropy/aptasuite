@@ -4,8 +4,6 @@
 package lib.export;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Level;
@@ -13,8 +11,6 @@ import java.util.logging.Level;
 import org.eclipse.collections.api.iterator.MutableIntIterator;
 import org.eclipse.collections.api.list.primitive.MutableIntList;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
-
-import com.itextpdf.text.log.SysoCounter;
 
 import exceptions.InvalidConfigurationException;
 import lib.aptacluster.Buckets;
