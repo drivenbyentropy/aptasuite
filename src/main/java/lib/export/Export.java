@@ -106,6 +106,7 @@ public class Export {
 		
 		// Write sequences
 		boolean includer_primer_regions = Configuration.getParameters().getBoolean("Export.IncludePrimerRegions");
+		String cardinality_format = Configuration.getParameters().getString("Export.PoolCardinalityFormat");
 		
 		int pool_size = ap.size();
 		int progress = 0;
@@ -143,7 +144,13 @@ public class Export {
 			counter = 2;
 			for ( SelectionCycle cycle : Configuration.getExperiment().getAllSelectionCycles() ){
 				
-				buffer[counter] = String.format("%s", cycle.getAptamerCardinality(aptamer_id));
+				if (cardinality_format.equals("counts")) {
+					buffer[counter] = String.format("%s", cycle.getAptamerCardinality(aptamer_id));
+				}
+				if (cardinality_format.equals("frequencies")) {
+					buffer[counter] = String.format("%10.3e", new Double(cycle.getAptamerCardinality(aptamer_id)) / new Double(cycle.getSize()) );
+				}
+				
 				counter++;
 				
 			}
@@ -162,7 +169,7 @@ public class Export {
 
 	/**
 	 * Writes the specified SelectionCycle <code>p</code> to 
-	 * persistent storage
+	 * file
 	 * @param ap instance of <code>AptamerPool</code>
 	 * @param p the location at which the file should be created
 	 */
@@ -191,7 +198,14 @@ public class Export {
 		
 		// Write sequences
 		for ( Entry<byte[], Integer> entry : sc.sequence_iterator()){
-			writer.write(formatter.format(entry.getValue(), entry.getKey()));
+			
+			// get the id of that aptamer
+			int id = Configuration.getExperiment().getAptamerPool().getIdentifier(entry.getKey());
+			
+			// write sequence an many times as its cardinality
+			for( int x=0; x<entry.getValue(); x++) {
+				writer.write(formatter.format(id, entry.getKey()));
+			}
 		}
 		
 		// Finalize
@@ -253,6 +267,11 @@ public class Export {
 		for ( Entry<Integer, Integer> item : sc.iterator()){
 
 			int cluster_id = cc.getClusterId(item.getKey());
+			
+			// Only take into account items which have a cluster membership
+			if (cluster_id == -1) {
+				continue;
+			}
 			
 			if ( !buckets.contains(cluster_id) ){
 				

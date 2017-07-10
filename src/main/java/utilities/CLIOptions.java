@@ -23,7 +23,7 @@ public class CLIOptions {
 		// Data input options, these are mutually exclusive
 				
 		// AptaPLEX 
-		Option aptaplex = new Option("parse", false, "Creates a new aptamer pool and associated selection cycles according to the configuration file. Note, this option is mutually exclusive with -simulate.");
+		Option aptaplex = new Option("parse", false, "Runs AptaPLEX and creates a new aptamer pool and associated selection cycles according to the configuration file. Note, this option is mutually exclusive with -simulate.");
 	
 		// AptaSIM
 		Option aptasim = new Option("simulate", false, "Creates a new aptamer pool using AptaSIM according to the configuration file. Note, this option is mutually exclusive with -parse");

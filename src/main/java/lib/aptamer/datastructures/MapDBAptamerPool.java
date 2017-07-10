@@ -192,6 +192,7 @@ public class MapDBAptamerPool implements AptamerPool {
     					    .fileDB(file.toFile())
     					    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
     					    .fileMmapPreclearDisable() // Make mmap file faster
+    					    .fileChannelEnable()
     					    .cleanerHackEnable() // Unmap (release resources) file when its closed.
     					    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
     					    .executorEnable()
@@ -223,6 +224,7 @@ public class MapDBAptamerPool implements AptamerPool {
     					    .fileDB(inverseFile.toFile())
     					    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
     					    .fileMmapPreclearDisable() // Make mmap file faster
+    					    .fileChannelEnable()
     					    .cleanerHackEnable() // Unmap (release resources) file when its closed.
     					    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
     					    .executorEnable()
@@ -261,6 +263,7 @@ public class MapDBAptamerPool implements AptamerPool {
     					    .fileDB(boundsFile.toFile())
     					    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
     					    .fileMmapPreclearDisable() // Make mmap file faster
+    					    .fileChannelEnable()
     					    .cleanerHackEnable() // Unmap (release resources) file when its closed.
     					    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
     					    .executorEnable()

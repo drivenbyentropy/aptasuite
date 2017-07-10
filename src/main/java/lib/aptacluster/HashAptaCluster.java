@@ -340,8 +340,14 @@ public class HashAptaCluster implements AptaCluster {
 		// create buckets and fill them with their corresponding hash
 		Buckets buckets =  Buckets.withExpectedSize(experiment.getAptamerPool().size());
 		
-		
+		int counter = 0;
 		for ( int item_id : this.aptamersBySize){
+			
+			counter++;
+			if(counter % 1000 == 0) {
+				System.out.print(String.format("Processed %s/%s items\r", counter, this.aptamersBySize.length));	
+			}
+			
 			
 			byte[] item = experiment.getAptamerPool().getAptamer(item_id);
 			AptamerBounds item_bounds = experiment.getAptamerPool().getAptamerBounds(item_id);
@@ -361,6 +367,7 @@ public class HashAptaCluster implements AptaCluster {
 			}
 			
 		}
+		System.out.println(String.format("Processed %s/%s items", counter, this.aptamersBySize.length));
 		
 		AptaLogger.log(Level.INFO, this.getClass(), String.format("Finished generating %s buckets in %s seconds", buckets.size(), ((System.currentTimeMillis() - tstart) / 1000.0)));
 		

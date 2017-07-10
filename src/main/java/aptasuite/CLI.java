@@ -16,6 +16,7 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.time.DateUtils;
 
+import exceptions.InformationNotFoundException;
 import exceptions.InvalidConfigurationException;
 import lib.aptacluster.AptaCluster;
 import lib.aptacluster.HashAptaCluster;
@@ -102,9 +103,17 @@ public class CLI {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+
+			// reference publication to cite
+			AptaLogger.log(Level.INFO, this.getClass(), "If you use this software in your research, please cite AptaPLEX as "
+					+ "Hoinka, J., & Przytycka, T. (2016). "
+					+ "AptaPLEX - A dedicated, multithreaded demultiplexer for HT-SELEX data. "
+					+ "Methods. http://doi.org/10.1016/j.ymeth.2016.04.011"
+					+ "");
 			
 			// call data input logic
 			createDatabase( line.getOptionValue("config") );
+			
 		}
 		
 		// Case for AptaSIM, create a database or overwrite an existing one
@@ -120,6 +129,13 @@ public class CLI {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+			
+			// reference publication to cite
+			AptaLogger.log(Level.INFO, this.getClass(), "If you use this software in your research, please cite AptaSIM as "
+					+ "Hoinka, J., Berezhnoy, A., Dao, P., Sauna, Z. E., Gilboa, E., & Przytycka, T. M. (2015). "
+					+ "Large scale analysis of the mutational landscape in HT-SELEX improves aptamer discovery. "
+					+ "Nucleic Acids Research, 43(12), 5699–5707. http://doi.org/10.1093/nar/gkv308"
+					+ "");
 			
 			// call data input logic
 			runAptaSim( line.getOptionValue("config") );
@@ -151,6 +167,13 @@ public class CLI {
 				e.printStackTrace();
 			}
 			
+			// reference publication to cite
+			AptaLogger.log(Level.INFO, this.getClass(), "If you use this software in your research, please cite AptaCLUSTER as "
+					+ "Hoinka, J., Berezhnoy, A., Sauna, Z. E., Gilboa, E., & Przytycka, T. M. (2014). "
+					+ "AptaCluster - A method to cluster HT-SELEX aptamer pools and lessons from its application. "
+					+ "In Lecture Notes in Computer Science  (Vol. 8394 LNBI, pp. 115–128). http://doi.org/10.1007/978-3-319-05269-4_9"
+					+ "");
+			
 			runAptaCluster( line.getOptionValue("config") );
 
 		}
@@ -158,6 +181,13 @@ public class CLI {
 		// Case for AptaTRACE
 		if (line.hasOption("trace")){
 
+			// reference publication to cite
+			AptaLogger.log(Level.INFO, this.getClass(), "If you use this software in your research, please cite AptaTRACE as "
+					+ "Dao, P., Hoinka, J., Takahashi, M., Zhou, J., Ho, M., Wang, Y., Costa, F., Rossi, J. J., Backofen, R., Burnett, J., Przytycka, T. M. (2016). "
+					+ "AptaTRACE Elucidates RNA Sequence-Structure Motifs from Selection Trends in HT-SELEX Experiments. "
+					+ "Cell Systems, 3(1), 62–70. http://doi.org/10.1016/j.cels.2016.07.003"
+					+ "");
+			
 			runAptaTrace( line.getOptionValue("config") );
 
 		}
@@ -201,7 +231,7 @@ public class CLI {
 
 		parserThread = new Thread(parser, "AptaPlex Main");
 
-		AptaLogger.log(Level.INFO, this.getClass(), "Starting Parser:");
+		AptaLogger.log(Level.INFO, this.getClass(), "Starting AptaPlex:");
 		long tParserStart = System.currentTimeMillis();
 		parserThread.start();
 
@@ -576,10 +606,16 @@ public class CLI {
 					AptaLogger.log(Level.INFO, this.getClass(), "Exporting clusters");
 					
 					// Get the instance of the StructurePool
-					if (experiment.getClusterContainer() == null)
-					{
-						experiment.instantiateClusterContainer(false);
-					}	
+					try {
+						if (experiment.getClusterContainer() == null)
+						{
+							experiment.instantiateClusterContainer(false);
+						}	
+					} catch(Exception e) { // We need to make sure a cluster pool exists
+						
+						throw new InformationNotFoundException("No cluster information was found to export. Did you run AptaCLUSTER?");
+						
+					}
 					
 					// Determine which cycles need to be exported
 					cycles_to_export = null;
@@ -614,11 +650,18 @@ public class CLI {
 					AptaLogger.log(Level.INFO, this.getClass(), "Exporting structure data");
 					
 					//Make sure we have structures
-					if (experiment.getStructurePool() == null)
-					{
-						experiment.instantiateStructurePool(false);
-					}	
-					
+					try {
+						if (experiment.getStructurePool() == null)
+						{
+							experiment.instantiateStructurePool(false);
+						}	
+					} catch(Exception e) { // We need to make sure a cluster pool exists
+						
+						throw new InformationNotFoundException("No structure information was found to export. Did you run AptaSUITE with the -structures option?");
+						
+					}
+						
+						
 					export.Structures(Configuration.getExperiment().getStructurePool(), Paths.get(exportPath.toString(), "structures.txt" + (compress ? ".gz" : "")));
 					break;
 					

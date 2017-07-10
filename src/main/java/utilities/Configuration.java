@@ -103,7 +103,7 @@ public class Configuration {
 			     // AptaCluster Option
 			     put("ClusterContainer.backend", "MapDBClusterContainer");
 			     put("Aptacluster.EditDistance", 5); // The maximal number of nucleodite differences between two sequences to be considered mememebers of the same cluster
-			     put("Aptacluster.LSHIterations", 10); // The number of LSH iterations to be performed
+			     put("Aptacluster.LSHIterations", 5); // The number of LSH iterations to be performed
 			     put("Aptacluster.KmerSize", 3); // The kmer size used for the distance calculations
 			     put("Aptacluster.KmerCutoffIterations", 10000); // The number of iterations to be performed for computing the kmer cutoff for cluster formation
 			     
@@ -133,11 +133,18 @@ public class Configuration {
 			     put("Aptasim.MutationProbability", 0.05); // Mutation probability during PCR (DOUBLE range: 0-1)
 			     put("Aptasim.AmplificationEfficiency", 0.995); // PCR amplification efficiency (DOUBLE range: 0-1)
 				 
+			     // AptaTRACE Options
+			     put("Aptatrace.KmerLength",6); // Size of the kmers used as the initial motif length
+			     put("Aptatrace.FilterClusters",true); // Whether to apply additional filtering methods to remove overlapping motifs
+			     put("Aptatrace.OutputClusters",true); // Whether to write clusters to file or not
+			     put("Aptatrace.Alpha",10); // The parameter alpha specifies which sequences should be included in the background model, i.e. all sequences whose number of occurrences is smaller than, or equal to this value are taken into account.
+			     
 			     // Export
 			     put("Export.compress", true); // Whether the resulting files should be gzip compressed or not
 			     put("Export.SequenceFormat", "fastq"); // The output format for nucleotide data [Fastq, Fasta, Raw]
 			     put("Export.IncludePrimerRegions", true); // If false, the 5' and 3' primers will not be exported 
 			     put("Export.MinimalClusterSize", 1); // The smallest amount of members a cluster should contain in order to be exported
+			     put("Export.PoolCardinalityFormat", "frequencies"); // [counts, frequencies] The format in which the cardinalities of the aptamers should be exported for in each selection cycle.
 			     
 			     // Performance Options
 			     put("Performance.maxNumberOfCores", 30); // if larger than available, min of both is taken
