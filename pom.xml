@@ -22,7 +22,8 @@
 						<execution>
 	          					<id>AptaSuiteMain</id>
 								<configuration>
-									<finalName>AptaSuite</finalName>
+									<appendAssemblyId>false</appendAssemblyId>
+									<finalName>aptasuite</finalName>
 									<descriptorRefs>
 										<descriptorRef>jar-with-dependencies</descriptorRef>
 									</descriptorRefs>
