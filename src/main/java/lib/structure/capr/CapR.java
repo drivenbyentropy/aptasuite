@@ -10,7 +10,8 @@ import java.util.ArrayList;
  * Implements the <code>CapR.cpp</code> and
  * <code>CapR.h</code> of the CapR package available at <a href=
  * "https://github.com/fukunagatsu/CapR">https://github.com/fukunagatsu/CapR</a>.
- * All intellectual credits of this work goes to the original authors.
+ * All intellectual credits of this work goes to the original authors. Please note
+ * the original code is licensed under the MIT license (see LICENSE.txt).
  */
 public class CapR {
 
