@@ -51,7 +51,6 @@ public class AptaTraceMotif {
 	
 	private int singletonThres; 
 	
-	
 	public AptaTraceMotif(
 							Experiment exp, 
 							String outputPath, 
@@ -615,7 +614,8 @@ public class AptaTraceMotif {
 				}
 			}
 		} catch (Exception e) {
-			AptaLogger.log(Level.INFO, this.getClass(), "Error in reading aptamer " + aptamer);
+			AptaLogger.log(Level.SEVERE, this.getClass(), "Error in reading aptamer " + aptamer);
+			AptaLogger.log(Level.SEVERE, this.getClass(), org.apache.commons.lang.exception.ExceptionUtils.getStackTrace(e));
 			e.printStackTrace();
 			System.exit(1);
 		}

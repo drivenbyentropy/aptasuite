@@ -136,6 +136,8 @@ public class Export {
 				catch(Exception e){
 					System.out.println(new String(sequence));
 					System.out.println(ab.startIndex + "   "+ ab.endIndex  );
+					AptaLogger.log(Level.SEVERE, this.getClass(), org.apache.commons.lang.exception.ExceptionUtils.getStackTrace(e));
+					e.printStackTrace();
 					System.exit(0);
 				}
 			}

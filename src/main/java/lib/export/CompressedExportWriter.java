@@ -35,6 +35,7 @@ public class CompressedExportWriter implements ExportWriter {
 		
 		} catch (IOException e) {
 			AptaLogger.log(Level.SEVERE, this.getClass(), "Could not create file " + p.toString());
+			AptaLogger.log(Level.SEVERE, this.getClass(), org.apache.commons.lang.exception.ExceptionUtils.getStackTrace(e));
 			e.printStackTrace();
 			System.exit(1);
 		}
@@ -53,6 +54,7 @@ public class CompressedExportWriter implements ExportWriter {
 		} catch (IOException e) {
 			
 			AptaLogger.log(Level.SEVERE, this.getClass(), "Could not write " + data + " to file " + p.toString());
+			AptaLogger.log(Level.SEVERE, this.getClass(), org.apache.commons.lang.exception.ExceptionUtils.getStackTrace(e));
 			e.printStackTrace();
 			System.exit(1);
 			

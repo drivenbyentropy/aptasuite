@@ -84,6 +84,7 @@ public class AptaPlexProducer implements Runnable{
 			} catch (ClassNotFoundException e) {
 
 				AptaLogger.log(Level.SEVERE, this.getClass(), "Error, the backend for the Reader could not be found.");
+				AptaLogger.log(Level.SEVERE, this.getClass(), org.apache.commons.lang.exception.ExceptionUtils.getStackTrace(e));
 				e.printStackTrace();
 				System.exit(0);
 			}

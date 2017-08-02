@@ -76,8 +76,9 @@ public class RawReader implements Reader {
 				AptaLogger.log(Level.CONFIG, this.getClass(), "Opened forward file in fastq format" + forward_file.toString());	
 			} catch (FileNotFoundException e1) {
 				AptaLogger.log(Level.SEVERE, this.getClass(), "Error (file not found) opening forward file " + forward_file.toString());
+				AptaLogger.log(Level.SEVERE, this.getClass(), org.apache.commons.lang.exception.ExceptionUtils.getStackTrace(e1));
 				e1.printStackTrace();
-				System.exit(0);
+				System.exit(1);
 			}
 		}
 
@@ -98,7 +99,7 @@ public class RawReader implements Reader {
 				} catch (FileNotFoundException e1) {
 					AptaLogger.log(Level.SEVERE, this.getClass(), "Error opening reverse file " + reverse_file.toString());
 					e1.printStackTrace();
-					System.exit(0);
+					System.exit(1);
 				}
 			}	
 		}
