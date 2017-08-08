@@ -220,7 +220,7 @@ public class LocalitySensitiveHash {
 	 * <code>lshPositions</code>
 	 */
 	public byte[] getHash(byte[] sequence, int lower, int upper){
-		
+
 		//initiate array
 		byte[] result = new byte[lshDimension];
 		
@@ -231,7 +231,8 @@ public class LocalitySensitiveHash {
 			counter++;
 		}
 		
-		return result;
+		return result;		
+		
 	}
 	
 	public ArrayList<LocalitySensitiveHash> getLhsInstances() {

@@ -192,6 +192,17 @@ public class CLI {
 
 		}
 		
+		// Case for AptaGAN
+		if (line.hasOption("gan")){
+
+			// reference publication to cite
+			AptaLogger.log(Level.INFO, this.getClass(), "If you use this software in your research, please cite AptaGAN as "
+					+ "");
+			
+			runAptaGAN( line.getOptionValue("config") );
+
+		}
+		
 		// Case for data export
 		if (line.hasOption("export")){
 
@@ -200,13 +211,13 @@ public class CLI {
 		}
 		
 		//TODO: Remove this for production
-		System.out.println("Final Wait");
-		try {
-			Thread.sleep(5000);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+//		System.out.println("Final Wait");
+//		try {
+//			Thread.sleep(5000);
+//		} catch (InterruptedException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 		
 	}
 
@@ -521,6 +532,31 @@ public class CLI {
 		
 		aptatrace.run();
 	}
+	
+	/**
+	 * Implements the logic for calling AptaGAN
+	 */
+	private void runAptaGAN(String configFile) {
+		
+		AptaLogger.log(Level.INFO, this.getClass(), "Starting AptaGAN");
+		
+		// Make sure we have data prior or load it from disk
+		if (experiment == null) {
+			AptaLogger.log(Level.INFO, this.getClass(), "Loading data from disk");
+			this.experiment = new Experiment(configFile, false);
+		}
+		else{
+			AptaLogger.log(Level.INFO, this.getClass(), "Using existing data");
+		}
+		
+		// Get the instance of the StructurePool
+		if (experiment.getStructurePool() == null)
+		{
+			experiment.instantiateStructurePool(false);
+		}	
+		
+		
+	}	
 	
 	/**
 	 * Implements the logic concerning the export of the data to text files as

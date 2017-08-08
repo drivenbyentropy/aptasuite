@@ -163,6 +163,10 @@ public class AptaPlexConsumer implements Runnable {
 	public void run() {
 
 		// keep taking elements from the queue
+		byte[] contig = null;
+		int randomized_region_start_index = -1;
+		int randomized_region_end_index = -1;
+		
 		while (isRunning) {
 			try {
 				Object queueElement = queue.take();
@@ -179,7 +183,6 @@ public class AptaPlexConsumer implements Runnable {
 				// process queueElement
 				read = (Read) queueElement;
 
-				byte[] contig = null;
 
 				// Differentiate between single-end and paired-end sequencing
 				if (read.reverse_read != null) {
@@ -254,8 +257,8 @@ public class AptaPlexConsumer implements Runnable {
 				 }
 				
 				 // we can now extract the randomized region
-				 int randomized_region_start_index = primer5_match.index + primer5.length;
-				 int randomized_region_end_index = -1;
+				 randomized_region_start_index = primer5_match.index + primer5.length;
+				 randomized_region_end_index = -1;
 				
 				 if (primer3 == null){ //use Experiment.randomizedRegionSize
 					 	randomized_region_end_index = randomized_region_start_index + randomizedRegionSize -1;
@@ -265,18 +268,40 @@ public class AptaPlexConsumer implements Runnable {
 				 }
 				
 				 // if the sequence was exacted successfully, we can finally
-				 // add it to to the selection cycle
-				 if (randomized_region_start_index < randomized_region_end_index && randomized_region_end_index <= contig.length){
+				 // add it to the selection cycle
+				 if (
+						    (randomized_region_start_index < randomized_region_end_index && randomized_region_end_index <= contig.length) //Primers are in the correct order
+						 && (randomized_region_start_index-primer5.length >= 0) // 5' primer does not overshoot the contig to the left
+						 && (randomized_region_end_index+primer3.length <= contig.length) // 3' primer does not overshoot the contig to the right
+					){
+					 
 					 read.selection_cycle.addToSelectionCycle(
 							 Arrays.copyOfRange(contig, randomized_region_start_index-primer5.length, randomized_region_end_index+primer3.length)
-							 ,randomized_region_start_index
-							 ,randomized_region_end_index
+							 ,primer5.length
+							 ,primer5.length + (randomized_region_end_index-randomized_region_start_index)
+							 //,randomized_region_start_index
+							 //,randomized_region_end_index
 							 );
 					 progress.totalAcceptedReads.incrementAndGet();
+					 
+				 }else { // Handle errors
+					 
+					 if (randomized_region_start_index-primer5.length < 0) {
+						 
+						 progress.totalUnmatchablePrimer5.incrementAndGet();
+						 
+					 }
+					 else if(randomized_region_end_index+primer3.length > contig.length) {
+						 
+						 progress.totalUnmatchablePrimer3.incrementAndGet();
+						 
+					 }
+					 
 				 }
 
 			} catch (Exception e) {
-				e.printStackTrace();
+				AptaLogger.log(Level.SEVERE, this.getClass(), String.format("Aptamer: %s Bounds: %s %s", new String(contig), randomized_region_start_index, randomized_region_end_index));
+				AptaLogger.log(Level.SEVERE, this.getClass(), org.apache.commons.lang.exception.ExceptionUtils.getStackTrace(e));
 			}
 		}
 
