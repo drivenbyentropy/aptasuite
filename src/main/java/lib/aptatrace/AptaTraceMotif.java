@@ -521,7 +521,7 @@ public class AptaTraceMotif {
 				AptamerBounds aptamerBounds= experiment.getAptamerPool().getAptamerBounds(aptamerId);
 				numOR = 0;
 				rid = 0;
-				for (SelectionCycle sc : experiment.getAllSelectionCycles()) {
+				for (SelectionCycle sc : experiment.getSelectionCycles()) {
 					cardinality = sc.getAptamerCardinality(aptamerId);
 					if (cardinality > 0) {
 						occCArr[numOR] = cardinality;
@@ -981,7 +981,7 @@ public class AptaTraceMotif {
 			AptamerBounds aptamerBounds = experiment.getAptamerPool().getAptamerBounds(aptamerId);
 			numOR = 0;
 			rid = 0;
-			for (SelectionCycle sc : experiment.getAllSelectionCycles()) {
+			for (SelectionCycle sc : experiment.getSelectionCycles()) {
 				cardinality = sc.getAptamerCardinality(aptamerId);
 				if (cardinality > 0) {
 					occCArr[numOR] = cardinality;

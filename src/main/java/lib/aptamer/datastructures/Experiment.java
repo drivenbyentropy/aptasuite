@@ -516,7 +516,7 @@ public class Experiment implements Serializable{
 	}
 	
 	/**
-	 * Provides access to all registered selection cycles of this experiment
+	 * Provides access to all registered positive selection cycles of this experiment
 	 * @return
 	 */
 	public ArrayList<SelectionCycle> getSelectionCycles(){
@@ -543,7 +543,7 @@ public class Experiment implements Serializable{
 	
 	/**
 	 * Provides access to all created instances of selection cycles in order of apperance
-	 * in the configuration
+	 * in the configuration. Note this includes negative and counter selections.
 	 * @return ArrayList<SelectionCycle>
 	 */
 	public ArrayList<SelectionCycle> getAllSelectionCycles() {
