@@ -12,9 +12,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import utilities.Configuration;
 
 /**
- * @author Jan Hoinka Java implementation of AptaPlex as described in Hoinka et
- *         al. 2016, Methods This class controls the producer-consumer pattern
- *         implemented in lib.parser.aptaplex
+ * @author Jan Hoinka 
+ * Java implementation of CapR as described. This class controls the producer-consumer pattern
  */
 public class CapRFactory implements Runnable{
 

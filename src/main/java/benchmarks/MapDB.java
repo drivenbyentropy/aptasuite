@@ -48,6 +48,8 @@ import lib.structure.capr.CapR;
 import lib.structure.capr.CapROriginal;
 import lib.structure.capr.EnergyPar;
 import lib.structure.capr.InitLoops;
+import lib.structure.rnafold.MFEData;
+import lib.structure.rnafold.RNAFoldAPI;
 import orestes.bloomfilter.CountingBloomFilter;
 import orestes.bloomfilter.FilterBuilder;
 import utilities.Configuration;
@@ -436,21 +438,17 @@ public class MapDB {
 
 	public static void main(String[] args) {
 		
-		Configuration.setConfiguration(args[0]);
-		Experiment experiment = new Experiment(args[0], true);
 		
-		AptaPlexConsumer apc = new AptaPlexConsumer(null, null);
+		byte[] seq = new String("GUGACGUGUGCAAAUGUGACGUGUGCAAAUGUGACGUGUGCAAAU").getBytes();
 		
-		byte[] seq = new String("GGGAGGACGATGCGGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAATGCCGTCAGACGACTCGCCCGA").getBytes();
-		byte[] primer = new String("GGGAGGACGATGCGG").getBytes();
+		RNAFoldAPI rfa= new RNAFoldAPI();
+		MFEData mfe = rfa.getMFE(seq);
 		
-		ArrayUtils.reverse(seq);
-		ArrayUtils.reverse(primer);
+		System.out.println(mfe.mfe);
+		System.out.println(new String(mfe.structure));
 		
-		Result match = apc.matchPrimer(seq, primer);
+		rfa.getBppm(seq);
 		
-		System.out.println(match.index);
-		System.out.println(seq.length - match.index - primer.length);
 		
 	}
 
