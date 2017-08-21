@@ -522,6 +522,10 @@ public class AptaTraceMotif {
 				numOR = 0;
 				rid = 0;
 				for (SelectionCycle sc : experiment.getSelectionCycles()) {
+					// we need to skip cycle for which no data is present
+					if (sc == null) {
+						continue;
+					}
 					cardinality = sc.getAptamerCardinality(aptamerId);
 					if (cardinality > 0) {
 						occCArr[numOR] = cardinality;
@@ -982,6 +986,10 @@ public class AptaTraceMotif {
 			numOR = 0;
 			rid = 0;
 			for (SelectionCycle sc : experiment.getSelectionCycles()) {
+				// we need to skip cycle for which no data is present
+				if (sc == null) {
+					continue;
+				}
 				cardinality = sc.getAptamerCardinality(aptamerId);
 				if (cardinality > 0) {
 					occCArr[numOR] = cardinality;
