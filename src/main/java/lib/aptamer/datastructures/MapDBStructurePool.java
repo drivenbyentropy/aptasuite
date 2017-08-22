@@ -30,13 +30,16 @@ import utilities.Configuration;
 
 /**
  * @author Jan Hoinka
- * Implementation of the StructurePool Interface using ensamble based structure prediction
- * tools such as CapR or SFold.
+ * Implementation of the StructurePool Interface using ensemble based structure prediction
+ * tools such as CapR, SFold, and RNAFold.
  * 
- * In this implementation the data of the secondary structure contexts hairpin, bulge, inner,
+ * For CapR and SFold, the data of the secondary structure contexts hairpin, bulge, inner,
  * and multi-loop is stored continuously in the <code>double[]</code>. First, all hairpin probabilities, then
- * all bulge probabilities, etc. Hence, a sequence of length <code>N</code> requires <code>4*N<code> 
+ * all bulge probabilities, etc. Hence, a sequence of length <code>N</code> requires <code>4*N</code> 
  * elements of storage.
+ * 
+ * For RNAfold -p, the base pair probabilities are stored as a linearized upper triangular matrix (without the 
+ * diagonal). Index conversion routines are available in the <code>utilities.Index</code> class.
  */
 public class MapDBStructurePool implements StructurePool {
 
@@ -72,7 +75,7 @@ public class MapDBStructurePool implements StructurePool {
 	/**
 	 * Maximal number of items to store in one treemap
 	 */
-	private int maxTreeMapCapacity = Configuration.getParameters().getInt("MapDBStructurePool.maxTreeMapCapacity");
+	private int maxTreeMapCapacity; // = Configuration.getParameters().getInt("MapDBStructurePool.maxTreeMapCapacity");
 	
 	/**
 	 * The structural data of the aptamer 
@@ -107,17 +110,21 @@ public class MapDBStructurePool implements StructurePool {
 	 * @param projectPath must point to the current projects working directory
 	 * all files related to the analysis of the HT-SELEX experiment are stored 
 	 * in that path. It must exist and be writable for the user.
+	 * @param poolName unique folder name in which the pool data will be stored in (inside projectPath) 
+	 * @param maxTreeMapCapacity maximal number of items per tree map
 	 * @param newdb if true, a new database is created on file. 
 	 * Any previously existing database will be deleted. If false, the existing database 
 	 * will be read from disk.
 	 * @throws FileNotFoundException if projectPath does not exist on file system.
 	 */
-	public MapDBStructurePool(Path projectPath, boolean newdb) throws IOException{
+	public MapDBStructurePool(Path projectPath, String poolName, int maxTreeMapCapacity, boolean newdb) throws IOException{
 		
 		AptaLogger.log(Level.INFO, this.getClass(), "Instantiating MapDBStructurePool");
 		
 		// Time it for logging purposes
 		long tReadFromDisk = System.currentTimeMillis();
+		
+		this.maxTreeMapCapacity = maxTreeMapCapacity;
 		
 		// Make sure the folder is writable
 		if (!Files.isWritable(projectPath)){
@@ -129,7 +136,7 @@ public class MapDBStructurePool implements StructurePool {
 		this.projectPath = projectPath;
 		
 		// Check if the data path exists, and if not create it
-		this.structureDataPath = Files.createDirectories(Paths.get(this.projectPath.toString(), "structuredata"));
+		this.structureDataPath = Files.createDirectories(Paths.get(this.projectPath.toString(), poolName));
 		
 		
 		// If we are reading an existing database, iterate over the folder and open the individual MapDB instances

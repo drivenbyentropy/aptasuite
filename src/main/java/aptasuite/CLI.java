@@ -16,6 +16,8 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.time.DateUtils;
 
+import com.itextpdf.xmp.options.Options;
+
 import exceptions.InformationNotFoundException;
 import exceptions.InvalidConfigurationException;
 import lib.aptacluster.AptaCluster;
@@ -32,6 +34,7 @@ import lib.structure.capr.CapR;
 import lib.structure.capr.CapRFactory;
 import lib.structure.capr.CapROriginal;
 import lib.structure.capr.InitLoops;
+import lib.structure.rnafold.RNAFoldFactory;
 import utilities.AptaLogger;
 import utilities.CLIOptions;
 import utilities.Configuration;
@@ -142,18 +145,57 @@ public class CLI {
 		}
 		
 		// Case for Structure Prediction
-		if (line.hasOption("structures")){
+		if (line.hasOption("predict")){
 			
-			// clean up old data if required
-			try {
-				FileUtils.deleteDirectory(Paths.get(projectPath.toString(), "structuredata").toFile());
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			// differentiable between the different cases and make sure the options are valid
+			String[] prediction_options = line.getOptionValue("predict").split(",");
+			
+			// we need at least one option
+			if(prediction_options.length == 0) {
+				
+				AptaLogger.log(Level.SEVERE, this.getClass(), "Predict option require at least on argument (allowed values: structure,bppm). Exiting.");
+				throw new InvalidConfigurationException("Predict option require at least on argument (allowed values: structure,bppm)");
+				
 			}
-						
-			runStructurePrediction( line.getOptionValue("config") );
-
+			
+			for (String option : prediction_options) {
+				
+				if (!option.equals("structure") && !option.equals("bppm")) {
+				
+					AptaLogger.log(Level.SEVERE, this.getClass(), "Predict option " + option + " not recognized. Exiting.");
+					throw new InvalidConfigurationException("Predict option " + option + " not recognized.");
+					
+				}
+				
+			}
+			
+			// now call the corresponding routine
+			for (String option : prediction_options) {
+				
+				// CapR
+				if (option.equals("structure")) {
+					// clean up old data if required
+					try {
+						FileUtils.deleteDirectory(Paths.get(projectPath.toString(), "structuredata").toFile());
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					runStructurePrediction( line.getOptionValue("config") );
+				}
+			
+				// RNAFold -p
+				if (option.equals("bppm")) {
+					// clean up old data if required
+					try {
+						FileUtils.deleteDirectory(Paths.get(projectPath.toString(), "bppmdata").toFile());
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					runBppmPrediction( line.getOptionValue("config") );
+				}
+			}
 		}		
 		
 		// Case for AptaCluster
@@ -459,6 +501,83 @@ public class CLI {
 	}
 	
 
+	/**
+	 * Implements the logic for predicting and storing the base pair probability
+	 * matrices of the pool members
+	 * @param configFile
+	 */
+	private void runBppmPrediction(String configFile){
+		
+		AptaLogger.log(Level.INFO, this.getClass(), "Starting Prediction of Base Pair Probabilities");
+		
+		// Make sure we have prior data or load it from disk
+		if (experiment == null) {
+			AptaLogger.log(Level.INFO, this.getClass(), "Loading data from disk");
+			this.experiment = new Experiment(configFile, false);
+		}
+		else{
+			AptaLogger.log(Level.INFO, this.getClass(), "Using existing sequencing data");
+		}
+		
+		// Create a new instance of the StructurePool
+		experiment.instantiateBppmPool(true);
+		
+		// Start parallel processing of structure prediction
+		RNAFoldFactory rnaff = new RNAFoldFactory(experiment.getAptamerPool().iterator());
+		
+		structureThread = new Thread(rnaff);
+
+		AptaLogger.log(Level.INFO, this.getClass(), "Starting Prediction of Base Pair Probabilities using " + Configuration.getParameters().getInt("Performance.maxNumberOfCores") + " threads:");
+		long tParserStart = System.currentTimeMillis();
+		structureThread.start();
+
+		// we need to add a shutdown hook for the CapRFactory in case the
+		// user presses ctl-c
+		Runtime.getRuntime().addShutdownHook(new Thread() {
+			@Override
+			public void run() {
+				try {
+					if (structureThread != null) {
+
+						structureThread.interrupt();
+						structureThread.join();
+
+					}
+				} catch (InterruptedException e) {
+					AptaLogger.log(Level.SEVERE, this.getClass(), "User interrupt on structureTread");
+				}
+			}
+		});
+
+		AptaLogger.log(Level.INFO, this.getClass(), "Predicting...");
+
+		long sps = 0;
+		while (structureThread.isAlive() && !structureThread.isInterrupted()) {
+			try {
+				long current_progress = rnaff.getProgress().longValue();
+				long eta = (experiment.getAptamerPool().size()-current_progress)/(current_progress-sps+1);
+				System.out.print(String.format("Completed: %s/%s (%s predictions per second  ETA:%s)     " + "\r", current_progress, experiment.getAptamerPool().size(), current_progress-sps, String.format("%02d:%02d:%02d", eta / 3600, (eta % 3600) / 60, eta % 60)));
+				sps = current_progress;
+				
+				// Once every second should suffice
+				Thread.sleep(1000);
+				
+			} catch (InterruptedException ie) {
+			}
+		}
+		// final update
+		System.out.print(        String.format("Completed: %s/%s                                            ", rnaff.getProgress(), experiment.getAptamerPool().size()));
+
+		AptaLogger.log(Level.INFO, this.getClass(), String.format("Structure prediction completed in %s seconds.\n",
+				((System.currentTimeMillis() - tParserStart) / 1000.0)));
+		
+	
+		// now that we have the data, set any file backed implementations 
+		// of StructurePool to read only
+		experiment.getStructurePool().setReadOnly();
+	}	
+	
+	
 	/**
 	 * Implements the logic for calling AptaTrace
 	 */

@@ -22,7 +22,9 @@ import java.util.Arrays;
  */
 public class Fold {
 
-	
+	FoldVars fold_vars;
+	Params params;
+	PairMat pair_mat;
 	
 	int STACK_BULGE1  = 1;   /* stacking energies for bulges of size 1 */
 	int NEW_NINIO   =   1;   /* new asymetry penalty */
@@ -30,7 +32,7 @@ public class Fold {
 	int logML=0;    /* if nonzero use logarithmic ML energy in
 		   		     	energy_of_struct */
 	int uniq_ML=0;  /* do ML decomposition uniquely (for subopt) */
-	static int MAXSECTORS=500;     /* dimension for a backtrack array */
+	int MAXSECTORS=500;     /* dimension for a backtrack array */
 	double LOCALITY = 0. ;     /* locality parameter for base-pairs */
 
 	boolean SAME_STRAND(int I,int J) {
@@ -71,6 +73,22 @@ public class Fold {
 	int   Fc, FcH, FcI, FcM; /* parts of the exterior loop energies			*/
 	/*--------------------------------------------------------------------------*/
 
+	
+	Sector[] sector = new Sector[MAXSECTORS]; /* stack of partial structures for backtracking */
+	
+	public Fold(FoldVars fold_vars, PairMat pair_mat, Params params) {
+		
+		this.fold_vars = fold_vars;
+		this.params = params;
+		
+		for (int x=0; x<MAXSECTORS; x++) {
+			sector[x] = new Sector();
+		}
+		
+		this.pair_mat = pair_mat;
+		
+	}
+	
 	void initialize_fold(int length)
 	{
 	  int n;
@@ -103,12 +121,12 @@ public class Fold {
 	  DMLi  = new int[size+1];
 	  DMLi1  =new int[size+1];
 	  DMLi2  =new int[size+1];
-	  if (FoldVars.base_pair != null) { 
-		  for(int x=0; x<FoldVars.base_pair.length; FoldVars.base_pair[x++] = null);
-		  FoldVars.base_pair=null;
+	  if (fold_vars.base_pair != null) { 
+		  for(int x=0; x<fold_vars.base_pair.length; fold_vars.base_pair[x++] = null);
+		  fold_vars.base_pair=null;
 	  }
-	  FoldVars.base_pair = new BondT[(1+size/2)];
-	  for(int x=0; x<FoldVars.base_pair.length; FoldVars.base_pair[x++] = new BondT());
+	  fold_vars.base_pair = new BondT[(1+size/2)];
+	  for(int x=0; x<fold_vars.base_pair.length; fold_vars.base_pair[x++] = new BondT());
 	  /* extra array(s) for circfold() */
 	  if(circ != 0) fM2 =  new int[size+2];
 	}
@@ -127,8 +145,8 @@ public class Fold {
 	  if(fM1!=null){ fM1=null;}
 	  if(fM2!=null){ fM2=null;}
 
-	  for(int x=0; x<FoldVars.base_pair.length; FoldVars.base_pair[x++] = null);
-	  FoldVars.base_pair=null; 
+	  for(int x=0; x<fold_vars.base_pair.length; fold_vars.base_pair[x++] = null);
+	  fold_vars.base_pair=null; 
 	  
 	  Fmi = null;
 	  DMLi = null; 
@@ -183,7 +201,7 @@ public class Fold {
 	  length = string.length;
 	  
 	  if (length>init_length) initialize_fold(length);
-	  if (Math.abs(P.temperature - FoldVars.temperature)>1e-6) update_fold_params();
+	  if (Math.abs(P.temperature - fold_vars.temperature)>1e-6) update_fold_params();
 
 	  
 	  encode_seq(string);
@@ -209,8 +227,8 @@ public class Fold {
 	    if(BP[i]>i) {
 	      int l;
 	      bonus_cnt++;
-	      for(l=1; l<=FoldVars.base_pair[0].i; l++)
-		if((i==FoldVars.base_pair[l].i)&&(BP[i]==FoldVars.base_pair[l].j)) bonus++;
+	      for(l=1; l<=fold_vars.base_pair[0].i; l++)
+		if((i==fold_vars.base_pair[l].i)&&(BP[i]==fold_vars.base_pair[l].j)) bonus++;
 	    }
 	  }
 
@@ -223,9 +241,9 @@ public class Fold {
 
 	  energy += bonus;      /*remove bonus energies from result */
 
-	  if (FoldVars.backtrack_type=='C')
+	  if (fold_vars.backtrack_type=='C')
 	    return (float) c[indx[length]+1]/100.;
-	  else if (FoldVars.backtrack_type=='M')
+	  else if (fold_vars.backtrack_type=='M')
 	    return (float) fML[indx[length]+1]/100.;
 	  else
 	    return (float) energy/100.;
@@ -269,7 +287,7 @@ public class Fold {
 	      if ((BP[j]==-1)||(BP[j]==-3)) bonus -= EnergyConst.BONUS;
 	      if ((BP[i]==-4)||(BP[j]==-4)) type=0;
 
-	      no_close = (((type==3)||(type==4))&&FoldVars.no_closingGU&&(bonus==0));
+	      no_close = (((type==3)||(type==4))&&fold_vars.no_closingGU&&(bonus==0));
 
 	      if (j-i-1 > max_separation) type = 0;  /* forces locality degree */
 
@@ -293,9 +311,9 @@ public class Fold {
 		    type_2 = ptype[indx[q]+p];
 
 		    if (type_2==0) continue;
-		    type_2 = PairMat.rtype[type_2];
+		    type_2 = pair_mat.rtype[type_2];
 
-		    if (FoldVars.no_closingGU)
+		    if (fold_vars.no_closingGU)
 		      if (no_close||(type_2==3)||(type_2==4))
 			if ((p>i+1)||(q<j-1)) continue;  /* continue unless stack */
 
@@ -314,12 +332,12 @@ public class Fold {
 		if (!no_close) {
 		  int MLenergy;
 		  decomp = DMLi1[j-1];
-		  if (FoldVars.dangles != 0) {
+		  if (fold_vars.dangles != 0) {
 		    int d3=0, d5=0;
-		    tt = PairMat.rtype[type];
+		    tt = pair_mat.rtype[type];
 		    d3 = P.dangle3[tt][S1[i+1]];
 		    d5 = P.dangle5[tt][S1[j-1]];
-		    if (FoldVars.dangles==2) /* double dangles */
+		    if (fold_vars.dangles==2) /* double dangles */
 		      decomp += d5 + d3;
 		    else {          /* normal dangles */
 		      decomp = Math.min(DMLi2[j-1]+d3+P.MLbase, decomp);
@@ -335,14 +353,14 @@ public class Fold {
 
 		/* coaxial stacking of (i.j) with (i+1.k) or (k+1.j-1) */
 
-		if (FoldVars.dangles==3) {
+		if (fold_vars.dangles==3) {
 		  decomp = EnergyConst.INF;
 		  for (k = i+2+EnergyConst.TURN; k < j-2-EnergyConst.TURN; k++) {
-		    type_2 = ptype[indx[k]+i+1]; type_2 = PairMat.rtype[type_2];
+		    type_2 = ptype[indx[k]+i+1]; type_2 = pair_mat.rtype[type_2];
 		    if (type_2 != 0)
 		      decomp = Math.min(decomp, c[indx[k]+i+1]+P.stack[type][type_2]+
 				    fML[indx[j-1]+k+1]);
-		    type_2 = ptype[indx[j-1]+k+1]; type_2 = PairMat.rtype[type_2];
+		    type_2 = ptype[indx[j-1]+k+1]; type_2 = pair_mat.rtype[type_2];
 		    if (type_2 != 0)
 		      decomp = Math.min(decomp, c[indx[j-1]+k+1]+P.stack[type][type_2]+
 				    fML[indx[k]+i+1]);
@@ -354,7 +372,7 @@ public class Fold {
 
 		new_c = Math.min(new_c, cc1[j-1]+stackEnergy);
 		cc[j] = new_c + bonus;
-		if (FoldVars.noLonelyPairs)
+		if (fold_vars.noLonelyPairs)
 		  c[ij] = cc1[j-1]+stackEnergy+bonus;
 		else
 		  c[ij] = cc[j];
@@ -370,7 +388,7 @@ public class Fold {
 	      new_fML = fML[ij+1]+P.MLbase;
 	      new_fML = Math.min(fML[indx[j-1]+i]+P.MLbase, new_fML);
 	      energy = c[ij]+P.MLintern[type];
-	      if (FoldVars.dangles==2) {  /* double dangles */
+	      if (fold_vars.dangles==2) {  /* double dangles */
 		energy += (i==1) ? /* works also for circfold */
 		  P.dangle5[type][S1[length]] : P.dangle5[type][S1[i-1]];
 		/* if (j<length) */ energy += P.dangle3[type][S1[j+1]];
@@ -379,7 +397,7 @@ public class Fold {
 	      if (uniq_ML != 0)
 		fM1[ij] = Math.min(fM1[indx[j-1]+i] + P.MLbase, energy);
 
-	      if (FoldVars.dangles%2==1) {  /* normal dangles */
+	      if (fold_vars.dangles%2==1) {  /* normal dangles */
 		tt = ptype[ij+1]; /* i+1,j */
 		new_fML = Math.min(c[ij+1]+P.dangle5[tt][S1[i]]
 			       +P.MLintern[tt]+P.MLbase,new_fML);
@@ -400,11 +418,11 @@ public class Fold {
 	      new_fML = Math.min(new_fML,decomp);
 
 	      /* coaxial stacking */
-	      if (FoldVars.dangles==3) {
+	      if (fold_vars.dangles==3) {
 		/* additional ML decomposition as two coaxially stacked helices */
 		for (decomp = EnergyConst.INF, k = i+1+EnergyConst.TURN; k <= j-2-EnergyConst.TURN; k++) {
-		  type = ptype[indx[k]+i]; type = PairMat.rtype[type];
-		  type_2 = ptype[indx[j]+k+1]; type_2 = PairMat.rtype[type_2];
+		  type = ptype[indx[k]+i]; type = pair_mat.rtype[type];
+		  type_2 = ptype[indx[j]+k+1]; type_2 = pair_mat.rtype[type_2];
 		  if ((type!=0) && (type_2!=0))
 		    decomp = Math.min(decomp,
 				  c[indx[k]+i]+c[indx[j]+k+1]+P.stack[type][type_2]);
@@ -443,12 +461,12 @@ public class Fold {
 	    if (type != 0) {
 	      energy = c[indx[j]+1];
 	      if (type>2) energy += P.TerminalAU;
-	      if ((FoldVars.dangles==2)&&(j<length))  /* double dangles */
+	      if ((fold_vars.dangles==2)&&(j<length))  /* double dangles */
 		energy += P.dangle3[type][S1[j+1]];
 	      f5[j] = Math.min(f5[j], energy);
 	    }
 	    type=ptype[indx[j-1]+1];
-	    if ((type != 0)&&(FoldVars.dangles%2==1)) {
+	    if ((type != 0)&&(fold_vars.dangles%2==1)) {
 	      energy = c[indx[j-1]+1]+P.dangle3[type][S1[j]];
 	      if (type>2) energy += P.TerminalAU;
 	      f5[j] = Math.min(f5[j], energy);
@@ -458,19 +476,19 @@ public class Fold {
 	      if (type != 0) {
 		energy = f5[i-1]+c[indx[j]+i];
 		if (type>2) energy += P.TerminalAU;
-		if (FoldVars.dangles==2) {
+		if (fold_vars.dangles==2) {
 		  energy += P.dangle5[type][S1[i-1]];
 		  if (j<length) energy += P.dangle3[type][S1[j+1]];
 		}
 		f5[j] = Math.min(f5[j], energy);
-		if (FoldVars.dangles%2==1) {
+		if (fold_vars.dangles%2==1) {
 		  energy = f5[i-2]+c[indx[j]+i]+P.dangle5[type][S1[i-1]];
 		  if (type>2) energy += P.TerminalAU;
 		  f5[j] = Math.min(f5[j], energy);
 		}
 	      }
 	      type = ptype[indx[j-1]+i];
-	      if ((type != 0)&&(FoldVars.dangles%2==1)) {
+	      if ((type != 0)&&(fold_vars.dangles%2==1)) {
 		energy = c[indx[j-1]+i]+P.dangle3[type][S1[j]];
 		if (type>2) energy += P.TerminalAU;
 		f5[j] = Math.min(f5[j], f5[i-1]+energy);
@@ -482,22 +500,7 @@ public class Fold {
 	  return f5[length];
 	}
 
-//	struct sect {
-//	  int  i;
-//	  int  j;
-//	  int ml;
-//	}
-	static Sector[] sector = new Sector[MAXSECTORS]; /* stack of partial structures for backtracking */
-	static {
-		
-		for (int x=0; x<MAXSECTORS; x++) {
-			
-			sector[x] = new Sector();
-			
-		}
-		
-	}
-	
+
 	
 	/* -*-C-*- */
 	/* this file contains code for folding circular RNAs */
@@ -524,7 +527,7 @@ public class Fold {
 
 	 length = string.length;
 	  if (length>init_length) initialize_fold(length);
-	  if (Math.abs(P.temperature - FoldVars.temperature)>1e-6) update_fold_params();
+	  if (Math.abs(P.temperature - fold_vars.temperature)>1e-6) update_fold_params();
 
 	  encode_seq(string);
 
@@ -550,11 +553,11 @@ public class Fold {
 	      if ((BP[j]==-1)||(BP[j]==-3)) bonus1 -= EnergyConst.BONUS;
 	      if ((BP[i]==-4)||(BP[j]==-4)) type=0;
 
-	      no_close = (((type==3)||(type==4))&&FoldVars.no_closingGU&&(bonus1==0));
+	      no_close = (((type==3)||(type==4))&&fold_vars.no_closingGU&&(bonus1==0));
 
 	      /* if (j-i-1 > max_separation) type = 0; */  /* forces locality degree */
 
-	      type=PairMat.rtype[type];
+	      type=pair_mat.rtype[type];
 	      if (type == 0) continue;
 	      if (no_close) new_c = EnergyConst.FORBIDDEN;
 	      else {
@@ -585,7 +588,7 @@ public class Fold {
 		if (qmin<p+EnergyConst.TURN+1) qmin = p+EnergyConst.TURN+1;
 		for (q = qmin; q <=length; q++) {
 		  int u2, type_2/*, si1, sq1*/;
-		  type_2 = PairMat.rtype[ptype[indx[q]+p]];
+		  type_2 = pair_mat.rtype[ptype[indx[q]+p]];
 		  if (type_2==0) continue;
 		  u2 = i-1 + length-q;
 		  if (u1+u2>EnergyConst.MAXLOOP) continue;
@@ -622,7 +625,7 @@ public class Fold {
 	  }
 	  Fc = Math.min(Fc, FcM);
 
-	  if (FoldVars.dangles==1) {
+	  if (fold_vars.dangles==1) {
 	    int u;
 	    fM_d3 =  new int[length+2];
 	    fM_d5 =  new int[length+2];
@@ -751,8 +754,8 @@ public class Fold {
 	    if(BP[i]>i) {
 	      int l;
 	      bonus_cnt++;
-	      for(l=1; l<=FoldVars.base_pair[0].i; l++)
-		if((i==FoldVars.base_pair[l].i)&&(BP[i]==FoldVars.base_pair[l].j)) bonus++;
+	      for(l=1; l<=fold_vars.base_pair[0].i; l++)
+		if((i==fold_vars.base_pair[l].i)&&(BP[i]==fold_vars.base_pair[l].j)) bonus++;
 	    }
 	  }
 
@@ -794,7 +797,7 @@ public class Fold {
 		if (s == 0) {
 			sector[++s].i = 1;
 			sector[s].j = length;
-			sector[s].ml = (FoldVars.backtrack_type == 'M') ? 1 : ((FoldVars.backtrack_type == 'C') ? 2 : 0);
+			sector[s].ml = (fold_vars.backtrack_type == 'M') ? 1 : ((fold_vars.backtrack_type == 'C') ? 2 : 0);
 		}
 		outer_while:
 		while (s > 0) {
@@ -817,8 +820,8 @@ public class Fold {
 				
 				
 				if (ml == 2) {
-					FoldVars.base_pair[++b].i = i;
-					FoldVars.base_pair[b].j = j;
+					fold_vars.base_pair[++b].i = i;
+					fold_vars.base_pair[b].j = j;
 					// goto repeat1 can be replaced with a break here
 					// this will continue code execution at the original
 					// repeat1 location
@@ -849,7 +852,7 @@ public class Fold {
 						int cc, en;
 						jj = k - 1;
 						type = ptype[indx[j - 1] + k];
-						if ((type != 0) && (FoldVars.dangles % 2 == 1)) {
+						if ((type != 0) && (fold_vars.dangles % 2 == 1)) {
 							cc = c[indx[j - 1] + k] + P.dangle3[type][S1[j]];
 							if (type > 2)
 								cc += P.TerminalAU;
@@ -867,7 +870,7 @@ public class Fold {
 							if (type > 2)
 								cc += P.TerminalAU;
 							en = cc + f5[k - 1];
-							if (FoldVars.dangles == 2) {
+							if (fold_vars.dangles == 2) {
 								if (k > 1)
 									en += P.dangle5[type][S1[k - 1]];
 								if (j < length)
@@ -875,7 +878,7 @@ public class Fold {
 							}
 							if (fij == en)
 								traced = j;
-							if ((FoldVars.dangles % 2 == 1) && (k > 1))
+							if ((fold_vars.dangles % 2 == 1) && (k > 1))
 								if (fij == f5[k - 2] + cc + P.dangle5[type][S1[k - 1]]) {
 									traced = j;
 									jj = k - 2;
@@ -895,8 +898,8 @@ public class Fold {
 
 					i = k;
 					j = traced;
-					FoldVars.base_pair[++b].i = i;
-					FoldVars.base_pair[b].j = j;
+					fold_vars.base_pair[++b].i = i;
+					fold_vars.base_pair[b].j = j;
 					// goto repeat1;
 					// same here, break to go to repeat1
 //					System.out.println("891 break above_goto_while");
@@ -914,10 +917,10 @@ public class Fold {
 
 					tt = ptype[indx[j] + i];
 					cij = c[indx[j] + i] + P.MLintern[tt];
-					if (FoldVars.dangles == 2) { /* double dangles, works also for circfold */
+					if (fold_vars.dangles == 2) { /* double dangles, works also for circfold */
 						cij += (i == 1) ? P.dangle5[tt][S1[length]] : P.dangle5[tt][S1[i - 1]];
 						/* if (j<length) */ cij += P.dangle3[tt][S1[j + 1]];
-					} else if (FoldVars.dangles % 2 == 1) { /* normal dangles */
+					} else if (fold_vars.dangles % 2 == 1) { /* normal dangles */
 						tt = ptype[indx[j] + i + 1];
 						ci1j = c[indx[j] + i + 1] + P.dangle5[tt][S1[i]] + P.MLintern[tt] + P.MLbase;
 						tt = ptype[indx[j - 1] + i];
@@ -937,8 +940,8 @@ public class Fold {
 							i++;
 							j--;
 						}
-						FoldVars.base_pair[++b].i = i;
-						FoldVars.base_pair[b].j = j;
+						fold_vars.base_pair[++b].i = i;
+						fold_vars.base_pair[b].j = j;
 						//goto repeat1;
 //						System.out.println("938 break above_goto_while");
 						break above_goto_while;
@@ -950,13 +953,13 @@ public class Fold {
 							break outer_while;
 						}
 
-					if ((FoldVars.dangles == 3) && (k > j - 2 - EnergyConst.TURN)) { /* must be coax stack */
+					if ((fold_vars.dangles == 3) && (k > j - 2 - EnergyConst.TURN)) { /* must be coax stack */
 						ml = 2;
 						for (k = i + 1 + EnergyConst.TURN; k <= j - 2 - EnergyConst.TURN; k++) {
 							type = ptype[indx[k] + i];
-							type = PairMat.rtype[type];
+							type = pair_mat.rtype[type];
 							type_2 = ptype[indx[j] + k + 1];
-							type_2 = PairMat.rtype[type_2];
+							type_2 = pair_mat.rtype[type_2];
 							if ((type != 0) && (type_2 != 0))
 								if (fij == c[indx[k] + i] + c[indx[j] + k + 1] + P.stack[type][type_2]
 										+ 2 * P.MLintern[1]) {
@@ -998,22 +1001,22 @@ public class Fold {
 
 				bonus = 0;
 
-				if (FoldVars.fold_constrained) {
+				if (fold_vars.fold_constrained) {
 					if ((BP[i] == j) || (BP[i] == -1) || (BP[i] == -2))
 						bonus -= EnergyConst.BONUS;
 					if ((BP[j] == -1) || (BP[j] == -3))
 						bonus -= EnergyConst.BONUS;
 				}
-				if (FoldVars.noLonelyPairs)
+				if (fold_vars.noLonelyPairs)
 					if (cij == c[indx[j] + i]) {
 						/*
 						 * (i.j) closes canonical structures, thus (i+1.j-1) must be a pair
 						 */
 						type_2 = ptype[indx[j - 1] + i + 1];
-						type_2 = PairMat.rtype[type_2];
+						type_2 = pair_mat.rtype[type_2];
 						cij -= P.stack[type][type_2] + bonus;
-						FoldVars.base_pair[++b].i = i + 1;
-						FoldVars.base_pair[b].j = j - 1;
+						fold_vars.base_pair[++b].i = i + 1;
+						fold_vars.base_pair[b].j = j - 1;
 						i++;
 						j--;
 						canonical = 0;
@@ -1023,7 +1026,7 @@ public class Fold {
 					}
 				canonical = 1;
 
-				no_close = (((type == 3) || (type == 4)) && FoldVars.no_closingGU && (bonus == 0)) ? 1 : 0;
+				no_close = (((type == 3) || (type == 4)) && fold_vars.no_closingGU && (bonus == 0)) ? 1 : 0;
 				if (no_close != 0) {
 					if (cij == EnergyConst.FORBIDDEN)
 						continue outer_while;
@@ -1045,8 +1048,8 @@ public class Fold {
 //							System.out.println("1040 continue inner_for_loop");
 							continue inner_for_loop;
 						}
-						type_2 = PairMat.rtype[type_2];
-						if (FoldVars.no_closingGU)
+						type_2 = pair_mat.rtype[type_2];
+						if (fold_vars.no_closingGU)
 							if ((no_close != 0) || (type_2 == 3) || (type_2 == 4))
 								if ((p > i + 1) || (q < j - 1)) {
 //									System.out.println("1047 continue inner_for_loop");
@@ -1065,8 +1068,8 @@ public class Fold {
 						
 						traced = (cij == new1) ? 1 : 0;
 						if (traced != 0) {
-							FoldVars.base_pair[++b].i = p;
-							FoldVars.base_pair[b].j = q;
+							fold_vars.base_pair[++b].i = p;
+							fold_vars.base_pair[b].j = q;
 							i = p;
 							j = q;
 							//goto repeat1;
@@ -1081,7 +1084,7 @@ public class Fold {
 			/* end of repeat: -------------------------------------------------- */
 
 			/* (i.j) must close a multi-loop */
-			tt = PairMat.rtype[type];
+			tt = pair_mat.rtype[type];
 			mm = bonus + P.MLclosing + P.MLintern[tt];
 			d5 = P.dangle5[tt][S1[j - 1]];
 			d3 = P.dangle3[tt][S1[i + 1]];
@@ -1092,11 +1095,11 @@ public class Fold {
 			for (k = i + 2 + EnergyConst.TURN; k < j - 2 - EnergyConst.TURN; k++) {
 				int en;
 				en = fML[indx[k] + i + 1] + fML[indx[j - 1] + k + 1] + mm;
-				if (FoldVars.dangles == 2) /* double dangles */
+				if (fold_vars.dangles == 2) /* double dangles */
 					en += d5 + d3;
 				if (cij == en)
 					break outer_while;
-				if (FoldVars.dangles % 2 == 1) { /* normal dangles */
+				if (fold_vars.dangles % 2 == 1) { /* normal dangles */
 					if (cij == (fML[indx[k] + i + 2] + fML[indx[j - 1] + k + 1] + mm + d3 + P.MLbase)) {
 						i1 = i + 2;
 						break outer_while;
@@ -1113,9 +1116,9 @@ public class Fold {
 				}
 				/* coaxial stacking of (i.j) with (i+1.k) or (k.j-1) */
 				/* use MLintern[1] since coax stacked pairs don't get TerminalAU */
-				if (FoldVars.dangles == 3) {
+				if (fold_vars.dangles == 3) {
 					type_2 = ptype[indx[k] + i + 1];
-					type_2 = PairMat.rtype[type_2];
+					type_2 = pair_mat.rtype[type_2];
 					if (type_2 != 0) {
 						en = c[indx[k] + i + 1] + P.stack[type][type_2] + fML[indx[j - 1] + k + 1];
 						if (cij == en + 2 * P.MLintern[1] + P.MLclosing) {
@@ -1125,7 +1128,7 @@ public class Fold {
 						}
 					}
 					type_2 = ptype[indx[j - 1] + k + 1];
-					type_2 = PairMat.rtype[type_2];
+					type_2 = pair_mat.rtype[type_2];
 					if (type_2 != 0) {
 						en = c[indx[j - 1] + k + 1] + P.stack[type][type_2] + fML[indx[k] + i + 1];
 						if (cij == en + 2 * P.MLintern[1] + P.MLclosing) {
@@ -1167,7 +1170,7 @@ public class Fold {
 		}
 		
 //		System.out.println(String.format("Saving b=%d", b));
-		FoldVars.base_pair[0].i = b; /* save the total number of base pairs */
+		fold_vars.base_pair[0].i = b; /* save the total number of base pairs */
 	}
 
  
@@ -1177,7 +1180,7 @@ public class Fold {
 	  sector[1].i  = i;
 	  sector[1].j  = j;
 	  sector[1].ml = 2;
-	  FoldVars.base_pair[0].i=0;
+	  fold_vars.base_pair[0].i=0;
 	  encode_seq(sequence);
 	  backtrack(sequence, 1);
 	  structure = new byte[sequence.length+1];
@@ -1192,7 +1195,7 @@ public class Fold {
 	  int energy;
 	  energy = (size <= 30) ? P.hairpin[size] :
 	    P.hairpin[30]+(int)(P.lxc*Math.log((size)/30.));
-	  if (FoldVars.tetra_loop)
+	  if (fold_vars.tetra_loop)
 	    if (size == 4) { /* check for tetraloop bonus */
 	    	byte[] tl = Arrays.copyOfRange(string, spos, spos + 6);
 			int tsmt = P.Tetraloops.indexOf(new String(tl));
@@ -1240,7 +1243,7 @@ public class Fold {
 
 		} else { /* interior loop */
 
-			if ((n1 + n2 == 2) && (FoldVars.james_rule != 0))
+			if ((n1 + n2 == 2) && (fold_vars.james_rule != 0))
 				/* special case for loop size 2 */
 				energy = P.int11[type][type_2][S1[i + 1]][S1[j - 1]];
 			else {
@@ -1321,8 +1324,8 @@ public class Fold {
 	  S[0] = (short) l;
 
 	  for (i=1; i<=l; i++) { /* make numerical encoding of sequence */
-	    S[i]= (short) PairMat.encode_char(sequence[i-1]);
-	    S1[i] = PairMat.alias[S[i]];   /* for mismatches of nostandard bases */
+	    S[i]= (short) pair_mat.encode_char(sequence[i-1]);
+	    S1[i] = pair_mat.alias[S[i]];   /* for mismatches of nostandard bases */
 	  }
 	  /* for circular folding add first base at position n+1 and last base at
 		position 0 in S1	*/
@@ -1338,9 +1341,9 @@ public class Fold {
 	  for (n = 0; n <= length-1; structure[n++] = ' ') ;
 	  structure[length] = '\0';
 
-	  for (n = 0, k = 1; k <= FoldVars.base_pair[0].i; k++) {
-	    y = FoldVars.base_pair[k].j;
-	    x = FoldVars.base_pair[k].i;
+	  for (n = 0, k = 1; k <= fold_vars.base_pair[0].i; k++) {
+	    y = fold_vars.base_pair[k].j;
+	    x = fold_vars.base_pair[k].i;
 	    if (x-1 > 0 && y+1 <= length) {
 	      if (structure[x-2] != ' ' && structure[y] == structure[x-2]) {
 		structure[x-1] = structure[x-2];
@@ -1367,17 +1370,17 @@ public class Fold {
 
 	  for (n = 0; n <= length-1; structure[n++] = '.') ;
 	  
-	  for (k = 1; k <= FoldVars.base_pair[0].i; k++) {
-	    structure[FoldVars.base_pair[k].i-1] = '(';
-	    structure[FoldVars.base_pair[k].j-1] = ')';
+	  for (k = 1; k <= fold_vars.base_pair[0].i; k++) {
+	    structure[fold_vars.base_pair[k].i-1] = '(';
+	    structure[fold_vars.base_pair[k].j-1] = ')';
 	  }
 	}
 	/*---------------------------------------------------------------------------*/
 
 	void update_fold_params()
 	{
-	  P = Params.scale_parameters();
-	  PairMat.make_pair_matrix();
+	  P = params.scale_parameters();
+	  pair_mat.make_pair_matrix();
 	  if (init_length < 0) init_length=0;
 	}
 
@@ -1390,7 +1393,7 @@ public class Fold {
 	  short[] ss, ss1;
 
 	  if ((init_length<0)||(P==null)) update_fold_params();
-	  if (Math.abs(P.temperature - FoldVars.temperature)>1e-6) update_fold_params();
+	  if (Math.abs(P.temperature - fold_vars.temperature)>1e-6) update_fold_params();
 
 	  if (structure.length != string.length)
 	    throw new RuntimeException(String.format("energy_of_struct: string and structure have unequal length (string: %d, structure: %d)", string.length, structure.length));
@@ -1422,7 +1425,7 @@ public class Fold {
 	  S1 = s1;
 
 	  length = S[0];
-	  energy =  FoldVars.backtrack_type=='M' ? ML_Energy(0, 0) : ML_Energy(0, 1);
+	  energy =  fold_vars.backtrack_type=='M' ? ML_Energy(0, 0) : ML_Energy(0, 1);
 	  if (eos_debug>0)
 	    System.out.println(String.format("External loop                           : %5d\n", energy));
 	  for (i=1; i<=length; i++) {
@@ -1444,7 +1447,7 @@ public class Fold {
 	  short[] ss, ss1;
 
 	  if ((init_length<0)||(P==null)) update_fold_params();
-	  if (Math.abs(P.temperature - FoldVars.temperature)>1e-6) update_fold_params();
+	  if (Math.abs(P.temperature - fold_vars.temperature)>1e-6) update_fold_params();
 
 	  if (structure.length != string.length)
 	    throw new RuntimeException("energy_of_struct: string and structure have unequal length");
@@ -1467,7 +1470,7 @@ public class Fold {
 	  if (degree==0) return 0.;
 	  for (i=1; pair_table[i]==0; i++);
 	  j = pair_table[i];
-	  type=PairMat.pair[S[j]][S[i]];
+	  type=pair_mat.pair[S[j]][S[i]];
 	  if (type==0) type=7;
 	  if (degree==1) {
 	    byte[] loopseq = new byte[10];
@@ -1491,7 +1494,7 @@ public class Fold {
 	      q=pair_table[p];
 	      u1 = p-j-1;
 	      u2 = i-1 + length-q;
-	      type_2 = PairMat.pair[S[q]][S[p]];
+	      type_2 = pair_mat.pair[S[q]][S[p]];
 	      if (type_2==0) type_2=7;
 	      si1 = (i==1)? S1[length] : S1[i-1];
 	      sq1 = (q==length)? S1[1] : S1[q+1];
@@ -1499,19 +1502,19 @@ public class Fold {
 			       S1[j+1], si1, S1[p-1], sq1);
 	    } else { /* degree > 2 */
 	      en0 = ML_Energy(0, 0) - P.MLintern[0];
-	      if (FoldVars.dangles != 0) {
+	      if (fold_vars.dangles != 0) {
 		int d5, d3;
 		if (pair_table[1] != 0) {
 		  j = pair_table[1];
-		  type = PairMat.pair[S[1]][S[j]];
-		  if (FoldVars.dangles==2)
+		  type = pair_mat.pair[S[1]][S[j]];
+		  if (fold_vars.dangles==2)
 		    en0 += P.dangle5[type][S1[length]];
 		  else { /* dangles==1 */
 		    if (pair_table[length]==0) {
 		      d5 = P.dangle5[type][S1[length]];
 		      if (pair_table[length-1]!=0) {
 			int tt;
-			tt = PairMat.pair[S[pair_table[length-1]]][S[length-1]];
+			tt = pair_mat.pair[S[pair_table[length-1]]][S[length-1]];
 			d3 = P.dangle3[tt][S1[length]];
 			if (d3<d5) d5 = 0;
 			else d5 -= d3;
@@ -1522,15 +1525,15 @@ public class Fold {
 		}
 		if (pair_table[length] != 0) {
 		  i = pair_table[length];
-		  type = PairMat.pair[S[i]][S[length]];
-		  if (FoldVars.dangles==2)
+		  type = pair_mat.pair[S[i]][S[length]];
+		  if (fold_vars.dangles==2)
 		    en0 += P.dangle3[type][S1[1]];
 		  else { /* dangles==1 */
 		    if (pair_table[1]==0) {
 		      d3 = P.dangle3[type][S1[1]];
 		      if (pair_table[2] != 0) {
 			int tt;
-			tt = PairMat.pair[S[2]][S[pair_table[2]]];
+			tt = pair_mat.pair[S[2]][S[pair_table[2]]];
 			d5 = P.dangle5[tt][1];
 			if (d5<d3) d3=0;
 			else d3 -= d5;
@@ -1559,7 +1562,7 @@ public class Fold {
 	  int j, p, q, type;
 
 	  j=pair_table[i];
-	  type = PairMat.pair[S[i]][S[j]];
+	  type = pair_mat.pair[S[i]][S[j]];
 	  if (type==0) {
 	    type=7;
 	    if (eos_debug>=0)
@@ -1572,7 +1575,7 @@ public class Fold {
 	    while (pair_table[++p]==0);
 	    while (pair_table[--q]==0);
 	    if ((pair_table[q]!=(short)p)||(p>q)) break;
-	    type_2 = PairMat.pair[S[q]][S[p]];
+	    type_2 = pair_mat.pair[S[q]][S[p]];
 	    if (type_2==0) {
 	      type_2=7;
 	      if (eos_debug>=0)
@@ -1587,7 +1590,7 @@ public class Fold {
 	    if (eos_debug>0)
 	      System.out.println(String.format("Interior loop (%3d,%3d) %c%c; (%3d,%3d) %c%c: %5d\n",i,j,string[i-1],string[j-1],p,q,string[p-1],string[q-1], ee));
 	    energy += ee;
-	    i=p; j=q; type = PairMat.rtype[type_2];
+	    i=p; j=q; type = pair_mat.rtype[type_2];
 	  } /* end while */
 
 	  /* p,q don't pair must have found hairpin or multiloop */
@@ -1661,13 +1664,13 @@ public class Fold {
 	    }
 	    else {
 	      j = pair_table[i];
-	      type = PairMat.pair[S[j]][S[i]]; if (type==0) type=7;
+	      type = pair_mat.pair[S[j]][S[i]]; if (type==0) type=7;
 
-	      if (FoldVars.dangles==3) { /* prime the ld5 variable */
+	      if (fold_vars.dangles==3) { /* prime the ld5 variable */
 		if (SAME_STRAND(j-1,j)) {
 		  ld5 = P.dangle5[type][S1[j-1]];
 		  if ((p=pair_table[j-2]) != 0 && SAME_STRAND(j-2, j-1))
-		      if (P.dangle3[PairMat.pair[S[p]][S[j-2]]][S1[j-1]]<ld5) ld5 = 0;
+		      if (P.dangle3[pair_mat.pair[S[p]][S[j-2]]][S1[j-1]]<ld5) ld5 = 0;
 		}
 	      }
 	    }
@@ -1687,13 +1690,13 @@ public class Fold {
 	      else {
 	      q  = pair_table[p];
 		/* get type of base pair P.q */
-	      tt = PairMat.pair[S[p]][S[q]]; if (tt==0) tt=7;
+	      tt = pair_mat.pair[S[p]][S[q]]; if (tt==0) tt=7;
 	      }
 
 	      energy += mlintern[tt];
 	      cx_energy += mlintern[tt];
 
-	      if (FoldVars.dangles != 0) {
+	      if (fold_vars.dangles != 0) {
 		int dang5=0, dang3=0, dang;
 		if ((SAME_STRAND(p-1,p))&&(p>1))
 		  dang5=P.dangle5[tt][S1[p-1]];      /* 5'dangle of pq pair */
@@ -1702,11 +1705,11 @@ public class Fold {
 
 		switch (p-i1-1) {
 		case 0: /* adjacent helices */
-		  if (FoldVars.dangles==2)
+		  if (fold_vars.dangles==2)
 		    energy += dang3+dang5;
-		  else if (FoldVars.dangles==3 && i1!=0) {
+		  else if (fold_vars.dangles==3 && i1!=0) {
 		    if (SAME_STRAND(i1,p)) {
-		      new_cx = energy + P.stack[PairMat.rtype[type]][PairMat.rtype[tt]];
+		      new_cx = energy + P.stack[pair_mat.rtype[type]][pair_mat.rtype[tt]];
 		      /* subtract 5'dangle and TerminalAU penalty */
 		      new_cx += -ld5 - mlintern[tt]-mlintern[type]+2*mlintern[1];
 		    }
@@ -1715,8 +1718,8 @@ public class Fold {
 		  }
 		  break;
 		case 1: /* 1 unpaired base between helices */
-		  dang = (FoldVars.dangles==2)?(dang3+dang5):Math.min(dang3, dang5);
-		  if (FoldVars.dangles==3) {
+		  dang = (fold_vars.dangles==2)?(dang3+dang5):Math.min(dang3, dang5);
+		  if (fold_vars.dangles==3) {
 		    energy = energy +dang; ld5 = dang - dang3;
 		    /* may be problem here: Suppose
 		       cx_energy>energy, cx_energy+dang5<energy
@@ -1732,7 +1735,7 @@ public class Fold {
 		  break;
 		default: /* many unpaired base between helices */
 		  energy += dang5 +dang3;
-		  if (FoldVars.dangles==3) {
+		  if (fold_vars.dangles==3) {
 		    energy = Math.min(energy, cx_energy + dang5);
 		    new_cx = EnergyConst.INF;  /* no coax stacking possible */
 		    ld5 = dang5;
@@ -1740,12 +1743,12 @@ public class Fold {
 		}
 		type = tt;
 	      }
-	      if (FoldVars.dangles==3) cx_energy = new_cx;
+	      if (fold_vars.dangles==3) cx_energy = new_cx;
 	      i1 = q; p=q+1;
 	    } while (q!=i);
 	    best_energy = Math.min(energy, best_energy); /* don't use cx_energy here */
 	    /* fprintf(stderr, "%6.2d\t", energy); */
-	    if (FoldVars.dangles!=3 || is_extloop != 0) break;  /* may break cofold with co-ax */
+	    if (fold_vars.dangles!=3 || is_extloop != 0) break;  /* may break cofold with co-ax */
 	    /* skip a helix and start again */
 	    while (pair_table[p]==0) p++;
 	    if (i == pair_table[p]) break;
@@ -1779,11 +1782,11 @@ public class Fold {
 	  }
 	  j = pair_table[i];
 	  if (j<i) throw new RuntimeException("i is unpaired in loop_energy()");
-	  type = PairMat.pair[S[i]][S[j]];
+	  type = pair_mat.pair[S[i]][S[j]];
 	  if (type==0) {
 	    type=7;
 	    if (eos_debug>=0)
-	      System.out.println(String.format("WARNING: bases %d and %d (%c%c) can't pair!\n", i, j, PairMat.Law_and_Order.charAt(S[i]),PairMat.Law_and_Order.charAt(S[j])));
+	      System.out.println(String.format("WARNING: bases %d and %d (%c%c) can't pair!\n", i, j, pair_mat.Law_and_Order.charAt(S[i]),pair_mat.Law_and_Order.charAt(S[j])));
 	  }
 	  p=i; q=j;
 
@@ -1795,7 +1798,7 @@ public class Fold {
 	    if (SAME_STRAND(i,j)) {
 	      if (j-i-1<7) {
 		int u;
-		for (u=0; i+u<=j; u++) loopseq[u] = (byte) PairMat.Law_and_Order.charAt(S[i+u]);
+		for (u=0; i+u<=j; u++) loopseq[u] = (byte) pair_mat.Law_and_Order.charAt(S[i+u]);
 		loopseq[u] = '\0';
 	      }
 	      energy = HairpinE(j-i-1, type, S1[i+1], S1[j-1], loopseq, 0);
@@ -1810,11 +1813,11 @@ public class Fold {
 	  }
 	  else { /* found interior loop */
 	    int type_2;
-	    type_2 = PairMat.pair[S[q]][S[p]];
+	    type_2 = pair_mat.pair[S[q]][S[p]];
 	    if (type_2==0) {
 	      type_2=7;
 	      if (eos_debug>=0)
-		System.out.println(String.format("WARNING: bases %d and %d (%c%c) can't pair!\n", p, q,PairMat.Law_and_Order.charAt(S[p]),PairMat.Law_and_Order.charAt(S[q])));
+		System.out.println(String.format("WARNING: bases %d and %d (%c%c) can't pair!\n", p, q,pair_mat.Law_and_Order.charAt(S[p]),pair_mat.Law_and_Order.charAt(S[q])));
 	    }
 	    /* energy += LoopEnergy(i, j, p, q, type, type_2); */
 	    if ( SAME_STRAND(i,p) && SAME_STRAND(q,j) )
@@ -1852,10 +1855,10 @@ public class Fold {
 	    for (l=1; l<=2; l++) {
 	      int type,ntype=0,otype=0;
 	      i=k; j = i+EnergyConst.TURN+l; if (j>n) continue;
-	      type = PairMat.pair[S[i]][S[j]];
+	      type = pair_mat.pair[S[i]][S[j]];
 	      while ((i>=1)&&(j<=n)) {
-		if ((i>1)&&(j<n)) ntype = PairMat.pair[S[i-1]][S[j+1]];
-		if (FoldVars.noLonelyPairs && (otype == 0) && (ntype == 0))
+		if ((i>1)&&(j<n)) ntype = pair_mat.pair[S[i-1]][S[j+1]];
+		if (fold_vars.noLonelyPairs && (otype == 0) && (ntype == 0))
 		  type = 0; /* i.j can only form isolated pairs */
 		ptype[indx[j]+i] = (byte) type;
 		otype =  type;
@@ -1864,7 +1867,7 @@ public class Fold {
 	      }
 	    }
 
-	  if (FoldVars.fold_constrained&&(structure!=null)) {
+	  if (fold_vars.fold_constrained&&(structure!=null)) {
 	    int hx;
 	    int[] stack = new int[n+1];
 	    byte type;

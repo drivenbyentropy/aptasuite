@@ -18,6 +18,9 @@ import exceptions.InvalidConfigurationException;
  */
 public class PartFunc {
 
+	FoldVars fold_vars;
+	PairMat pair_mat;
+	
 	int st_back = 0;
 	double expMLclosing;
 	double[] expMLintern = new double[EnergyConst.NBPAIRS + 1];
@@ -41,7 +44,7 @@ public class PartFunc {
 	double[][] expninio = new double[5][EnergyConst.MAXLOOP + 1];
 	double[] q;
 	double[] qb = null;
-	static double[] qm;
+	double[] qm;
 	double[] qm1;
 	double[] qqm;
 	double[] qqm1;
@@ -74,6 +77,13 @@ public class PartFunc {
 	short[] S;
 	short[] S1;
 
+	public PartFunc(FoldVars fold_vars, PairMat pair_mat) {
+		
+		this.fold_vars = fold_vars;
+		this.pair_mat = pair_mat;
+		
+	}
+	
 	double pf_fold(byte[] sequence, byte[] structure) {
 
 		double Q;
@@ -86,24 +96,24 @@ public class PartFunc {
 		/* do the linear pf fold and fill all matrices */
 		pf_linear(sequence, structure);
 
-		if (FoldVars.backtrack_type == 'C')
-			Q = qb[FoldVars.iindx[1] - n];
-		else if (FoldVars.backtrack_type == 'M')
-			Q = qm[FoldVars.iindx[1] - n];
+		if (fold_vars.backtrack_type == 'C')
+			Q = qb[fold_vars.iindx[1] - n];
+		else if (fold_vars.backtrack_type == 'M')
+			Q = qm[fold_vars.iindx[1] - n];
 		else
-			Q = q[FoldVars.iindx[1] - n];
+			Q = q[fold_vars.iindx[1] - n];
 
 		/* ensemble free energy in Kcal/mol */
 		if (Q <= Float.MIN_VALUE)
 			System.out.println("pf_scale too large\n");
-		free_energy = (-Math.log(Q) - n * Math.log(FoldVars.pf_scale)) * (FoldVars.temperature + EnergyConst.K0)
+		free_energy = (-Math.log(Q) - n * Math.log(fold_vars.pf_scale)) * (fold_vars.temperature + EnergyConst.K0)
 				* EnergyConst.GASCONST / 1000.0;
 		/* in case we abort because of floating point errors */
 		if (n > 1600)
 			System.out.println(String.format("free energy = %8.2f\n", free_energy));
 
 		/* calculate base pairing probability matrix (bppm) */
-		if (FoldVars.do_backtrack != 0)
+		if (fold_vars.do_backtrack != 0)
 			pf_create_bppm(sequence, structure);
 
 		return free_energy;
@@ -124,24 +134,24 @@ public class PartFunc {
 		/* RNAs */
 		pf_circ(sequence, structure);
 
-		if (FoldVars.backtrack_type == 'C')
-			Q = qb[FoldVars.iindx[1] - n];
-		else if (FoldVars.backtrack_type == 'M')
-			Q = qm[FoldVars.iindx[1] - n];
+		if (fold_vars.backtrack_type == 'C')
+			Q = qb[fold_vars.iindx[1] - n];
+		else if (fold_vars.backtrack_type == 'M')
+			Q = qm[fold_vars.iindx[1] - n];
 		else
 			Q = qo;
 
 		/* ensemble free energy in Kcal/mol */
 		if (Q <= Double.MIN_VALUE)
 			System.out.println("pf_scale too large\n");
-		free_energy = (-Math.log(Q) - n * Math.log(FoldVars.pf_scale)) * (FoldVars.temperature + EnergyConst.K0)
+		free_energy = (-Math.log(Q) - n * Math.log(fold_vars.pf_scale)) * (fold_vars.temperature + EnergyConst.K0)
 				* EnergyConst.GASCONST / 1000.0;
 		/* in case we abort because of floating point errors */
 		if (n > 1600)
 			System.out.println(String.format("free energy = %8.2f\n", free_energy));
 
 		/* calculate base pairing probability matrix (bppm) */
-		if (FoldVars.do_backtrack != 0)
+		if (fold_vars.do_backtrack != 0)
 			pf_create_bppm(sequence, structure);
 
 		return free_energy;
@@ -163,7 +173,7 @@ public class PartFunc {
 		n = sequence.length;
 		if (n > init_length)
 			init_pf_fold(n); /* (re)allocate space */
-		if ((init_temp - FoldVars.temperature) > 1e-6)
+		if ((init_temp - fold_vars.temperature) > 1e-6)
 			update_pf_params(n);
 
 		S  = (S==null) ? new short[n+2] : Arrays.copyOf(S, n + 2);
@@ -171,8 +181,8 @@ public class PartFunc {
 
 		S[0] = (short) n;
 		for (l = 1; l <= n; l++) {
-			S[l] = (short) PairMat.encode_char(sequence[l - 1]);
-			S1[l] = PairMat.alias[S[l]];
+			S[l] = (short) pair_mat.encode_char(sequence[l - 1]);
+			S1[l] = pair_mat.alias[S[l]];
 		}
 		make_ptypes(S, structure);
 
@@ -189,7 +199,7 @@ public class PartFunc {
 		for (d = 0; d <= EnergyConst.TURN; d++)
 			for (i = 1; i <= n - d; i++) {
 				j = i + d;
-				ij = FoldVars.iindx[i] - j;
+				ij = fold_vars.iindx[i] - j;
 				q[ij] = 1.0 * scale[d + 1];
 				qb[ij] = qm[ij] = 0.0;
 			}
@@ -202,11 +212,11 @@ public class PartFunc {
 				/* construction of partition function of segment i,j */
 				/* firstly that given i bound to j : qb(i,j) */
 				u = j - i - 1;
-				ij = FoldVars.iindx[i] - j;
+				ij = fold_vars.iindx[i] - j;
 				type = ptype[ij];
 				if (type != 0) {
 					/* hairpin contribution */
-					if (((type == 3) || (type == 4)) && FoldVars.no_closingGU)
+					if (((type == 3) || (type == 4)) && fold_vars.no_closingGU)
 						qbt1 = 0;
 					else
 						qbt1 = expHairpinEnergy(u, type, S1[i + 1], S1[j - 1], sequence, i - 1)
@@ -215,21 +225,21 @@ public class PartFunc {
 					for (k = i + 1; k <= Math.min(i + EnergyConst.MAXLOOP + 1, j - EnergyConst.TURN - 2); k++) {
 						u1 = k - i - 1;
 						for (l = Math.max(k + EnergyConst.TURN + 1, j - 1 - EnergyConst.MAXLOOP + u1); l < j; l++) {
-							type_2 = ptype[FoldVars.iindx[k] - l];
+							type_2 = ptype[fold_vars.iindx[k] - l];
 							if (type_2 != 0) {
-								type_2 = PairMat.rtype[type_2];
+								type_2 = pair_mat.rtype[type_2];
 								/* add *scale[u1+u2+2] */
-								qbt1 += qb[FoldVars.iindx[k] - l] * (scale[u1 + j - l + 1] * expLoopEnergy(u1,
+								qbt1 += qb[fold_vars.iindx[k] - l] * (scale[u1 + j - l + 1] * expLoopEnergy(u1,
 										j - l - 1, type, type_2, S1[i + 1], S1[j - 1], S1[k - 1], S1[l + 1]));
 							}
 						}
 					}
 					/* multiple stem loop contribution */
-					ii = FoldVars.iindx[i + 1]; /* ii-k=[i+1,k-1] */
+					ii = fold_vars.iindx[i + 1]; /* ii-k=[i+1,k-1] */
 					temp = 0.0;
 					for (k = i + 2; k <= j - 1; k++)
 						temp += qm[ii - (k - 1)] * qqm1[k];
-					tt = PairMat.rtype[type];
+					tt = pair_mat.rtype[type];
 					qbt1 += temp * expMLclosing * expMLintern[tt] * scale[2] * expdangle3[tt][S1[i + 1]]
 							* expdangle5[tt][S1[j - 1]];
 
@@ -261,7 +271,7 @@ public class PartFunc {
 				 * contributions from segment i,j
 				 */
 				temp = 0.0;
-				ii = FoldVars.iindx[i]; /* ii-k=[i,k-1] */
+				ii = fold_vars.iindx[i]; /* ii-k=[i,k-1] */
 				for (k = i + 1; k <= j; k++)
 					temp += (qm[ii - (k - 1)] + expMLbase[k - i]) * qqm[k];
 				qm[ij] = (temp + qqm[i]);
@@ -331,14 +341,14 @@ public class PartFunc {
 				u = n - q + p - 1;
 				if (u < EnergyConst.TURN)
 					continue;
-				type = ptype[FoldVars.iindx[p] - q];
+				type = ptype[fold_vars.iindx[p] - q];
 				if (type == 0)
 					continue;
 				/*
 				 * cause we want to calc the exterior loops, we need the reversed pair type from
 				 * now on
 				 */
-				type = PairMat.rtype[type];
+				type = pair_mat.rtype[type];
 
 				if (u < 7) {
 					System.arraycopy(sequence, q - 1, loopseq, 0, sequence.length - (q - 1));
@@ -355,8 +365,8 @@ public class PartFunc {
 				 * is done again by
 				 */
 				/* calling the expHairpinEnergy function here */
-				qho += (((type == 3) || (type == 4)) && FoldVars.no_closingGU) ? 0.
-						: qb[FoldVars.iindx[p] - q] * expHairpinEnergy(u, type, S1[q + 1], S1[p - 1], loopseq, 0)
+				qho += (((type == 3) || (type == 4)) && fold_vars.no_closingGU) ? 0.
+						: qb[fold_vars.iindx[p] - q] * expHairpinEnergy(u, type, S1[q + 1], S1[p - 1], loopseq, 0)
 								* scale[u];
 
 				/* 2. exterior interior loops, i "define" the (k,l) pair as "outer pair" */
@@ -377,14 +387,14 @@ public class PartFunc {
 						if ((ln1 + ln2) > EnergyConst.MAXLOOP)
 							continue;
 
-						type2 = ptype[FoldVars.iindx[k] - l];
+						type2 = ptype[fold_vars.iindx[k] - l];
 						if (type2 == 0)
 							continue;
 						/*
 						 * for division by scale[2] just have a look at hairpin energy calculation above
 						 */
-						qio += qb[FoldVars.iindx[p] - q] * qb[FoldVars.iindx[k] - l] * expLoopEnergy(ln2, ln1,
-								PairMat.rtype[type2], type, S1[l + 1], S1[k - 1], S1[p - 1], S1[q + 1])
+						qio += qb[fold_vars.iindx[p] - q] * qb[fold_vars.iindx[k] - l] * expLoopEnergy(ln2, ln1,
+								pair_mat.rtype[type2], type, S1[l + 1], S1[k - 1], S1[p - 1], S1[q + 1])
 								* scale[ln1 + ln2];
 					}
 				} /* end of kl double loop */
@@ -393,7 +403,7 @@ public class PartFunc {
 
 		/* 3. Multiloops */
 		for (k = EnergyConst.TURN + 2; k < n - 2 * EnergyConst.TURN - 3; k++)
-			qmo += qm[FoldVars.iindx[1] - k] * qm2[k + 1] * expMLclosing;
+			qmo += qm[fold_vars.iindx[1] - k] * qm2[k + 1] * expMLclosing;
 
 		/* add an additional pf of 1.0 to take the open chain into account too */
 		qo = qho + qio + qmo + 1.0 * scale[n];
@@ -414,29 +424,29 @@ public class PartFunc {
 			Qmax = 0;
 
 			for (k = 1; k <= n; k++) {
-				q1k[k] = q[FoldVars.iindx[1] - k];
-				qln[k] = q[FoldVars.iindx[k] - n];
+				q1k[k] = q[fold_vars.iindx[1] - k];
+				qln[k] = q[fold_vars.iindx[k] - n];
 			}
 			q1k[0] = 1.0;
 			qln[n + 1] = 1.0;
 
-			FoldVars.pr = q; /* recycling */
+			fold_vars.pr = q; /* recycling */
 
 			/* 1. exterior pair i,j and initialization of pr array */
 			if (circ != 0) {
 				for (i = 1; i <= n; i++) {
 					for (j = i; j <= Math.min(i + EnergyConst.TURN, n); j++)
-						FoldVars.pr[FoldVars.iindx[i] - j] = 0;
+						fold_vars.pr[fold_vars.iindx[i] - j] = 0;
 					for (j = i + EnergyConst.TURN + 1; j <= n; j++) {
-						ij = FoldVars.iindx[i] - j;
+						ij = fold_vars.iindx[i] - j;
 						type = ptype[ij];
 						if ((type != 0) && (qb[ij] > 0.)) {
 							int rt, u;
 							byte[] loopseq = new byte[10];
 
 							u = i + n - j - 1;
-							rt = PairMat.rtype[type];
-							FoldVars.pr[ij] = 1. / qo;
+							rt = pair_mat.rtype[type];
+							fold_vars.pr[ij] = 1. / qo;
 
 							/* 1.1. Exterior Hairpin Contribution */
 							/* get the loop sequence */
@@ -464,14 +474,14 @@ public class PartFunc {
 									lstart = k + EnergyConst.TURN + 1;
 								for (l = lstart; l < i; l++) {
 									int ln2; // , type_2;
-									type_2 = ptype[FoldVars.iindx[k] - l];
+									type_2 = ptype[fold_vars.iindx[k] - l];
 									if (type_2 == 0)
 										continue;
 									ln2 = i - l - 1;
 									if (ln1 + ln2 > EnergyConst.MAXLOOP)
 										continue;
-									tmp2 += qb[FoldVars.iindx[k] - l] * expLoopEnergy(ln1, ln2, rt,
-											PairMat.rtype[type_2], S1[j + 1], S1[i - 1], S1[k - 1], S1[l + 1])
+									tmp2 += qb[fold_vars.iindx[k] - l] * expLoopEnergy(ln1, ln2, rt,
+											pair_mat.rtype[type_2], S1[j + 1], S1[i - 1], S1[k - 1], S1[l + 1])
 											* scale[ln1 + ln2];
 								}
 							}
@@ -486,59 +496,59 @@ public class PartFunc {
 									lstart = k + EnergyConst.TURN + 1;
 								for (l = lstart; l <= n; l++) {
 									int ln2; // , type_2;
-									type_2 = ptype[FoldVars.iindx[k] - l];
+									type_2 = ptype[fold_vars.iindx[k] - l];
 									if (type_2 == 0)
 										continue;
 									ln2 = i - 1 + n - l;
 									if (ln1 + ln2 > EnergyConst.MAXLOOP)
 										continue;
-									tmp2 += qb[FoldVars.iindx[k] - l] * expLoopEnergy(ln2, ln1, PairMat.rtype[type_2],
+									tmp2 += qb[fold_vars.iindx[k] - l] * expLoopEnergy(ln2, ln1, pair_mat.rtype[type_2],
 											rt, S1[l + 1], S1[k - 1], S1[i - 1], S1[j + 1]) * scale[ln1 + ln2];
 								}
 							}
 							/* 1.3 Exterior multiloop decomposition */
 							/* 1.3.1 Middle part */
 							if ((i > EnergyConst.TURN + 2) && (j < n - EnergyConst.TURN - 1))
-								tmp2 += qm[FoldVars.iindx[1] - i + 1] * qm[FoldVars.iindx[j + 1] - n] * expMLclosing
+								tmp2 += qm[fold_vars.iindx[1] - i + 1] * qm[fold_vars.iindx[j + 1] - n] * expMLclosing
 										* expMLintern[type] * expdangle3[type][S1[j + 1]] * expdangle5[type][S1[i - 1]];
 
 							/* 1.3.2 Left part */
 							for (k = EnergyConst.TURN + 2; k < i - EnergyConst.TURN - 2; k++)
-								tmp2 += qm[FoldVars.iindx[1] - k] * qm1[jindx[i - 1] + k + 1] * expMLbase[n - j]
+								tmp2 += qm[fold_vars.iindx[1] - k] * qm1[jindx[i - 1] + k + 1] * expMLbase[n - j]
 										* expMLclosing * expMLintern[type] * expdangle3[type][S1[j + 1]]
 										* expdangle5[type][S1[i - 1]];
 
 							/* 1.3.3 Right part */
 							for (k = j + EnergyConst.TURN + 2; k < n - EnergyConst.TURN - 1; k++)
-								tmp2 += qm[FoldVars.iindx[j + 1] - k] * qm1[jindx[n] + k + 1] * expMLbase[i - 1]
+								tmp2 += qm[fold_vars.iindx[j + 1] - k] * qm1[jindx[n] + k + 1] * expMLbase[i - 1]
 										* expMLclosing * expMLintern[type] * expdangle3[type][S1[j + 1]]
 										* expdangle5[type][S1[i - 1]];
 
 							/* all exterior loop decompositions for pair i,j done */
-							FoldVars.pr[ij] *= tmp2;
+							fold_vars.pr[ij] *= tmp2;
 
 						} else
-							FoldVars.pr[ij] = 0;
+							fold_vars.pr[ij] = 0;
 					}
 				}
 			} /* end if(circ) */
 			else {
 				for (i = 1; i <= n; i++) {
 					for (j = i; j <= Math.min(i + EnergyConst.TURN, n); j++)
-						FoldVars.pr[FoldVars.iindx[i] - j] = 0;
+						fold_vars.pr[fold_vars.iindx[i] - j] = 0;
 					for (j = i + EnergyConst.TURN + 1; j <= n; j++) {
-						ij = FoldVars.iindx[i] - j;
+						ij = fold_vars.iindx[i] - j;
 						type = ptype[ij];
 						if ((type != 0) && (qb[ij] > 0.)) {
-							FoldVars.pr[ij] = q1k[i - 1] * qln[j + 1] / q1k[n];
+							fold_vars.pr[ij] = q1k[i - 1] * qln[j + 1] / q1k[n];
 							if (i > 1)
-								FoldVars.pr[ij] *= expdangle5[type][S1[i - 1]];
+								fold_vars.pr[ij] *= expdangle5[type][S1[i - 1]];
 							if (j < n)
-								FoldVars.pr[ij] *= expdangle3[type][S1[j + 1]];
+								fold_vars.pr[ij] *= expdangle3[type][S1[j + 1]];
 							else if (type > 2)
-								FoldVars.pr[ij] *= expTermAU;
+								fold_vars.pr[ij] *= expTermAU;
 						} else
-							FoldVars.pr[ij] = 0;
+							fold_vars.pr[ij] = 0;
 					}
 				}
 			} /* end if(!circ) */
@@ -547,19 +557,19 @@ public class PartFunc {
 
 				/* 2. bonding k,l as substem of 2:loop enclosed by i,j */
 				for (k = 1; k < l - EnergyConst.TURN; k++) {
-					kl = FoldVars.iindx[k] - l;
+					kl = fold_vars.iindx[k] - l;
 					type_2 = ptype[kl];
-					type_2 = PairMat.rtype[type_2];
+					type_2 = pair_mat.rtype[type_2];
 					if (qb[kl] == 0)
 						continue;
 
 					for (i = Math.max(1, k - EnergyConst.MAXLOOP - 1); i <= k - 1; i++)
 						for (j = l + 1; j <= Math.min(l + EnergyConst.MAXLOOP - k + i + 2, n); j++) {
-							ij = FoldVars.iindx[i] - j;
+							ij = fold_vars.iindx[i] - j;
 							type = ptype[ij];
-							if ((FoldVars.pr[ij] > 0)) {
+							if ((fold_vars.pr[ij] > 0)) {
 								/* add *scale[u1+u2+2] */
-								FoldVars.pr[kl] += FoldVars.pr[ij] * (scale[k - i + j - l] * expLoopEnergy(k - i - 1,
+								fold_vars.pr[kl] += fold_vars.pr[ij] * (scale[k - i + j - l] * expLoopEnergy(k - i - 1,
 										j - l - 1, type, type_2, S1[i + 1], S1[j - 1], S1[k - 1], S1[l + 1]));
 							}
 						}
@@ -571,19 +581,19 @@ public class PartFunc {
 						i = k - 1;
 						prmt = prmt1 = 0.0;
 
-						ii = FoldVars.iindx[i]; /* ii-j=[i,j] */
-						ll = FoldVars.iindx[l + 1]; /* ll-j=[l+1,j-1] */
+						ii = fold_vars.iindx[i]; /* ii-j=[i,j] */
+						ll = fold_vars.iindx[l + 1]; /* ll-j=[l+1,j-1] */
 						tt = ptype[ii - (l + 1)];
-						tt = PairMat.rtype[tt];
-						prmt1 = FoldVars.pr[ii - (l + 1)] * expMLclosing * expMLintern[tt] * expdangle3[tt][S1[i + 1]]
+						tt = pair_mat.rtype[tt];
+						prmt1 = fold_vars.pr[ii - (l + 1)] * expMLclosing * expMLintern[tt] * expdangle3[tt][S1[i + 1]]
 								* expdangle5[tt][S1[l]];
 						for (j = l + 2; j <= n; j++) {
 							tt = ptype[ii - j];
-							tt = PairMat.rtype[tt];
-							prmt += FoldVars.pr[ii - j] * expdangle3[tt][S1[i + 1]] * expdangle5[tt][S1[j - 1]]
+							tt = pair_mat.rtype[tt];
+							prmt += fold_vars.pr[ii - j] * expdangle3[tt][S1[i + 1]] * expdangle5[tt][S1[j - 1]]
 									* qm[ll - (j - 1)];
 						}
-						kl = FoldVars.iindx[k] - l;
+						kl = fold_vars.iindx[k] - l;
 						tt = ptype[kl];
 						prmt *= expMLclosing * expMLintern[tt];
 						prml[i] = prmt;
@@ -603,24 +613,24 @@ public class PartFunc {
 						temp = prm_MLb;
 
 						for (i = 1; i <= k - 2; i++)
-							temp += prml[i] * qm[FoldVars.iindx[i + 1] - (k - 1)];
+							temp += prml[i] * qm[fold_vars.iindx[i + 1] - (k - 1)];
 
 						temp *= expMLintern[tt] * scale[2];
 						if (k > 1)
 							temp *= expdangle5[tt][S1[k - 1]];
 						if (l < n)
 							temp *= expdangle3[tt][S1[l + 1]];
-						FoldVars.pr[kl] += temp;
+						fold_vars.pr[kl] += temp;
 
-						if (FoldVars.pr[kl] > Qmax) {
-							Qmax = FoldVars.pr[kl];
+						if (fold_vars.pr[kl] > Qmax) {
+							Qmax = fold_vars.pr[kl];
 							if (Qmax > max_real / 10.)
 								System.out.println(String.format("P close to overflow: %d %d %g %g\n", i, j,
-										FoldVars.pr[kl], qb[kl]));
+										fold_vars.pr[kl], qb[kl]));
 						}
-						if (FoldVars.pr[kl] >= max_real) {
+						if (fold_vars.pr[kl] >= max_real) {
 							ov++;
-							FoldVars.pr[kl] = Double.MAX_VALUE;
+							fold_vars.pr[kl] = Double.MAX_VALUE;
 						}
 
 					} /* end for (k=..) */
@@ -632,8 +642,8 @@ public class PartFunc {
 
 			for (i = 1; i <= n; i++)
 				for (j = i + EnergyConst.TURN + 1; j <= n; j++) {
-					ij = FoldVars.iindx[i] - j;
-					FoldVars.pr[ij] *= qb[ij];
+					ij = fold_vars.iindx[i] - j;
+					fold_vars.pr[ij] *= qb[ij];
 				}
 
 			if (structure != null)
@@ -641,7 +651,7 @@ public class PartFunc {
 			if (ov > 0)
 				throw new RuntimeException(String.format(
 						"%d overflows occurred while backtracking;\nyou might try a smaller pf_scale than %g\n", ov,
-						FoldVars.pf_scale));
+						fold_vars.pf_scale));
 		} /* end if((S != NULL) && (S1 != NULL)) */
 		else
 			throw new RuntimeException("bppm calculations have to be done after calling forward recursion\n");
@@ -671,18 +681,18 @@ public class PartFunc {
 		double kT, TT;
 		double GT;
 
-		init_temp = FoldVars.temperature;
-		kT = (FoldVars.temperature + EnergyConst.K0) * EnergyConst.GASCONST; /* kT in cal/mol */
-		TT = (FoldVars.temperature + EnergyConst.K0) / (EnergyPar.Tmeasure);
+		init_temp = fold_vars.temperature;
+		kT = (fold_vars.temperature + EnergyConst.K0) * EnergyConst.GASCONST; /* kT in cal/mol */
+		TT = (fold_vars.temperature + EnergyConst.K0) / (EnergyPar.Tmeasure);
 
 		/* scaling factors (to avoid overflows) */
-		if (FoldVars.pf_scale == -1) { /* mean energy for random sequences: 184.3*length cal */
-			FoldVars.pf_scale = Math.exp(-(-185 + (FoldVars.temperature - 37.) * 7.27) / kT);
-			if (FoldVars.pf_scale < 1)
-				FoldVars.pf_scale = 1;
+		if (fold_vars.pf_scale == -1) { /* mean energy for random sequences: 184.3*length cal */
+			fold_vars.pf_scale = Math.exp(-(-185 + (fold_vars.temperature - 37.) * 7.27) / kT);
+			if (fold_vars.pf_scale < 1)
+				fold_vars.pf_scale = 1;
 		}
 		scale[0] = 1.;
-		scale[1] = 1. / FoldVars.pf_scale;
+		scale[1] = 1. / fold_vars.pf_scale;
 		for (i = 2; i <= length; i++) {
 			scale[i] = scale[i / 2] * scale[i - (i / 2)];
 		}
@@ -699,7 +709,7 @@ public class PartFunc {
 			expinternal[i] = Math.exp(-GT * 10. / kT);
 		}
 		/* special case of size 2 interior loops (single mismatch) */
-		if (FoldVars.james_rule != 0)
+		if (fold_vars.james_rule != 0)
 			expinternal[2] = Math.exp(-80 * 10 / kT);
 
 		lxc = EnergyPar.lxc37 * TT;
@@ -747,7 +757,7 @@ public class PartFunc {
 		 */
 		for (i = 0; i <= EnergyConst.NBPAIRS; i++)
 			for (j = 0; j <= 4; j++) {
-				if (FoldVars.dangles != 0) {
+				if (fold_vars.dangles != 0) {
 					GT = EnergyPar.dangle5_H[i][j] - (EnergyPar.dangle5_H[i][j] - EnergyPar.dangle5_37[i][j]) * TT;
 					expdangle5[i][j] = Math.exp(SMOOTH(-GT) * 10. / kT);
 					GT = EnergyPar.dangle3_H[i][j] - (EnergyPar.dangle3_H[i][j] - EnergyPar.dangle3_37[i][j]) * TT;
@@ -819,7 +829,7 @@ public class PartFunc {
 		/* compute Boltzmann weight of a hairpin loop, multiply by scale[u+2] */
 		double q;
 		q = exphairpin[u];
-		if ((FoldVars.tetra_loop) && (u == 4)) {
+		if ((fold_vars.tetra_loop) && (u == 4)) {
 			byte[] tl = Arrays.copyOfRange(string, spos, spos + 6);
 
 			int tsmt = EnergyPar.Tetraloops.indexOf(new String(tl));
@@ -848,7 +858,7 @@ public class PartFunc {
 		double z = 0;
 		int no_close = 0;
 
-		if ((FoldVars.no_closingGU) && ((type2 == 3) || (type2 == 4) || (type == 2) || (type == 4)))
+		if ((fold_vars.no_closingGU) && ((type2 == 3) || (type2 == 4) || (type == 2) || (type == 4)))
 			no_close = 1;
 
 		if ((u1 == 0) && (u2 == 0)) /* stack */
@@ -910,10 +920,10 @@ public class PartFunc {
 		exphairpin = new double[(length + 1)];
 		expMLbase = new double[(length + 1)];
 		scale = new double[(length + 1)];
-		FoldVars.iindx = new int[(length + 1)];
+		fold_vars.iindx = new int[(length + 1)];
 		jindx = new int[(length + 1)];
 		for (i = 1; i <= length; i++) {
-			FoldVars.iindx[i] = ((length + 1 - i) * (length - i)) / 2 + length + 1;
+			fold_vars.iindx[i] = ((length + 1 - i) * (length - i)) / 2 + length + 1;
 			jindx[i] = (i * (i - 1)) / 2;
 		}
 		if (circ != 0) {
@@ -937,7 +947,7 @@ public class PartFunc {
 		if (init_length > 0)
 			free_pf_arrays(); /* free previous allocation */
 
-		PairMat.make_pair_matrix();
+		pair_mat.make_pair_matrix();
 		get_arrays(length);
 		scale_pf_params(length);
 		init_length = length;
@@ -945,7 +955,7 @@ public class PartFunc {
 
 	void free_pf_arrays() {
 		q = null;
-		FoldVars.pr = null;
+		fold_vars.pr = null;
 		qb = null;
 		qm = null;
 		qm1 = null;
@@ -963,7 +973,7 @@ public class PartFunc {
 		exphairpin = null;
 		expMLbase = null;
 		scale = null;
-		FoldVars.iindx = null;
+		fold_vars.iindx = null;
 		jindx = null;
 		init_length = 0;
 		S = null;
@@ -975,7 +985,7 @@ public class PartFunc {
 		if (length > init_length)
 			init_pf_fold(length); /* init not update */
 		else {
-			PairMat.make_pair_matrix();
+			pair_mat.make_pair_matrix();
 			scale_pf_params(length);
 		}
 	}
@@ -1013,12 +1023,12 @@ public class PartFunc {
 			P[0] = 1.0;
 			P[1] = P[2] = 0.0;
 			for (i = 1; i < j; i++) {
-				P[2] += FoldVars.pr[FoldVars.iindx[i] - j]; /* j is paired downstream */
-				P[0] -= FoldVars.pr[FoldVars.iindx[i] - j]; /* j is unpaired */
+				P[2] += fold_vars.pr[fold_vars.iindx[i] - j]; /* j is paired downstream */
+				P[0] -= fold_vars.pr[fold_vars.iindx[i] - j]; /* j is unpaired */
 			}
 			for (i = j + 1; i <= length; i++) {
-				P[1] += FoldVars.pr[FoldVars.iindx[j] - i]; /* j is paired upstream */
-				P[0] -= FoldVars.pr[FoldVars.iindx[j] - i]; /* j is unpaired */
+				P[1] += fold_vars.pr[fold_vars.iindx[j] - i]; /* j is paired upstream */
+				P[0] -= fold_vars.pr[fold_vars.iindx[j] - i]; /* j is unpaired */
 			}
 			structure[j - 1] = bppm_symbol(P);
 		}
@@ -1037,14 +1047,14 @@ public class PartFunc {
 				j = i + EnergyConst.TURN + l;
 				if (j > n)
 					continue;
-				type = PairMat.pair[S[i]][S[j]];
+				type = pair_mat.pair[S[i]][S[j]];
 				while ((i >= 1) && (j <= n)) {
 					if ((i > 1) && (j < n))
-						ntype = PairMat.pair[S[i - 1]][S[j + 1]];
-					if (FoldVars.noLonelyPairs && (otype == 0) && (ntype == 0))
+						ntype = pair_mat.pair[S[i - 1]][S[j + 1]];
+					if (fold_vars.noLonelyPairs && (otype == 0) && (ntype == 0))
 						type = 0; /* i.j can only form isolated pairs */
-					qb[FoldVars.iindx[i] - j] = 0.;
-					ptype[FoldVars.iindx[i] - j] = (char) type;
+					qb[fold_vars.iindx[i] - j] = 0.;
+					ptype[fold_vars.iindx[i] - j] = (char) type;
 					otype = type;
 					type = ntype;
 					i--;
@@ -1052,7 +1062,7 @@ public class PartFunc {
 				}
 			}
 
-		if (FoldVars.fold_constrained && (structure != null)) {
+		if (fold_vars.fold_constrained && (structure != null)) {
 			int hx;
 			int[] stack = new int[n + 1];
 			char type;
@@ -1061,16 +1071,16 @@ public class PartFunc {
 				switch (structure[j - 1]) {
 				case 'x': /* can't pair */
 					for (l = 1; l < j - EnergyConst.TURN; l++)
-						ptype[FoldVars.iindx[l] - j] = 0;
+						ptype[fold_vars.iindx[l] - j] = 0;
 					for (l = j + EnergyConst.TURN + 1; l <= n; l++)
-						ptype[FoldVars.iindx[j] - l] = 0;
+						ptype[fold_vars.iindx[j] - l] = 0;
 					break;
 				case '(':
 					stack[hx++] = j;
 					/* fallthrough */
 				case '<': /* pairs upstream */
 					for (l = 1; l < j - EnergyConst.TURN; l++)
-						ptype[FoldVars.iindx[l] - j] = 0;
+						ptype[fold_vars.iindx[l] - j] = 0;
 					break;
 				case ')':
 					if (hx <= 0) {
@@ -1078,20 +1088,20 @@ public class PartFunc {
 								String.format("%s\nunbalanced brackets in constraints", new String(structure)));
 					}
 					i = stack[--hx];
-					type = ptype[FoldVars.iindx[i] - j];
+					type = ptype[fold_vars.iindx[i] - j];
 					/* don't allow pairs i<k<j<l */
 					for (k = i; k <= j; k++)
 						for (l = j; l <= n; l++)
-							ptype[FoldVars.iindx[k] - l] = 0;
+							ptype[fold_vars.iindx[k] - l] = 0;
 					/* don't allow pairs k<i<l<j */
 					for (k = 1; k <= i; k++)
 						for (l = i; l <= j; l++)
-							ptype[FoldVars.iindx[k] - l] = 0;
-					ptype[FoldVars.iindx[i] - j] = (type == 0) ? 7 : type;
+							ptype[fold_vars.iindx[k] - l] = 0;
+					ptype[fold_vars.iindx[i] - j] = (type == 0) ? 7 : type;
 					/* fallthrough */
 				case '>': /* pairs downstream */
 					for (l = j + EnergyConst.TURN + 1; l <= n; l++)
-						ptype[FoldVars.iindx[j] - l] = 0;
+						ptype[fold_vars.iindx[j] - l] = 0;
 					break;
 				}
 			}
@@ -1135,10 +1145,10 @@ public class PartFunc {
 			r = rand.nextDouble() * (qln[i] - qln[i + 1] * scale[1]);
 			for (qt = 0, j = i + 1; j <= n; j++) {
 				int type;
-				type = ptype[FoldVars.iindx[i] - j];
+				type = ptype[fold_vars.iindx[i] - j];
 				if (type != 0) {
 					double qkl;
-					qkl = qb[FoldVars.iindx[i] - j];
+					qkl = qb[fold_vars.iindx[i] - j];
 					if (j < n)
 						qkl *= qln[j + 1];
 					if (i > 1)
@@ -1195,11 +1205,11 @@ public class PartFunc {
 				if (u < EnergyConst.TURN)
 					continue;
 
-				type = ptype[FoldVars.iindx[i] - j];
+				type = ptype[fold_vars.iindx[i] - j];
 				if (type == 0)
 					continue;
 
-				type = PairMat.rtype[type];
+				type = pair_mat.rtype[type];
 
 				if (u < 7) {
 					System.arraycopy(sequence, j - 1, loopseq, 0, sequence.length - (j - 1));
@@ -1208,7 +1218,7 @@ public class PartFunc {
 					// strncat(loopseq, sequence, i);
 				}
 
-				qt += qb[FoldVars.iindx[i] - j] * expHairpinEnergy(u, type, S1[j + 1], S1[i - 1], loopseq, 0)
+				qt += qb[fold_vars.iindx[i] - j] * expHairpinEnergy(u, type, S1[j + 1], S1[i - 1], loopseq, 0)
 						* scale[u];
 				/* found a hairpin? so backtrack in the enclosed part and we're done */
 				if (qt > r) {
@@ -1232,11 +1242,11 @@ public class PartFunc {
 						if ((ln1 + ln2) > EnergyConst.MAXLOOP)
 							continue;
 
-						type2 = ptype[FoldVars.iindx[k] - l];
+						type2 = ptype[fold_vars.iindx[k] - l];
 						if (type == 0)
 							continue;
-						type2 = PairMat.rtype[type2];
-						qt += qb[FoldVars.iindx[i] - j] * qb[FoldVars.iindx[k] - l]
+						type2 = pair_mat.rtype[type2];
+						qt += qb[fold_vars.iindx[i] - j] * qb[fold_vars.iindx[k] - l]
 								* expLoopEnergy(ln2, ln1, type2, type, S1[l + 1], S1[k - 1], S1[i - 1], S1[j + 1])
 								* scale[ln1 + ln2];
 						/* found an exterior interior loop? also this time, we can go straight */
@@ -1258,7 +1268,7 @@ public class PartFunc {
 			qt = 0.;
 			r = rand.nextDouble() * qmo;
 			for (k = EnergyConst.TURN + 2; k < n - 2 * EnergyConst.TURN - 3; k++) {
-				qt += qm[FoldVars.iindx[1] - k] * qm2[k + 1] * expMLclosing;
+				qt += qm[fold_vars.iindx[1] - k] * qm2[k + 1] * expMLclosing;
 				/* backtrack in qm and qm2 if we've found a valid barrier k */
 				if (qt > r) {
 					backtrack_qm(1, k);
@@ -1279,12 +1289,12 @@ public class PartFunc {
 		int k;
 		while (j > i) {
 			/* now backtrack [i ... j] in qm[] */
-			r = rand.nextDouble() * qm[FoldVars.iindx[i] - j];
+			r = rand.nextDouble() * qm[fold_vars.iindx[i] - j];
 			qmt = qm1[jindx[j] + i];
 			k = i;
 			if (qmt < r)
 				for (k = i + 1; k <= j; k++) {
-					qmt += (qm[FoldVars.iindx[i] - (k - 1)] + expMLbase[k - i]) * qm1[jindx[j] + k];
+					qmt += (qm[fold_vars.iindx[i] - (k - 1)] + expMLbase[k - i]) * qm1[jindx[j] + k];
 					if (qmt >= r)
 						break;
 				}
@@ -1295,7 +1305,7 @@ public class PartFunc {
 
 			if (k < i + EnergyConst.TURN)
 				break; /* no more pairs */
-			r = rand.nextDouble() * (qm[FoldVars.iindx[i] - (k - 1)] + expMLbase[k - i]);
+			r = rand.nextDouble() * (qm[fold_vars.iindx[i] - (k - 1)] + expMLbase[k - i]);
 			if (expMLbase[k - i] >= r)
 				break; /* no more pairs */
 			j = k - 1;
@@ -1308,7 +1318,7 @@ public class PartFunc {
 		double qt, r;
 
 		r = rand.nextDouble() * qm1[jindx[j] + i];
-		ii = FoldVars.iindx[i];
+		ii = fold_vars.iindx[i];
 		for (qt = 0., l = i + EnergyConst.TURN + 1; l <= j; l++) {
 			type = ptype[ii - l];
 			if (type != 0)
@@ -1346,11 +1356,11 @@ public class PartFunc {
 			pstruc[i - 1] = '(';
 			pstruc[j - 1] = ')';
 
-			r = rand.nextDouble() * qb[FoldVars.iindx[i] - j];
-			type = ptype[FoldVars.iindx[i] - j];
+			r = rand.nextDouble() * qb[fold_vars.iindx[i] - j];
+			type = ptype[fold_vars.iindx[i] - j];
 			u = j - i - 1;
 			/* hairpin contribution */
-			if (((type == 3) || (type == 4)) && FoldVars.no_closingGU)
+			if (((type == 3) || (type == 4)) && fold_vars.no_closingGU)
 				qbt1 = 0;
 			else
 				qbt1 = expHairpinEnergy(u, type, S1[i + 1], S1[j - 1], sequence, i - 1)
@@ -1363,11 +1373,11 @@ public class PartFunc {
 				u1 = k - i - 1;
 				for (l = Math.max(k + EnergyConst.TURN + 1, j - 1 - EnergyConst.MAXLOOP + u1); l < j; l++) {
 					int type_2;
-					type_2 = ptype[FoldVars.iindx[k] - l];
+					type_2 = ptype[fold_vars.iindx[k] - l];
 					if (type_2 != 0) {
-						type_2 = PairMat.rtype[type_2];
+						type_2 = pair_mat.rtype[type_2];
 						/* add *scale[u1+u2+2] */
-						qbt1 += qb[FoldVars.iindx[k] - l] * (scale[u1 + j - l + 1] * expLoopEnergy(u1, j - l - 1, type,
+						qbt1 += qb[fold_vars.iindx[k] - l] * (scale[u1 + j - l + 1] * expLoopEnergy(u1, j - l - 1, type,
 								type_2, S1[i + 1], S1[j - 1], S1[k - 1], S1[l + 1]));
 					}
 					if (qbt1 > r)
@@ -1391,7 +1401,7 @@ public class PartFunc {
 			i++;
 			j--;
 			/* find the first split index */
-			ii = FoldVars.iindx[i]; /* ii-j=[i,j] */
+			ii = fold_vars.iindx[i]; /* ii-j=[i,j] */
 			jj = jindx[j]; /* jj+i=[j,i] */
 			for (qt = 0., k = i + 1; k < j; k++)
 				qt += qm[ii - (k - 1)] * qm1[jj + k];
@@ -1420,12 +1430,12 @@ public class PartFunc {
 		int i, j;
 		double d = 0;
 
-		if (FoldVars.pr == null)
+		if (fold_vars.pr == null)
 			throw new RuntimeException("pr==NULL. You need to call pf_fold() before mean_bp_dist()");
 
 		for (i = 1; i <= length; i++)
 			for (j = i + EnergyConst.TURN + 1; j <= length; j++)
-				d += FoldVars.pr[FoldVars.iindx[i] - j] * (1 - FoldVars.pr[FoldVars.iindx[i] - j]);
+				d += fold_vars.pr[fold_vars.iindx[i] - j] * (1 - fold_vars.pr[fold_vars.iindx[i] - j]);
 		return 2 * d;
 	}
 
@@ -1440,7 +1450,7 @@ public class PartFunc {
 		double p;
 		CentroidData centroid = new CentroidData();
 
-		if (FoldVars.pr == null)
+		if (fold_vars.pr == null)
 			throw new RuntimeException("pr==NULL. You need to call pf_fold() before centroid()");
 
 		centroid.structure = new byte[length];
@@ -1448,7 +1458,7 @@ public class PartFunc {
 			centroid.structure[i] = '.';
 		for (i = 1; i <= length; i++)
 			for (j = i + EnergyConst.TURN + 1; j <= length; j++) {
-				if ((p = FoldVars.pr[FoldVars.iindx[i] - j]) > 0.5) {
+				if ((p = fold_vars.pr[fold_vars.iindx[i] - j]) > 0.5) {
 					centroid.structure[i - 1] = '(';
 					centroid.structure[j - 1] = ')';
 					centroid.distance += (1 - p);
@@ -1464,7 +1474,7 @@ public class PartFunc {
 		PList[] pl;
 		int i, j, plsize = 256;
 		int length, num = 0;
-		if (FoldVars.pr == null)
+		if (fold_vars.pr == null)
 			throw new RuntimeException("pr==NULL. You need to call pf_fold() before stackProb()");
 
 		pl = new PList[plsize];
@@ -1473,13 +1483,13 @@ public class PartFunc {
 		for (i = 1; i < length; i++)
 			for (j = i + EnergyConst.TURN + 3; j <= length; j++) {
 				double p;
-				if ((p = FoldVars.pr[FoldVars.iindx[i] - j]) < cutoff)
+				if ((p = fold_vars.pr[fold_vars.iindx[i] - j]) < cutoff)
 					continue;
-				if (qb[FoldVars.iindx[i + 1] - (j - 1)] < Double.MIN_VALUE)
+				if (qb[fold_vars.iindx[i + 1] - (j - 1)] < Double.MIN_VALUE)
 					continue;
-				p *= qb[FoldVars.iindx[i + 1] - (j - 1)] / qb[FoldVars.iindx[i] - j];
-				p *= expLoopEnergy(0, 0, (int) ptype[FoldVars.iindx[i] - j],
-						PairMat.rtype[ptype[FoldVars.iindx[i + 1] - (j - 1)]], (short) 0, (short) 0, (short) 0,
+				p *= qb[fold_vars.iindx[i + 1] - (j - 1)] / qb[fold_vars.iindx[i] - j];
+				p *= expLoopEnergy(0, 0, (int) ptype[fold_vars.iindx[i] - j],
+						pair_mat.rtype[ptype[fold_vars.iindx[i + 1] - (j - 1)]], (short) 0, (short) 0, (short) 0,
 						(short) 0) * scale[2];/* add *scale[u1+u2+2] */
 				if (p > cutoff) {
 					pl[num].i = i;

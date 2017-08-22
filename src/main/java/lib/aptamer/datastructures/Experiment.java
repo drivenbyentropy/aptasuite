@@ -55,7 +55,11 @@ public class Experiment implements Serializable{
 	 * Stores all structural data regarding this experiment 
 	 */
 	private StructurePool structures = null;
-	
+
+	/**
+	 * Stores all base pair probability data regarding this experiment 
+	 */
+	private StructurePool bppms = null;	
 	
 	/**
 	 * Stores all cluster information for the data of this experiment
@@ -233,7 +237,7 @@ public class Experiment implements Serializable{
 			s = Class.forName("lib.aptamer.datastructures." + Configuration.getParameters().getString("StructurePool.backend"));
 		} catch (ClassNotFoundException e) {
 
-			AptaLogger.log(Level.SEVERE, this.getClass(), "Error, the backend for the AptamerPool could not be found.");
+			AptaLogger.log(Level.SEVERE, this.getClass(), "Error, the backend for the StructurePool could not be found.");
 			AptaLogger.log(Level.SEVERE, this.getClass(), org.apache.commons.lang.exception.ExceptionUtils.getStackTrace(e));
 			e.printStackTrace();
 			System.exit(0);
@@ -242,7 +246,7 @@ public class Experiment implements Serializable{
 		// Try to instantiate the class...
 		boolean instanceSuccess = false;
 		try {
-			structures = (StructurePool)s.getConstructor(Path.class, boolean.class).newInstance(Paths.get(Configuration.getParameters().getString("Experiment.projectPath")), newdb);
+			structures = (StructurePool)s.getConstructor(Path.class, String.class, int.class, boolean.class).newInstance(Paths.get(Configuration.getParameters().getString("Experiment.projectPath")), "structuredata", Configuration.getParameters().getInt("MapDBStructurePool.maxTreeMapCapacity"), newdb);
 			instanceSuccess = true;
 		} catch (InstantiationException e) {
 			AptaLogger.log(Level.SEVERE, this.getClass(), "Error, could not instantiate the backend for the StructurePool");
@@ -266,6 +270,55 @@ public class Experiment implements Serializable{
 		}
 	}
 
+	
+	/**
+	 * Instantiates an implementation of <code>StructurePool</code>
+	 * @param newdb if <code>true</code>, a new instance is created. if <code>false</code>, 
+	 *  an existing instance is loaded from disk
+	 */
+	public void instantiateBppmPool(boolean newdb){
+		
+		// Create a new StructurePool instance. Use reflection so we can define the backend
+		// in the configuration file
+		Class s = null;
+		try {
+			s = Class.forName("lib.aptamer.datastructures." + Configuration.getParameters().getString("StructurePool.backend"));
+		} catch (ClassNotFoundException e) {
+
+			AptaLogger.log(Level.SEVERE, this.getClass(), "Error, the backend for the StructurePool (bppm) could not be found.");
+			AptaLogger.log(Level.SEVERE, this.getClass(), org.apache.commons.lang.exception.ExceptionUtils.getStackTrace(e));
+			e.printStackTrace();
+			System.exit(0);
+		}
+		
+		// Try to instantiate the class...
+		boolean instanceSuccess = false;
+		try {
+			bppms = (StructurePool)s.getConstructor(Path.class, String.class, int.class, boolean.class).newInstance(Paths.get(Configuration.getParameters().getString("Experiment.projectPath")), "bppmdata", Configuration.getParameters().getInt("MapDBStructurePool.maxTreeMapCapacityBppm"), newdb);
+			instanceSuccess = true;
+		} catch (InstantiationException e) {
+			AptaLogger.log(Level.SEVERE, this.getClass(), "Error, could not instantiate the backend for the StructurePool (bppm)");
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			e.printStackTrace();
+		} catch (IllegalArgumentException e) {
+			e.printStackTrace();
+		} catch (InvocationTargetException e) {
+			AptaLogger.log(Level.SEVERE, this.getClass(), "Error invoking construtor of StructurePool backend (bppm)");
+			e.printStackTrace();
+		} catch (NoSuchMethodException e) {
+			e.printStackTrace();
+		} catch (SecurityException e) {
+			e.printStackTrace();
+		} finally{ // ... we cannot continue if this fails 
+			if (!instanceSuccess){
+				AptaLogger.log(Level.SEVERE, this.getClass(), "Error invoking StructurePool backend (bppm)");
+				System.exit(0);
+			}
+		}
+	}	
+	
+	
 	
 	/**
 	 * Instantiates an implementation of <code>ClusterContainer</code>
@@ -638,6 +691,14 @@ public class Experiment implements Serializable{
 	public StructurePool getStructurePool(){
 		return this.structures;
 	}
+
+	/**
+	 * Get the base pair probability pool instance of this experiment
+	 * @return
+	 */
+	public StructurePool getBppmPool(){
+		return this.bppms;
+	}	
 	
 	/**
 	 * Get the structural pool instance of this experiment

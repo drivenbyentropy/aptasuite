@@ -24,6 +24,11 @@ public class RNAFold {
 	static String scale1 = "....,....1....,....2....,....3....,....4";
 	static String scale2 = "....,....5....,....6....,....7....,....8";
 
+	static FoldVars fold_vars = new FoldVars();
+	static PairMat pair_mat = new PairMat(fold_vars);
+	static Params params = new Params(fold_vars);
+	
+	
 	/**
 	 * @param args
 	 */
@@ -43,7 +48,7 @@ public class RNAFold {
 		int circ = 0;
 		Path outputPath = Paths.get(System.getProperty("user.dir"));
 
-		FoldVars.do_backtrack = 1;
+		fold_vars.do_backtrack = 1;
 		string = null;
 		for (i = 0; i < args.length; i++) {
 			if (args[i].charAt(0) == '-')
@@ -58,7 +63,7 @@ public class RNAFold {
 						System.exit(1);
 					}
 					try {
-						FoldVars.temperature = Double.parseDouble(args[++i]);
+						fold_vars.temperature = Double.parseDouble(args[++i]);
 					} catch (NumberFormatException e) {
 						usage();
 						System.exit(1);
@@ -67,15 +72,15 @@ public class RNAFold {
 				case 'p':
 					pf = 1;
 					if (args[i].length() > 2)
-						FoldVars.do_backtrack = Integer.parseInt(args[i].substring(2));
+						fold_vars.do_backtrack = Integer.parseInt(args[i].substring(2));
 					break;
 				case 'n':
 					if (args[i].equals("-noGU"))
-						FoldVars.noGU = true;
+						fold_vars.noGU = true;
 					if (args[i].equals("-noCloseGU"))
-						FoldVars.no_closingGU = true;
+						fold_vars.no_closingGU = true;
 					if (args[i].equals("-noLP"))
-						FoldVars.noLonelyPairs = true;
+						fold_vars.noLonelyPairs = true;
 					if (args[i].equals("-nsp")) {
 						if (i == argc - 1) {
 							System.exit(1);
@@ -87,7 +92,7 @@ public class RNAFold {
 						noconv = 1;
 					break;
 				case '4':
-					FoldVars.tetra_loop = false;
+					fold_vars.tetra_loop = false;
 					break;
 				case 'e':
 					if (i == argc - 1) {
@@ -95,14 +100,14 @@ public class RNAFold {
 						System.exit(1);
 					}
 					try {
-						FoldVars.energy_set = Integer.parseInt(args[++i]);
+						fold_vars.energy_set = Integer.parseInt(args[++i]);
 					} catch (NumberFormatException e) {
 						usage();
 						System.exit(1);
 					}
 					break;
 				case 'C':
-					FoldVars.fold_constrained = true;
+					fold_vars.fold_constrained = true;
 					break;
 				case 'c':
 					if (args[i].equals("-circ"))
@@ -121,10 +126,10 @@ public class RNAFold {
 					}
 					break;
 				case 'd':
-					FoldVars.dangles = 0;
+					fold_vars.dangles = 0;
 					if (args[i].length() > 1) {
 						try {
-							FoldVars.dangles = Integer.parseInt(args[i].substring(1));
+							fold_vars.dangles = Integer.parseInt(args[i].substring(1));
 						} catch (NumberFormatException e) {
 							usage();
 							System.exit(1);
@@ -152,12 +157,12 @@ public class RNAFold {
 				}
 		}
 
-		if ((circ != 0) && FoldVars.noLonelyPairs)
+		if ((circ != 0) && fold_vars.noLonelyPairs)
 			System.out.println(
 					"warning, depending on the origin of the circular sequence, some structures may be missed when using -noLP\nTry rotating your sequence a few times\n");
 
 		if (ns_bases != null) {
-			FoldVars.nonstandards = new byte[33];
+			fold_vars.nonstandards = new byte[33];
 			c = ns_bases;
 			i = sym = 0;
 			int c_indx = 0;
@@ -167,17 +172,17 @@ public class RNAFold {
 			}
 			while (c_indx < c.length()) {
 				if (c.charAt(c_indx) != ',') {
-					FoldVars.nonstandards[i++] = (byte) c.charAt(c_indx++);
-					FoldVars.nonstandards[i++] = (byte) c.charAt(c_indx);
+					fold_vars.nonstandards[i++] = (byte) c.charAt(c_indx++);
+					fold_vars.nonstandards[i++] = (byte) c.charAt(c_indx);
 					if ((sym != 0) && (c.charAt(c_indx) != c.charAt(c_indx - 1))) {
-						FoldVars.nonstandards[i++] = (byte) c.charAt(c_indx);
-						FoldVars.nonstandards[i++] = (byte) c.charAt(c_indx - 1);
+						fold_vars.nonstandards[i++] = (byte) c.charAt(c_indx);
+						fold_vars.nonstandards[i++] = (byte) c.charAt(c_indx - 1);
 					}
 				}
 				c_indx++;
 			}
 		}
-		if (FoldVars.fold_constrained) {
+		if (fold_vars.fold_constrained) {
 			System.out.println("Input constraints using the following notation:\n" + "| : paired with another base\n"
 					+ ". : no constraint at all\n" + "x : base must not pair\n"
 					+ "< : base i is paired with a base j<i\n" + "> : base i is paired with a base j>i\n"
@@ -186,8 +191,8 @@ public class RNAFold {
 
 		// Prepare loop instances
 		Scanner scanner = new Scanner(System.in);
-		Fold fold = new Fold();
-		PartFunc part_func = new PartFunc();
+		Fold fold = new Fold(fold_vars, pair_mat, params);
+		PartFunc part_func = new PartFunc(fold_vars, pair_mat);
 
 		do { /* main loop: continue until end of file */
 
@@ -213,7 +218,7 @@ public class RNAFold {
 
 			// structure contstains
 			structure = new byte[length];
-			if (FoldVars.fold_constrained) {
+			if (fold_vars.fold_constrained) {
 				cstruc = scanner.next().getBytes();
 				if (cstruc.length > 0)
 					System.arraycopy(cstruc, 0, structure, 0, length);
@@ -240,17 +245,17 @@ public class RNAFold {
 				fold.free_arrays();
 			if (pf != 0) {
 				byte[] pf_struc = new byte[length + 1];
-				if (FoldVars.dangles == 1) {
-					FoldVars.dangles = 2; /* recompute with dangles as in pf_fold() */
+				if (fold_vars.dangles == 1) {
+					fold_vars.dangles = 2; /* recompute with dangles as in pf_fold() */
 					min_en = (circ != 0) ? fold.energy_of_circ_struct(string, structure)
 							: fold.energy_of_struct(string, structure);
-					FoldVars.dangles = 1;
+					fold_vars.dangles = 1;
 				}
 
-				kT = (FoldVars.temperature + 273.15) * 1.98717 / 1000.; /* in Kcal */
-				FoldVars.pf_scale = Math.exp(-(sfact * min_en) / kT / length);
+				kT = (fold_vars.temperature + 273.15) * 1.98717 / 1000.; /* in Kcal */
+				fold_vars.pf_scale = Math.exp(-(sfact * min_en) / kT / length);
 				if (length > 2000)
-					System.out.println(String.format("scaling factor %f", FoldVars.pf_scale));
+					System.out.println(String.format("scaling factor %f", fold_vars.pf_scale));
 
 				if (circ != 0) {
 					part_func.init_pf_circ_fold(length);
@@ -262,13 +267,13 @@ public class RNAFold {
 					pf_struc = Arrays.copyOf(cstruc, length + 1);
 				energy = (circ != 0) ? part_func.pf_circ_fold(string, pf_struc) : part_func.pf_fold(string, pf_struc);
 
-				if (FoldVars.do_backtrack != 0) {
+				if (fold_vars.do_backtrack != 0) {
 					System.out.print(String.format("%s ", new String(pf_struc)));
 					System.out.println(String.format("[%6.2f]", energy));
 				}
-				if (FoldVars.do_backtrack == 0)
+				if (fold_vars.do_backtrack == 0)
 					System.out.println(String.format(" free energy of ensemble = %6.2f kcal/mol", energy));
-				if (FoldVars.do_backtrack != 0) {
+				if (fold_vars.do_backtrack != 0) {
 					PList[] pl1, pl2;
 					byte[] cent;
 					double cent_en, dist = 0;
@@ -284,7 +289,7 @@ public class RNAFold {
 					pl1 = make_plist(length, 1e-15);
 					writePListToFile(pl1, String.format("%s_bpp.txt", fname), outputPath);
 					pl2 = null;
-					if (FoldVars.do_backtrack == 2) {
+					if (fold_vars.do_backtrack == 2) {
 						pl2 = part_func.stackProb(1e-15);
 						writePListToFile(pl2, String.format("%s_sbpp.txt", fname), outputPath);
 						pl2 = null;
@@ -294,7 +299,7 @@ public class RNAFold {
 				}
 				System.out.print(String.format(" frequency of mfe structure in ensemble %g; ",
 						Math.exp((energy - min_en) / kT)));
-				if (FoldVars.do_backtrack != 0)
+				if (fold_vars.do_backtrack != 0)
 					System.out.println(String.format("ensemble diversity %-6.2f", part_func.mean_bp_dist(length)));
 
 				System.out.println();
@@ -349,7 +354,7 @@ public class RNAFold {
 		k = 0;
 		for (i = 1; i < length; i++)
 			for (j = i + 1; j <= length; j++) {
-				if (FoldVars.pr[FoldVars.iindx[i] - j] < pmin)
+				if (fold_vars.pr[fold_vars.iindx[i] - j] < pmin)
 					continue;
 				if (k >= maxl - 1) {
 					maxl *= 2;
@@ -359,7 +364,7 @@ public class RNAFold {
 				}
 				pl[k].i = i;
 				pl[k].j = j;
-				pl[k++].p = FoldVars.pr[FoldVars.iindx[i] - j];
+				pl[k++].p = fold_vars.pr[fold_vars.iindx[i] - j];
 			}
 		pl[k].i = 0;
 		pl[k].j = 0;

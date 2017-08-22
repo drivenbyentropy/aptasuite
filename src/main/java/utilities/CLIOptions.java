@@ -35,7 +35,10 @@ public class CLIOptions {
 		parameters.addOptionGroup(datainput);
 		
 		// Structure Prediction
-		parameters.addOption("structures", false, "Predicts the structural ensamble of all aptamers in the pool and stores them on disk");
+		Option predict = new Option("predict", true, "Performs several structural predictions of all aptamers in the pool and stores them on disk.\nArguments: \n\nstructure: Predicts the context probabilities for each nuceotide position of every species in the pool\n\nbppm: Predicts the base pair probabilities for each possible pair of nucleodites in every species.");
+		predict.setOptionalArg(true);
+		predict.setArgName("structure,bppm");
+		parameters.addOption(predict);
 		
 		// AptaCLUSTER
 		parameters.addOption("cluster", false, "Applies AptaCLUSTER to the dataset using the parameters as specified in the configuration file");

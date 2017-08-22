@@ -11,21 +11,28 @@ package lib.structure.rnafold;
  * go to the original authors and the Institute for Theoretical Chemistry of the 
  * University of Vienna. My only contribution is the adaptation of the C source to Java.
  */
-public final class Params {
+public class Params {
 
-
-	static ParamT p = new ParamT();
-	static int id=-1;
+	FoldVars fold_vars;
+	public ParamT p = new ParamT();
+	
+	public int id=-1;
 	/* variables for partition function */
 	PFParamT pf = new PFParamT();
 	int pf_id=-1;
 
-	static ParamT scale_parameters()
+	public Params(FoldVars fold_vars) {
+		
+		this.fold_vars = fold_vars;
+		
+	}
+	
+	public ParamT scale_parameters()
 	{
 	  int i,j,k,l;
 	  double tempf;
 
-	  tempf = ((FoldVars.temperature+EnergyConst.K0)/EnergyPar.Tmeasure);
+	  tempf = ((fold_vars.temperature+EnergyConst.K0)/EnergyPar.Tmeasure);
 	  	  
 	  for (i=0; i<31; i++) 
 	    p.hairpin[i] = (int) ((double) EnergyPar.hairpin37[i]*(tempf));
@@ -117,7 +124,7 @@ public final class Params {
 	  p.Tetraloops = EnergyPar.Tetraloops;
 	  p.Triloops = EnergyPar.Triloops;
 
-	  p.temperature = FoldVars.temperature;
+	  p.temperature = fold_vars.temperature;
 	  p.id = ++id;
 	  return p;
 	}
@@ -158,7 +165,7 @@ public final class Params {
 	  /* scale pf_params() in partfunc.c is only a wrapper, that calls
 	     this functions !! */
 
-	  pf.temperature = FoldVars.temperature;
+	  pf.temperature = fold_vars.temperature;
 	  kT = (pf.temperature+EnergyConst.K0)*EnergyConst.GASCONST;   /* kT in cal/mol  */
 	  TT = (pf.temperature+EnergyConst.K0)/(EnergyPar.Tmeasure);
 
@@ -174,7 +181,7 @@ public final class Params {
 	    pf.expinternal[i] = Math.exp( -GT*10./kT);
 	  }
 	  /* special case of size 2 interior loops (single mismatch) */
-	  if (FoldVars.james_rule != 0) pf.expinternal[2] = Math.exp( -80*10/kT);
+	  if (fold_vars.james_rule != 0) pf.expinternal[2] = Math.exp( -80*10/kT);
 	   
 	  pf.lxc = EnergyPar.lxc37*TT;
 	  
@@ -220,7 +227,7 @@ public final class Params {
 	     but make sure go smoothly to 0                        */
 	  for (i=0; i<=EnergyConst.NBPAIRS; i++)
 	    for (j=0; j<=4; j++) {
-	      if (FoldVars.dangles != 0) {
+	      if (fold_vars.dangles != 0) {
 		GT = EnergyPar.dangle5_H[i][j] - (EnergyPar.dangle5_H[i][j] - EnergyPar.dangle5_37[i][j])*TT;
 		pf.expdangle5[i][j] = Math.exp(SMOOTH(-GT)*10./kT);
 		GT = EnergyPar.dangle3_H[i][j] - (EnergyPar.dangle3_H[i][j] - EnergyPar.dangle3_37[i][j])*TT;

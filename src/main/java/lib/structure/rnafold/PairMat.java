@@ -8,41 +8,41 @@ import exceptions.InvalidConfigurationException;
 /**
  * @author Jan Hoinka
  *
- * RNAFold4j is a port of RNAFold implemented and developed by Ivo L Hofacker et al.
- * as part of the ViennaRNA package v 1.8.5. All intellectual credits of this work 
- * go to the original authors and the Institute for Theoretical Chemistry of the 
- * University of Vienna. My only contribution is the adaptation of the C source to Java.
+ *         RNAFold4j is a port of RNAFold implemented and developed by Ivo L
+ *         Hofacker et al. as part of the ViennaRNA package v 1.8.5. All
+ *         intellectual credits of this work go to the original authors and the
+ *         Institute for Theoretical Chemistry of the University of Vienna. My
+ *         only contribution is the adaptation of the C source to Java.
  */
-public final class PairMat {
+public class PairMat {
 
-	static int NBASES = 8;
+	FoldVars fold_vars;
+	
+	int NBASES = 8;
 
-	static String Law_and_Order = "_ACGUTXKI";
-	static int[][] BP_pair =
-				   /* _  A  C  G  U  X  K  I */
-			{ 		{ 0, 0, 0, 0, 0, 0, 0, 0 }, 
-					{ 0, 0, 0, 0, 5, 0, 0, 5 }, 
-					{ 0, 0, 0, 1, 0, 0, 0, 0 },
-					{ 0, 0, 2, 0, 3, 0, 0, 0 }, 
-					{ 0, 6, 0, 4, 0, 0, 0, 6 }, 
-					{ 0, 0, 0, 0, 0, 0, 2, 0 },
-					{ 0, 0, 0, 0, 0, 1, 0, 0 }, 
-					{ 0, 6, 0, 0, 5, 0, 0, 0 } };
+	String Law_and_Order = "_ACGUTXKI";
+	int[][] BP_pair =
+			/* _ A C G U X K I */
+			{ { 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 5, 0, 0, 5 }, { 0, 0, 0, 1, 0, 0, 0, 0 },
+					{ 0, 0, 2, 0, 3, 0, 0, 0 }, { 0, 6, 0, 4, 0, 0, 0, 6 }, { 0, 0, 0, 0, 0, 0, 2, 0 },
+					{ 0, 0, 0, 0, 0, 1, 0, 0 }, { 0, 6, 0, 0, 5, 0, 0, 0 } };
 
-	static int MAXALPHA = 20; /* maximal length of alphabet */
+	int MAXALPHA = 20; /* maximal length of alphabet */
 
-	static short[] alias = new short[MAXALPHA + 1];
-	static int[][] pair = new int[MAXALPHA + 1][MAXALPHA + 1];
-	/* rtype[pair[i][j]]:=pair[j][i] */
-	static int[] rtype = { 0, 2, 1, 4, 3, 6, 5, 7 };
+	short[] alias = new short[MAXALPHA + 1];
+	int[][] pair = new int[MAXALPHA + 1][MAXALPHA + 1];
+	int[] rtype = { 0, 2, 1, 4, 3, 6, 5, 7 };
 
-	/* for backward compatibility */
-	// #define ENCODE(c) encode_char(c)
-
-	static int encode_char(byte c) {
+	public PairMat( FoldVars fold_vars) {
+		
+		this.fold_vars = fold_vars;
+		
+	}
+	
+	public int encode_char(byte c) {
 		/* return numerical representation of base used e.g. in pair[][] */
 		int code;
-		if (FoldVars.energy_set > 0)
+		if (fold_vars.energy_set > 0)
 			code = (int) (c - 'A') + 1;
 		else {
 			int pos = Law_and_Order.indexOf(c);
@@ -56,14 +56,10 @@ public final class PairMat {
 		return code;
 	}
 
-	/* @+boolint +charint@ */
-	/* @null@ */
-	// extern char *nonstandards;
-	// extern void nrerror(const char message[]);
-	static void make_pair_matrix() {
+	public void make_pair_matrix() {
 		int i, j;
 
-		if (FoldVars.energy_set == 0) {
+		if (fold_vars.energy_set == 0) {
 			for (i = 0; i < 5; i++)
 				alias[i] = (short) i;
 			alias[5] = 3; /* X <-> G */
@@ -73,11 +69,11 @@ public final class PairMat {
 				for (j = 0; j < NBASES; j++)
 					pair[i][j] = BP_pair[i][j];
 			}
-			if (FoldVars.noGU)
+			if (fold_vars.noGU)
 				pair[3][4] = pair[4][3] = 0;
-			if (FoldVars.nonstandards != null) { /* allow nonstandard bp's */
-				for (i = 0; i < FoldVars.nonstandards.length; i += 2)
-					pair[encode_char(FoldVars.nonstandards[i])][encode_char(FoldVars.nonstandards[i + 1])] = 7;
+			if (fold_vars.nonstandards != null) { /* allow nonstandard bp's */
+				for (i = 0; i < fold_vars.nonstandards.length; i += 2)
+					pair[encode_char(fold_vars.nonstandards[i])][encode_char(fold_vars.nonstandards[i + 1])] = 7;
 			}
 			for (i = 0; i < NBASES; i++) {
 				for (j = 0; j < NBASES; j++)
@@ -88,7 +84,7 @@ public final class PairMat {
 				for (j = 0; j <= MAXALPHA; j++)
 					pair[i][j] = 0;
 			}
-			if (FoldVars.energy_set == 1) {
+			if (fold_vars.energy_set == 1) {
 				for (i = 1; i < MAXALPHA;) {
 					alias[i++] = 3; /* A <-> G */
 					alias[i++] = 2; /* B <-> C */
@@ -98,7 +94,7 @@ public final class PairMat {
 					i++;
 					pair[i][i - 1] = 1; /* BA <-> CG */
 				}
-			} else if (FoldVars.energy_set == 2) {
+			} else if (fold_vars.energy_set == 2) {
 				for (i = 1; i < MAXALPHA;) {
 					alias[i++] = 1; /* A <-> A */
 					alias[i++] = 4; /* B <-> U */
@@ -108,7 +104,7 @@ public final class PairMat {
 					i++;
 					pair[i][i - 1] = 6; /* BA <-> UA */
 				}
-			} else if (FoldVars.energy_set == 3) {
+			} else if (fold_vars.energy_set == 3) {
 				for (i = 1; i < MAXALPHA - 2;) {
 					alias[i++] = 3; /* A <-> G */
 					alias[i++] = 2; /* B <-> C */

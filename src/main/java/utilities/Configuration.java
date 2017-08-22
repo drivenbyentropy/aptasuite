@@ -96,11 +96,12 @@ public class Configuration {
 			     // StructurePoolMapDB Options
 			     put("MapDBStructurePool.bloomFilterCollisionProbability", 0.001);
 			     put("MapDBStructurePool.maxTreeMapCapacity", 500000); 
+			     put("MapDBStructurePool.maxTreeMapCapacityBppm", 150000);
 			     
 			     // BloomFilterSelectionCycle  Options
 			     put("MapDBSelectionCycle.bloomFilterCollisionProbability", 0.001); //the capacity must be the same as MapDBAptamerPool.bloomFilterCapacity
 			     
-			     // AptaCluster Option
+			     // AptaCluster Options
 			     put("ClusterContainer.backend", "MapDBClusterContainer");
 			     put("Aptacluster.EditDistance", 5); // The maximal number of nucleodite differences between two sequences to be considered mememebers of the same cluster
 			     put("Aptacluster.LSHIterations", 5); // The number of LSH iterations to be performed

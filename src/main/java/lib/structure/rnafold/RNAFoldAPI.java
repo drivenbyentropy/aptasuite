@@ -7,6 +7,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 
+import utilities.Index;
+
 /**
  * @author Jan Hoinka
  * 
@@ -22,17 +24,23 @@ public class RNAFoldAPI {
 	private int circ = 0;
 	private Path outputPath = Paths.get(System.getProperty("user.dir"));
 	private byte[] foldconstrains = null;
-	private Fold fold = new Fold();
-	private PartFunc part_func = new PartFunc();
 	private double pmin = 1e-15;
-
+	
+	// set up parameters and classes
+	private FoldVars fold_vars = new FoldVars();
+	private PairMat pair_mat = new PairMat(fold_vars);
+	private PartFunc part_func = new PartFunc(fold_vars, pair_mat);
+	private Params params = new Params(fold_vars);
+	private Fold fold = new Fold(fold_vars, pair_mat, params);
+	
+	
 	/**
 	 * Standard Constructor, sets all default values as if calling RNAFold without
 	 * any parameters
 	 */
 	public RNAFoldAPI() {
 
-		FoldVars.do_backtrack = 1;
+		fold_vars.do_backtrack = 1;
 
 	}
 
@@ -51,7 +59,7 @@ public class RNAFoldAPI {
 		byte[] cstruc = null; // structure constaints
 
 		// structure contstains
-		if (FoldVars.fold_constrained) {
+		if (fold_vars.fold_constrained) {
 			if (length != foldconstrains.length) {
 
 				throw new RuntimeException("The fold contrains and input sequence have unequal length");
@@ -85,22 +93,24 @@ public class RNAFoldAPI {
 	}
 
 	/**
-	 * Returns the base pair probability matrix for sequence string
+	 * Returns the base pair probability matrix for sequence string 
+	 * as a linearized upper triangular matrix.
 	 * 
 	 * @param string
 	 *            assumed to be in upper case and no undefined alphabet
 	 */
-	public void getBppm(byte[] string) {
+	public double[] getBppm(byte[] string) {
 
 		// Initialize variables
-		int l, sym, r;
+		int l;
 		int length = string.length;
 		double energy;
 		byte[] structure = null;
 		byte[] cstruc = null; // structure constaints
 
+
 		// structure contstains
-		if (FoldVars.fold_constrained) {
+		if (fold_vars.fold_constrained) {
 			if (length != foldconstrains.length) {
 
 				throw new RuntimeException("The fold contrains and input sequence have unequal length");
@@ -113,7 +123,7 @@ public class RNAFoldAPI {
 
 		}
 
-		// Convert U to Ts
+		// Convert T to Us
 		if (noconv == 0) {
 			for (l = 0; l < length; l++) {
 				if (string[l] == 'T')
@@ -128,15 +138,15 @@ public class RNAFoldAPI {
 			energy = fold.fold(string, structure);
 
 		byte[] pf_struc = new byte[length + 1];
-		if (FoldVars.dangles == 1) {
-			FoldVars.dangles = 2; /* recompute with dangles as in pf_fold() */
+		if (fold_vars.dangles == 1) {
+			fold_vars.dangles = 2; /* recompute with dangles as in pf_fold() */
 			energy = (circ != 0) ? fold.energy_of_circ_struct(string, structure)
 					: fold.energy_of_struct(string, structure);
-			FoldVars.dangles = 1;
+			fold_vars.dangles = 1;
 		}
 
-		kT = (FoldVars.temperature + 273.15) * 1.98717 / 1000.; /* in Kcal */
-		FoldVars.pf_scale = Math.exp(-(sfact * energy) / kT / length);
+		kT = (fold_vars.temperature + 273.15) * 1.98717 / 1000.; /* in Kcal */
+		fold_vars.pf_scale = Math.exp(-(sfact * energy) / kT / length);
 
 		if (circ != 0) {
 			part_func.init_pf_circ_fold(length);
@@ -149,16 +159,13 @@ public class RNAFoldAPI {
 		}
 		energy = (circ != 0) ? part_func.pf_circ_fold(string, pf_struc) : part_func.pf_fold(string, pf_struc);
 
-		// BEGIN get bppm
+		// store the base pair probability matrix 
+		double[] bppm = new double[(((length+1)*length)/2) - length];
 		for (int i = 1; i < length; i++)
 			for (int j = i + 1; j <= length; j++) {
-				if (FoldVars.pr[FoldVars.iindx[i] - j] < pmin) {
-					continue;
-				}
-				System.out.println(String.format("%d %d %f", i,j,FoldVars.pr[FoldVars.iindx[i] - j]));
+				// bppm is 0 indexed, hence -1
+				bppm[Index.triu(i-1, j-1, length)] = fold_vars.pr[fold_vars.iindx[i] - j];
 		}
-		// END
-
 		
 		// cleanup
 		pf_struc = null;
@@ -171,6 +178,7 @@ public class RNAFoldAPI {
 
 		fold.free_arrays();
 
+		return bppm;
 	}
 
 	/**
@@ -181,7 +189,7 @@ public class RNAFoldAPI {
 	 */
 	public void setTemperature(double temp) {
 
-		FoldVars.temperature = temp;
+		fold_vars.temperature = temp;
 
 	}
 
@@ -193,7 +201,7 @@ public class RNAFoldAPI {
 	 */
 	public void setNoGU(boolean nogu) {
 
-		FoldVars.noGU = nogu;
+		fold_vars.noGU = nogu;
 
 	}
 
@@ -205,7 +213,7 @@ public class RNAFoldAPI {
 	 */
 	public void setNoCloseGU(boolean noclosegu) {
 
-		FoldVars.no_closingGU = noclosegu;
+		fold_vars.no_closingGU = noclosegu;
 	}
 
 	/**
@@ -216,7 +224,7 @@ public class RNAFoldAPI {
 	 */
 	public void setNoLonelyPairs(boolean nolonelypair) {
 
-		FoldVars.noLonelyPairs = nolonelypair;
+		fold_vars.noLonelyPairs = nolonelypair;
 
 	}
 
@@ -244,7 +252,7 @@ public class RNAFoldAPI {
 	 */
 	public void setEnergySet(int e) {
 
-		FoldVars.energy_set = e;
+		fold_vars.energy_set = e;
 
 	}
 
@@ -255,7 +263,7 @@ public class RNAFoldAPI {
 	 */
 	public void setFoldConstrained(boolean foldc) {
 
-		FoldVars.fold_constrained = foldc;
+		fold_vars.fold_constrained = foldc;
 
 	}
 
@@ -309,7 +317,7 @@ public class RNAFoldAPI {
 
 		if (d == 0 || d == 1 || d == 2 || d == 3) {
 
-			FoldVars.dangles = d;
+			fold_vars.dangles = d;
 
 		}
 

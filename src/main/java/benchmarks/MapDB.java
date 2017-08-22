@@ -449,7 +449,7 @@ public class MapDB {
 		
 		rfa.getBppm(seq);
 		
-		
+		System.out.println("Seq length " + seq.length);
 	}
 
 }
