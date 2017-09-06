@@ -14,6 +14,7 @@ public  final class EnergyPar {
 	public final static double GASCONST = 1.98717;  // in [cal/K]
 	public final static double K0 = 273.15;
 	public final static int INF = 1000000;
+	public final static double INFD = 1000000.0;
 	public final static int TURN = 3; 
 	public final static int MAXLOOP = 30;
 
