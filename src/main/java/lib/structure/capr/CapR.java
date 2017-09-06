@@ -784,7 +784,7 @@ public class CapR {
 				if (p != 0 && q != _seq_length) {
 					// Beta_stemend
 					_Beta_stemend.set(p, q - p,
-							(q - p >= _maximal_span) ? -EnergyPar.INF : _Beta_stem.get(p - 1,q - p + 2));
+							(q - p >= _maximal_span) ? -EnergyPar.INFD : _Beta_stem.get(p - 1,q - p + 2));
 
 					// Beta_Multi
 					flag = false;
