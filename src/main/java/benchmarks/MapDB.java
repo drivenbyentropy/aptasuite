@@ -1,6 +1,5 @@
 package benchmarks;
 
-import java.awt.List;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -9,54 +8,30 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.nio.file.Files;
+import java.math.BigInteger;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
-import org.apache.commons.lang3.ArrayUtils;
-import org.eclipse.collections.api.list.primitive.MutableIntList;
-import org.eclipse.collections.impl.factory.primitive.IntLists;
+import org.deeplearning4j.ui.UiServer;
 import org.mapdb.BTreeMap;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
-import org.mapdb.HTreeMap;
 import org.mapdb.Serializer;
 import org.mapdb.serializer.SerializerCompressionWrapper;
 
-import com.koloboke.collect.map.hash.HashIntIntMaps;
-import com.koloboke.compile.KolobokeMap;
-
-import lib.aptacluster.LocalitySensitiveHash;
 import lib.aptamer.datastructures.AptamerPool;
-import lib.aptamer.datastructures.Experiment;
 import lib.aptamer.datastructures.MapDBAptamerPool;
-import lib.aptamer.datastructures.SelectionCycle;
-import lib.parser.aptaplex.AptaPlexConsumer;
-import lib.parser.aptaplex.distances.Distance;
-import lib.parser.aptaplex.distances.Result;
-import lib.structure.capr.CapR;
-import lib.structure.capr.CapROriginal;
-import lib.structure.capr.EnergyPar;
-import lib.structure.capr.InitLoops;
 import lib.structure.rnafold.MFEData;
 import lib.structure.rnafold.RNAFoldAPI;
-import orestes.bloomfilter.CountingBloomFilter;
-import orestes.bloomfilter.FilterBuilder;
 import utilities.Configuration;
-import utilities.Quicksort;
-
-import lib.aptacluster.Buckets;
-import lib.aptacluster.Distances;
+import utilities.Index;
 
 public class MapDB {
 
@@ -436,20 +411,81 @@ public class MapDB {
 		
 	}
 
+	static int iteratedDataSize = 0;
+	static int dataSize = 10;
+	static int currentIteratorPosition;
+	static ArrayList<Integer> data = new ArrayList<Integer>();
+	static {
+		for(int x=0; x<10;data.add(++x));
+	}
+	static Iterator<Integer> dataIterator;
+	static {
+		dataIterator = data.iterator();
+	}
+	static int stepSize;
+	static {
+		BigInteger bi = BigInteger.valueOf(2*dataSize);
+		stepSize = bi.nextProbablePrime().intValue();
+		
+		// Set the initial position of the iterator
+		currentIteratorPosition = stepSize % dataSize;
+		for(int x=0; x<currentIteratorPosition; ++x, dataIterator.next() );
+	}
+	
+	public static Integer getNextItem() {
+		
+		Integer item = null;
+		
+		// Do we have more items to return?
+		if (iteratedDataSize != dataSize) {
+			
+			// Get the item to return
+			item = dataIterator.next();
+			
+			// Compute next position
+			int new_iterator_position = (currentIteratorPosition + stepSize) % dataSize;
+			
+//			System.out.println(String.format("%s %s", currentIteratorPosition , new_iterator_position  ));
+			
+			if( currentIteratorPosition < new_iterator_position ) { // Do we have to circle around?
+				
+				for (int x=currentIteratorPosition; x<new_iterator_position-1; ++x, dataIterator.next() );
+								
+			} else {
+				
+//				System.out.println("else");
+				
+				// Reset iterator
+				dataIterator = data.iterator();
+				for (int x=0; x<new_iterator_position; ++x, dataIterator.next() );
+				
+			}
+			
+			// Update parameters
+			iteratedDataSize++;
+			currentIteratorPosition = new_iterator_position;
+		}
+		
+		
+		return item;
+		
+	}
+	
+	
 	public static void main(String[] args) {
 		
-		
-		byte[] seq = new String("GUGACGUGUGCAAAUGUGACGUGUGCAAAUGUGACGUGUGCAAAU").getBytes();
-		
-		RNAFoldAPI rfa= new RNAFoldAPI();
-		MFEData mfe = rfa.getMFE(seq);
-		
-		System.out.println(mfe.mfe);
-		System.out.println(new String(mfe.structure));
-		
-		rfa.getBppm(seq);
-		
-		System.out.println("Seq length " + seq.length);
+		UiServer server;
+		try {
+			server = UiServer.getInstance();
+			System.out.println("");
+	        System.out.println("");
+	        System.out.println("");
+	        System.out.println("Server is available on http://localhost:"+ server.getPort()+"/ or via your external IP address with port " + server.getPort());
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	    
 	}
 
 }

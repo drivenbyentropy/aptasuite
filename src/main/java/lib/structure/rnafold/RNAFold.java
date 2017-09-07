@@ -197,7 +197,7 @@ public class RNAFold {
 		do { /* main loop: continue until end of file */
 
 			System.out.println("\nInput string (upper or lower case); @ to quit");
-			System.out.println(String.format("%s%s\n", scale1, scale2));
+			System.out.println(String.format("%s%n", scale1, scale2));
 			line = scanner.next();
 
 			/* skip comment lines and get filenames */
@@ -396,7 +396,7 @@ public class RNAFold {
 	}
 
 	static void usage() {
-		System.out.println("usage:\n" + "RNAfold [-p[0|2]] [-C] [-T temp] [-4] [-d[2|3]] [-noGU] [-noCloseGU]\n"
+		System.out.println("usage:\n" + "java -jar rnafold4j [-p[0|2]] [-C] [-T temp] [-4] [-d[2|3]] [-noGU] [-noCloseGU]\n"
 				+ "        [-noLP] [-e e_set] [-nsp pairs] [-S scale]\n"
 				+ "        [-noconv] [-circ] [-o outputFolder]\n");
 	}

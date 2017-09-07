@@ -103,6 +103,9 @@ public class AptaLogger {
     	}
     }
 
+    public static synchronized void log(Level level, Class caller, Exception e) {
+    	log(level, caller, org.apache.commons.lang.exception.ExceptionUtils.getStackTrace(e));
+    }
     
 }
 

@@ -46,6 +46,9 @@ public class CLIOptions {
 		// AptaTRACE
 		parameters.addOption("trace", false, "Applies AptaTRACE to the dataset using the parameters as specified in the configuration file");
 		
+		// AptaNET
+		parameters.addOption("net", false, "Experimental branch: AptaNET");
+		
 		// Export
 		Option export = new Option("export", true, "Writes the specified <data> to file. Multiple arguments must be comma-separated with not spaces in between. Arguments: \n\npool: every unique aptamer of the selection together with the counts of all selection cycles\n\ncycles: the aptamers sequences as present in the specified selection cycles. Each aptamer will be written to file as many times as its cardinality in the pool.\n\nclusters: Exports the clusters for the specified cycles sorted by cluster size\n\nstructures: writes the structural data for the aptamer pool to file.");
 		export.setArgName("pool,cycles,clusters,structure");
