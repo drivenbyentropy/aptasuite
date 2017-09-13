@@ -42,6 +42,7 @@
 						</goals>
 						<configuration>
 							<transformers>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer" />
 								<transformer
 									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
 									<resource>reference.conf</resource>
@@ -62,6 +63,7 @@
 				<artifactId>maven-assembly-plugin</artifactId>
 				<version>2.6</version>
 				<executions>
+				<!-- This is now done by the shade plugin
 					<execution>
 						<id>AptaSuiteMain</id>
 						<configuration>
@@ -81,7 +83,7 @@
 						<goals>
 							<goal>single</goal>
 						</goals>
-					</execution>
+					</execution> -->
 					<execution>
 						<id>RNAFold4J</id>
 						<configuration>
@@ -124,20 +126,34 @@
 			</plugin>
 			<!-- Executable Jars END -->
 		</plugins>
-		<resources>
-			<resource>
-				<directory>src/main/resources</directory>
-				<includes>
-					<include>application.conf</include>
-				</includes>
-			</resource>
-		</resources>
 	</build>
+	
+	<!-- Choose in Properties depending on the Platform -->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.nd4j</groupId>
+                <artifactId>nd4j-native-platform</artifactId>
+                <version>${nd4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.nd4j</groupId>
+                <artifactId>nd4j-cuda-7.5-platform</artifactId>
+                <version>${nd4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.nd4j</groupId>
+                <artifactId>nd4j-cuda-8.0-platform</artifactId>
+                <version>${nd4j.version}</version>
+            </dependency>
+      </dependencies>
+    </dependencyManagement>	
+	
 	<dependencies>
 		<dependency>
 			<groupId>org.mapdb</groupId>
 			<artifactId>mapdb</artifactId>
-			<version>3.0.4</version>
+			<version>3.0.5</version>
 		</dependency>
 		<dependency>
 			<groupId>com.googlecode.concurrent-trees</groupId>
@@ -225,11 +241,22 @@
 			<artifactId>datavec-api</artifactId>
 			<version>${nd4j.version}</version>
 		</dependency>
-		<dependency> <!-- WE NEED TO CHANCE THIS FOR CUDA SUPPORT -->
+		<!-- cuDNN Option. This requires additional external dependencies, disable for production or check for support in code -->
+		<!-- <dependency>
+   			<groupId>org.deeplearning4j</groupId>
+    		<artifactId>deeplearning4j-cuda-8.0</artifactId>
+   			<version>${nd4j.version}</version>
+		</dependency> -->
+		<dependency>
 			<groupId>org.nd4j</groupId>
-			<artifactId>nd4j-native-platform</artifactId>
-			<version>${nd4j.version}</version>
+			<artifactId>${nd4j.backend}</artifactId>  <!-- WE NEED TO CHANGE THIS IN PROPERTIES FOR CPU/CUDA SUPPORT -->
 		</dependency>
+		<!-- Dependency for parallel wrapper (for multi-GPU parameter averaging -->
+        <dependency>
+            <groupId>org.deeplearning4j</groupId>
+            <artifactId>deeplearning4j-parallel-wrapper</artifactId>
+            <version>0.7.2</version>
+        </dependency>
 		<!-- Core DL4J functionality -->
 		<dependency>
 			<groupId>org.deeplearning4j</groupId>
@@ -237,11 +264,6 @@
 			<version>${nd4j.version}</version>
 		</dependency>
 		<!-- Visualizing Network training functionality -->
-		<dependency>
-			<groupId>org.deeplearning4j</groupId>
-			<artifactId>deeplearning4j-ui</artifactId>
-			<version>${deeplearning4j-ui.version}</version>
-		</dependency>
 		<dependency>
 			<groupId>org.deeplearning4j</groupId>
 			<artifactId>deeplearning4j-ui_2.11</artifactId>
@@ -264,6 +286,7 @@
 		</repository>
 	</repositories>
 	<properties>
+		<nd4j.backend>nd4j-cuda-8.0-platform</nd4j.backend>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
