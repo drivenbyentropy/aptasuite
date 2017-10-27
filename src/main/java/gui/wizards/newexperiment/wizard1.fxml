@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Spinner?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane minHeight="620.0" minWidth="800.0" prefHeight="620.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1">
+    <bottom>
+        <fx:include source="actionBar.fxml" />
+    </bottom>
+    <center>
+      <VBox spacing="10.0">
+         <children>
+                <Label text="Selection Cycle Input">
+                    <font>
+                        <Font size="24.0" />
+                    </font>
+                </Label>
+            <Label text="Primary Structure Information">
+               <font>
+                  <Font name="System Bold" size="14.0" />
+               </font>
+            </Label>
+            <Label minHeight="-Infinity" text="Specify the primer sequences as used during the selection. Note that the primers are to be specified in 5' to 3' orientation of the original aptamer. Optionally, you can also specify the randomized region size. If specified, all sequences which differ if length from that value will be filtered out." wrapText="true">
+               <font>
+                  <Font size="12.0" />
+               </font>
+            </Label>
+            <HBox alignment="CENTER_LEFT">
+               <children>
+                  <Label text="5' Primer">
+                     <font>
+                        <Font size="12.0" />
+                     </font>
+                     <HBox.margin>
+                        <Insets right="10.0" />
+                     </HBox.margin>
+                  </Label>
+                  <TextField fx:id="primer5TextField" promptText="A,C,G, or T only" HBox.hgrow="ALWAYS">
+                     <font>
+                        <Font size="12.0" />
+                     </font>
+                     <HBox.margin>
+                        <Insets right="30.0" />
+                     </HBox.margin>
+                  </TextField>
+                  <Label text="3' Primer">
+                     <font>
+                        <Font size="12.0" />
+                     </font>
+                     <HBox.margin>
+                        <Insets right="10.0" />
+                     </HBox.margin>
+                  </Label>
+                  <TextField fx:id="primer3TextField" promptText="A,C,G, or T only" HBox.hgrow="ALWAYS">
+                     <font>
+                        <Font size="12.0" />
+                     </font>
+                     <HBox.margin>
+                        <Insets right="30.0" />
+                     </HBox.margin>
+                  </TextField>
+                  <Label text="Randomized Region Size">
+                     <font>
+                        <Font size="12.0" />
+                     </font>
+                     <HBox.margin>
+                        <Insets right="10.0" />
+                     </HBox.margin>
+                  </Label>
+                  <Spinner fx:id="randomizedRegionSizeSpinner" max="100" min="0" prefHeight="22.0" prefWidth="75.0" />
+               </children>
+            </HBox>
+            <Label text="Selection Cycles">
+               <font>
+                  <Font name="System Bold" size="14.0" />
+               </font>
+            </Label>
+            <Label minHeight="-Infinity" text="Explain how this wiorks down belowExplain how this wiorks down belowExplain how this wiorks down belowExplain how this wiorks down belowExplain how this wiorks down belowExplain how this wiorks down belowExplain how this wiorks down belowExplain how this wiorks down belowExplain how this wiorks down belowExplain how this wiorks down below" wrapText="true">
+               <font>
+                  <Font size="12.0" />
+               </font>
+            </Label>
+            <HBox alignment="CENTER_LEFT">
+               <children>
+                  <Button fx:id="addSelectionCycleButtonAction" minWidth="-Infinity" mnemonicParsing="false" onAction="#addSelectionCycleButtonAction" text="Add Selection Cycle">
+                     <font>
+                        <Font size="12.0" />
+                     </font>
+                     <HBox.margin>
+                        <Insets right="30.0" />
+                     </HBox.margin>
+                  </Button>
+                  <Label fx:id="forwardReadsFileLabel" text="Forward Reads File">
+                     <font>
+                        <Font size="12.0" />
+                     </font>
+                     <HBox.margin>
+                        <Insets right="10.0" />
+                     </HBox.margin>
+                  </Label>
+                  <TextField fx:id="forwardReadsFileTextField" disable="true" editable="false" HBox.hgrow="ALWAYS">
+                     <HBox.margin>
+                        <Insets right="5.0" />
+                     </HBox.margin>
+                  </TextField>
+                  <Button fx:id="forwardReadsFileButton" minWidth="-Infinity" mnemonicParsing="false" onAction="#chooseForwardReadFileButtonAction" text="Choose">
+                     <HBox.margin>
+                        <Insets right="30.0" />
+                     </HBox.margin>
+                     <font>
+                        <Font size="12.0" />
+                     </font>
+                  </Button>
+                  <Label fx:id="reverseReadsFileLabel" text="Reverse Reads File">
+                     <font>
+                        <Font size="12.0" />
+                     </font>
+                     <HBox.margin>
+                        <Insets right="10.0" />
+                     </HBox.margin>
+                  </Label>
+                  <TextField fx:id="reverseReadsFileTextField" disable="true" editable="false" HBox.hgrow="ALWAYS">
+                     <HBox.margin>
+                        <Insets right="5.0" />
+                     </HBox.margin>
+                  </TextField>
+                  <Button fx:id="reverseReadsFileButton" minWidth="-Infinity" mnemonicParsing="false" onAction="#chooseReverseReadFileButtonAction" text="Choose">
+                     <font>
+                        <Font size="12.0" />
+                     </font>
+                  </Button>
+               </children>
+            </HBox>
+            <StackPane style="-fx-background-color: red;" VBox.vgrow="ALWAYS">
+               <children>
+                  <ScrollPane fitToHeight="true" fitToWidth="true" hbarPolicy="NEVER">
+                     <content>
+                        <VBox fx:id="selectionCycleContainers" spacing="5.0">
+                           <padding>
+                              <Insets bottom="1.0" left="1.0" right="1.0" top="1.0" />
+                           </padding>
+                        </VBox>
+                     </content>
+                  </ScrollPane>
+               </children>
+            </StackPane>
+         </children>
+         <BorderPane.margin>
+            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+         </BorderPane.margin>
+      </VBox>
+    </center>
+</BorderPane>

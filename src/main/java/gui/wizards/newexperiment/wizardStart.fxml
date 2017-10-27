@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.RadioButton?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane minHeight="620.0" minWidth="800.0" prefHeight="620.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1">
+      <bottom>
+          <fx:include source="actionBar.fxml" />
+      </bottom>
+      <center>
+      <VBox spacing="10.0">
+         <children>
+                  <Label text="Create a New Experiment">
+                      <font>
+                          <Font size="24.0" />
+                      </font>
+                  </Label>
+            <Label minHeight="-Infinity" text="This wizard will guide you through the steps required to set up a new experiment, set the experimental details of the selection, and import your data into AptaSuite." wrapText="true">
+               <font>
+                  <Font size="12.0" />
+               </font>
+            </Label>
+            <Label text="General Information">
+               <padding>
+                  <Insets top="20.0" />
+               </padding>
+               <font>
+                  <Font name="System Bold" size="14.0" />
+               </font>
+            </Label>
+            <Label text="Please enter a unique name for your experiment:">
+               <font>
+                  <Font size="12.0" />
+               </font>
+            </Label>
+            <TextField fx:id="newExperimentName" promptText="e.g. MyExperiment">
+               <font>
+                  <Font size="12.0" />
+               </font>
+            </TextField>
+            <Label text="Enter a concise description of your SELEX protocol:">
+               <font>
+                  <Font size="12.0" />
+               </font>
+            </Label>
+            <TextArea fx:id="newExperimentDescription" prefHeight="100.0" prefWidth="200.0" promptText="eg. cell-SELEX against target XYZ with 10 rounds of selection." wrapText="true" VBox.vgrow="ALWAYS">
+               <font>
+                  <Font size="12.0" />
+               </font>
+            </TextArea>
+            <Label text="Project Location">
+               <padding>
+                  <Insets top="20.0" />
+               </padding>
+               <font>
+                  <Font name="System Bold" size="14.0" />
+               </font>
+            </Label>
+            <Label minHeight="-Infinity" text="Please select a folder which will be used to store any files associated with this experiment. If you choose an existing folder with content from a previous experiment, the data will be overwritten." wrapText="true">
+               <font>
+                  <Font size="12.0" />
+               </font>
+            </Label>
+            <HBox alignment="CENTER_LEFT">
+               <children>
+                  <Label text="Project Path">
+                     <font>
+                        <Font size="12.0" />
+                     </font>
+                     <HBox.margin>
+                        <Insets right="10.0" />
+                     </HBox.margin>
+                  </Label>
+                  <TextField fx:id="projectPathTextField" disable="true" editable="false" HBox.hgrow="ALWAYS">
+                     <HBox.margin>
+                        <Insets right="10.0" />
+                     </HBox.margin>
+                     <font>
+                        <Font size="12.0" />
+                     </font>
+                  </TextField>
+                  <Button mnemonicParsing="false" onAction="#projectPathFileChooserActionButton" text="Choose Folder">
+                     <font>
+                        <Font size="12.0" />
+                     </font>
+                  </Button>
+               </children>
+            </HBox>
+            <Label text="Sequencing Information">
+               <padding>
+                  <Insets top="20.0" />
+               </padding>
+               <font>
+                  <Font name="System Bold" size="14.0" />
+               </font>
+            </Label>
+            <Label minHeight="-Infinity" text="Has your data previously been demultiplexed? If you are unsure, you can check if your sequencing data is stored as one file per sequenced selection round or if it is contained in a single file. If the latter is the case, please check no, otherwise check yes." wrapText="true">
+               <font>
+                  <Font size="12.0" />
+               </font>
+            </Label>
+            <HBox>
+               <children>
+                  <RadioButton fx:id="newExperimentIsDemultiplexed" mnemonicParsing="false" text="IS Demultiplexed">
+                     <font>
+                        <Font size="12.0" />
+                     </font>
+                     <padding>
+                        <Insets right="30.0" />
+                     </padding>
+                     <toggleGroup>
+                        <ToggleGroup fx:id="demultiplexedToggleGroup" />
+                     </toggleGroup>
+                  </RadioButton>
+                  <RadioButton fx:id="newExperimentIsNotDemultiplexed" mnemonicParsing="false" text="IS NOT Demultiplexed" toggleGroup="$demultiplexedToggleGroup">
+                     <font>
+                        <Font size="12.0" />
+                     </font>
+                  </RadioButton>
+               </children>
+            </HBox>
+            <Label minHeight="-Infinity" text="Is your data paired-end? If so, you should have two sequencing files per data set. These typically end with &quot;_1.fastq[.gz]&quot; for the forward reads, and with &quot;_2.fastq[.gz]&quot; for the reverse reads." wrapText="true">
+               <font>
+                  <Font size="12.0" />
+               </font>
+               <padding>
+                  <Insets top="15.0" />
+               </padding>
+            </Label>
+            <HBox>
+               <children>
+                  <RadioButton fx:id="newExperimentIsSingleEnd" mnemonicParsing="false" text="Single End">
+                     <font>
+                        <Font size="12.0" />
+                     </font>
+                     <toggleGroup>
+                        <ToggleGroup fx:id="pairedEndToggleGroup" />
+                     </toggleGroup>
+                     <padding>
+                        <Insets right="63.0" />
+                     </padding>
+                  </RadioButton>
+                  <RadioButton fx:id="newExperimentIsPairedEnd" mnemonicParsing="false" text="Paired End" toggleGroup="$pairedEndToggleGroup">
+                     <font>
+                        <Font size="12.0" />
+                     </font>
+                  </RadioButton>
+               </children>
+            </HBox>
+         </children>
+         <BorderPane.margin>
+            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+         </BorderPane.margin>
+      </VBox>
+      </center>
+</BorderPane>

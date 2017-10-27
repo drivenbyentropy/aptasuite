@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<assembly>
+	<id>package</id>
+	<formats>
+		<format>dir</format>
+		<!-- <format>zip</format> -->
+	</formats>
+	<includeBaseDirectory>true</includeBaseDirectory>
+	<fileSets>
+		<fileSet>
+			<directory>${project.build.directory}${file.separator}dependency</directory>
+			<outputDirectory>${file.separator}lib</outputDirectory>
+			<includes>
+				<include>**${file.separator}*</include>                
+			</includes>
+		</fileSet>
+		<fileSet>
+			<directory>${project.build.directory}/</directory>
+			<outputDirectory>${file.separator}</outputDirectory>
+			<includes>
+				<include>*.jar</include>
+			</includes>
+		</fileSet>
+	</fileSets>
+</assembly>
