@@ -8,8 +8,6 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.ParseException;
 
-import gui.core.RootClass;
-//import gui.core.RootClass;
 import utilities.AptaLogger;
 import utilities.CLIOptions;
 
