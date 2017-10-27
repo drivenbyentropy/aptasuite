@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>aptasuite</groupId>
 	<artifactId>aptasuite</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.0.1</version>
 	<name>AptaSUITE</name>
 	<description>A full-featured software collection for the comprehensive analysis of HT-SELEX experiments with both graphical and command line based user interfaces.</description>
 	<profiles>
@@ -102,136 +102,7 @@
 					</execution>
 				</executions>
 			</plugin>
-		
-			<!--  <plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-jar-plugin</artifactId>
-				<version>3.0.2</version>
-				<executions>
-					<execution>
-						<id>AptaSuiteMainInstall</id>
-						<phase>install</phase>
-						<configuration>
-							<archive>
-								<manifest>
-									<mainClass>aptasuite.Aptasuite</mainClass>
-								</manifest>
-							</archive>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin> -->
-			<!-- <plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-shade-plugin</artifactId>
-				<version>3.1.0</version>
-				<configuration>
-					<shadedArtifactAttached>true</shadedArtifactAttached>
-					<shadedClassifierName>${shadedClassifier}</shadedClassifierName>
-					<createDependencyReducedPom>true</createDependencyReducedPom>
-					<filters>
-						<filter>
-							<artifact>*:*</artifact>
-							<excludes>
-								<exclude>org/datanucleus/**</exclude>
-								<exclude>META-INF/*.SF</exclude>
-								<exclude>META-INF/*.DSA</exclude>
-								<exclude>META-INF/*.RSA</exclude>
-							</excludes>
-						</filter>
-					</filters>
-				</configuration>
-				<executions>
-					<execution>
-						<phase>package</phase>
-						<goals>
-							<goal>shade</goal>
-						</goals>
-						<configuration>
-							<transformers>
-								<transformer
-									implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer" />
-								<transformer
-									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>reference.conf</resource>
-								</transformer>
-								<transformer
-									implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
-								<transformer
-									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-									<mainClass>aptasuite.Aptasuite</mainClass>
-								</transformer>
-							</transformers>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin> -->
-			<!-- Executable Jars BEGIN -->
-			<!-- <plugin>
-				<artifactId>maven-assembly-plugin</artifactId>
-				<version>2.6</version>
-				<executions>
-					<execution>
-						<id>AptaSuiteMain</id>
-						<configuration>
-							<appendAssemblyId>false</appendAssemblyId>
-							<finalName>aptasuite</finalName>
-							<attach>false</attach>
-							<descriptorRefs>
-								<descriptorRef>jar-with-dependencies</descriptorRef>
-							</descriptorRefs>
-							<archive>
-								<manifest>
-									<mainClass>aptasuite.Aptasuite</mainClass>
-								</manifest>
-							</archive>
-						</configuration>
-						<phase>package</phase>
-						<goals>
-							<goal>single</goal>
-						</goals>
-					</execution>
-					<execution>
-						<id>RNAFold4J</id>
-						<configuration>
-							<appendAssemblyId>false</appendAssemblyId>
-							<finalName>rnafold4j</finalName>
-							<attach>false</attach>
-							<descriptorRefs>
-								<descriptorRef>jar-with-dependencies</descriptorRef>
-							</descriptorRefs>
-							<archive>
-								<manifest>
-									<mainClass>lib.structure.rnafold.RNAFold</mainClass>
-								</manifest>
-							</archive>
-						</configuration>
-						<phase>package</phase>
-						<goals>
-							<goal>single</goal>
-						</goals>
-					</execution>
-					<execution>
-						<id>MapDBBenchmark</id>
-						<configuration>
-							<finalName>MapDBBenchmark</finalName>
-							<descriptorRefs>
-								<descriptorRef>jar-with-dependencies</descriptorRef>
-							</descriptorRefs>
-							<archive>
-								<manifest>
-									<mainClass>benchmarks.MapDB</mainClass>
-								</manifest>
-							</archive>
-						</configuration>
-						<phase>package</phase>
-						<goals>
-							<goal>single</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin> -->
-			<!-- Executable Jars END -->
+
 		</plugins>
 	</build>
 
