@@ -6,6 +6,7 @@ package lib.aptanet;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Random;
 import java.util.logging.Level;
 
 import org.nd4j.linalg.api.ndarray.INDArray;
@@ -97,7 +98,17 @@ public class SequenceStructureDatasetIterator implements DataSetIterator{
 	/**
 	 * The number of channels for the tensor. 16 for each pair of nucleotides + 1 for the Bppm
 	 */
-	int channels = 17;
+	private int channels = 17;
+	
+	/**
+	 * If true, it adds a small percentage of noise to the one hot representation of the
+	 * RNA (First 16 channels) in the hopes this will improve learning
+	 */
+	private boolean withNoise = false;
+	
+	private double noisePercentage = 0.1;
+	
+	private Random rand = new Random();
 	
 	private int cursor = 0;
 	
@@ -227,16 +238,28 @@ public class SequenceStructureDatasetIterator implements DataSetIterator{
         // Why 'f' order here? See http://deeplearning4j.org/usingrnns.html#data section "Alternative: Implementing a custom DataSetIterator"
 		INDArray input = Nd4j.zeros(new int[]{batch_ids.size(),this.channels,this.randomizedRegionSize, this.randomizedRegionSize}, 'f');
 
+	
 		// We have as many labels as we have items in the batch. 
 		// Here, they correspond to the chosen score since we are dealing with a
 		// classification problem.
-		INDArray labels = Nd4j.create(new int[]{batch_ids.size()}, 'f');
+		INDArray labels = Nd4j.create(new int[]{batch_ids.size(), 1 }, 'f'); //1 because its regression based
 		
 		// Now iterate over the batch of aptamers and create fill the tensor
 		for (int b=0; b<batch_ids.size(); b++) {
+
+			// Add noise if required
+			if (this.withNoise) {
+				for (int c=0; c<this.channels-1; c++) {
+					for (int h=0; h<this.randomizedRegionSize; h++) {
+						for (int w=0; w<this.randomizedRegionSize; w++) {
+							input.putScalar(new int[] {b, c , h, w}, rand.nextDouble()*noisePercentage);
+						}
+					}
+				}
+			}
 			
 			// Take care of the label first
-			labels.putScalar(new int[] {b}, batch_ids.get(b).score);
+			labels.putScalar(new int[] {b,0}, batch_ids.get(b).score);
 			
 			// Get the aptamer sequence
 			AptamerBounds bounds = pool.getAptamerBounds(batch_ids.get(b).aptamer_id);
@@ -268,7 +291,7 @@ public class SequenceStructureDatasetIterator implements DataSetIterator{
 				}
 				
 			}
-			
+			 
 			cursor++;
 			
 //			System.out.println(String.format("%s %s", bounds.startIndex, bounds.endIndex));
@@ -288,12 +311,17 @@ public class SequenceStructureDatasetIterator implements DataSetIterator{
 
 	@Override
 	public void reset() {
-		
+		if(type == DataType.TEST) {
+			this.dataInputIterator.resetTestData();
+		}
+		else {
+			this.dataInputIterator.resetTrainData();
+		}
 	}
 
 	@Override
 	public boolean resetSupported() {
-		return false;
+		return true;
 	}
 
 	@Override
@@ -309,8 +337,17 @@ public class SequenceStructureDatasetIterator implements DataSetIterator{
 
 	@Override
 	public int totalOutcomes() {
-		// TODO Auto-generated method stub
-		return 0;
+		return 1; //regression
 	}
 
+	public void setWithNoise(boolean withnoise) {
+		
+		this.withNoise = withnoise;
+		
+	}
+	
+	public void setNoisePercentage(double percentage) {
+		this.noisePercentage = percentage;
+	}
+	
 }

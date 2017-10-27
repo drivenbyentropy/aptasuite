@@ -6,8 +6,16 @@ package lib.parser.aptaplex;
 import java.util.ArrayList;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+
+import lib.aptamer.datastructures.Metadata;
+import lib.aptamer.datastructures.SelectionCycle;
 import lib.parser.Parser;
 import lib.parser.ParserProgress;
+import utilities.AptaLogger;
 import utilities.Configuration;
 
 /**
@@ -31,46 +39,55 @@ public class AptaPlexParser implements Parser, Runnable{
 		// We need to know how many threads we can use on the system
 		int num_threads = Math.min( Runtime.getRuntime().availableProcessors(), Configuration.getParameters().getInt("Performance.maxNumberOfCores"));
 		
-		// Creating Producer and Consumer Thread
-		Thread prodThread  = new Thread(new AptaPlexProducer(sharedQueue), "AptaPlex Producer");
+		// Creating Producer and Consumer Threads using the ExecutorService to manage them
+		ExecutorService es = Executors.newCachedThreadPool();
+		es.execute(new Thread(new AptaPlexProducer(sharedQueue), "AptaPlex Producer"));
+		es.execute(new Thread(new AptaPlexConsumer(sharedQueue, progress), "AptaPlex Consumer 1"));
 		
-		ArrayList<Thread> consumers = new ArrayList<Thread>();
-		
-		// We need at least one consumer
-		consumers.add(new Thread(new AptaPlexConsumer(sharedQueue, progress), "AptaPlex Consumer 1"));
-		
-		// Add remaining consumers
 		for (int x=1; x<num_threads-1; x++){
-			consumers.add(new Thread(new AptaPlexConsumer(sharedQueue, progress), "AptaPlex Consumer " + (x+1)));
+			es.execute(new Thread(new AptaPlexConsumer(sharedQueue, progress), "AptaPlex Consumer " + (x+1)));
 		}
-
-		// Start the producer and consumer threads
-		for (int x=0; x<consumers.size(); x++){
-			consumers.get(x).start();
-		}
-		prodThread.start();
-
-		// Make sure the threads wait until completion
+		
+		// Make sure threads are GCed once completed
+		es.shutdown();
+		
+		// Wait until all threads are done
 		try {
-			for (int x=0; x<consumers.size(); x++){
-				consumers.get(x).join();
-			}
-			prodThread.join();
+			es.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS); //wait forever
 		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
-		// Clear resources used by the threads
-		for (int x=0; x<consumers.size(); x++){
-			consumers.set(x, null);
-		}
-		prodThread  = null;
 		
 	}
 
 	@Override
 	public void parsingCompleted() {
+
+		// Now that we have the data set any pools and cycles to read only
+		Configuration.getExperiment().getAptamerPool().setReadOnly();
+		for (SelectionCycle cycle : Configuration.getExperiment().getAllSelectionCycles()) {
+			if (cycle != null) {
+				cycle.setReadOnly();
+			}
+		}
 		
+		// Store the final progress data to the metadata statistics
+		Metadata metadata = Configuration.getExperiment().getMetadata();
+		
+		metadata.parserStatistics.put("processed_reads", progress.totalProcessedReads.get());
+		metadata.parserStatistics.put("accepted_reads", progress.totalAcceptedReads.get());
+		metadata.parserStatistics.put("contig_assembly_fails", progress.totalContigAssemblyFails.get());
+		metadata.parserStatistics.put("invalid_alphabet", progress.totalInvalidContigs.get());
+		metadata.parserStatistics.put("5_prime_error", progress.totalUnmatchablePrimer5.get());
+		metadata.parserStatistics.put("3_prime_error", progress.totalUnmatchablePrimer3.get());
+		metadata.parserStatistics.put("invalid_cycle", progress.totalInvalidCycle.get());
+		metadata.parserStatistics.put("total_primer_overlaps", progress.totalPrimerOverlaps.get());
+		
+		// Finally, store the metadata to disk
+		metadata.saveDataToFile();
+		
+		AptaLogger.log(Level.INFO, this.getClass(), "Parsing Completed, Data storage set to read-only and metadata written to file");
 	}
 
 	@Override

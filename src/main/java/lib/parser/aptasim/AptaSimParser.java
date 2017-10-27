@@ -11,12 +11,15 @@ import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Random;
 import java.util.logging.Level;
 
+import lib.aptamer.datastructures.Metadata;
 import lib.aptamer.datastructures.SelectionCycle;
 import lib.parser.Parser;
 import lib.parser.ParserProgress;
+import utilities.Accumulator;
 import utilities.AptaLogger;
 import utilities.Configuration;
 
@@ -123,6 +126,10 @@ public class AptaSimParser implements Parser, Runnable{
 	 */
 	private ArrayList<SelectionCycle> temporary_cycles = new ArrayList<SelectionCycle>();
 	
+	/**
+	 * Metadata such as nucleotide counts
+	 */
+	private Metadata metadata = Configuration.getExperiment().getMetadata();
 	
 	public AptaSimParser(){
 
@@ -221,7 +228,18 @@ public class AptaSimParser implements Parser, Runnable{
 
 	@Override
 	public void parsingCompleted() {
-		// TODO Auto-generated method stub
+		
+		// now that we have the data set any file backed implementations of the
+		// pools and cycles to read only
+		Configuration.getExperiment().getAptamerPool().setReadOnly();
+		for (SelectionCycle cycle : Configuration.getExperiment().getAllSelectionCycles()) {
+			if (cycle != null) {
+				cycle.setReadOnly();
+			}
+		}
+		
+		// Save metadata to disk
+		metadata.saveDataToFile();
 		
 	}
 
@@ -234,6 +252,7 @@ public class AptaSimParser implements Parser, Runnable{
 	public void run() {
 		
 		parse();
+		parsingCompleted();
 		
 	}
 
@@ -294,6 +313,10 @@ public class AptaSimParser implements Parser, Runnable{
 			int a_id = cycle.addToSelectionCycle(n, primer5.length(), randomized_region_size+primer5.length(),  c);
 			affinities.put(a_id, a);
 			
+			// And Metadata
+			this.addAcceptedNucleotideDistributions(cycle, n, primer5.length(), randomized_region_size+primer5.length());
+			this.addNuceotideDistributions(n, cycle);
+			
 			total += c;
 			progress.totalProcessedReads.getAndAdd(c);
 			progress.totalPoolSize.getAndIncrement();
@@ -309,6 +332,10 @@ public class AptaSimParser implements Parser, Runnable{
 			// Add aptamer to pool and update affinity 
 			int a_id = cycle.addToSelectionCycle(n, primer5.length(), randomized_region_size+primer5.length(),  c);
 			affinities.put(a_id, a);
+			
+			// And Metadata
+			this.addAcceptedNucleotideDistributions(cycle, n, primer5.length(), randomized_region_size+primer5.length());
+			this.addNuceotideDistributions(n, cycle);
 			
 			total += c;
 			progress.totalProcessedReads.getAndAdd(c);
@@ -343,6 +370,10 @@ public class AptaSimParser implements Parser, Runnable{
 			int a_id = cycle.addToSelectionCycle(n, primer5.length(), randomized_region_size+primer5.length(),  c);
 			affinities.put(a_id, a);
 			
+			// And Metadata
+			this.addAcceptedNucleotideDistributions(cycle, n, primer5.length(), randomized_region_size+primer5.length());
+			this.addNuceotideDistributions(n, cycle);
+			
 			total += c;
 			progress.totalProcessedReads.getAndAdd(c);	
 			progress.totalPoolSize.getAndIncrement();
@@ -358,6 +389,10 @@ public class AptaSimParser implements Parser, Runnable{
 			// Add aptamer to pool and update affinity 
 			int a_id = cycle.addToSelectionCycle(n, primer5.length(), randomized_region_size+primer5.length(),  c);
 			affinities.put(a_id, a);
+			
+			// And Metadata
+			this.addAcceptedNucleotideDistributions(cycle, n, primer5.length(), randomized_region_size+primer5.length());
+			this.addNuceotideDistributions(n, cycle);
 			
 			total += c;
 			progress.totalProcessedReads.getAndAdd(c);	
@@ -594,4 +629,82 @@ public class AptaSimParser implements Parser, Runnable{
 		temporary_cycles.clear();
 		
 	}
+	
+	
+	/**
+	 * Iterates over the forward and reverse read (if present) and adds 
+	 * the nucleotide counts to the meta data
+	 * @param c
+	 */
+	void addNuceotideDistributions(byte[] read, SelectionCycle sc) {
+		
+		ConcurrentHashMap<Integer,ConcurrentHashMap<Byte,Integer>> forward = metadata.nucleotideDistributionForward.get(sc.getName());
+		
+		// Iterate over the read add add quality scores to the accumulators
+		for (int i= 0; i < read.length; i++) {
+			
+			// Make sure the entry exists prior to adding
+			if(!forward.contains(i)) {
+				ConcurrentHashMap<Byte,Integer> map = new ConcurrentHashMap<Byte,Integer>();
+				map.put((byte) 'A', 0); 
+				map.put((byte) 'C', 0);
+				map.put((byte) 'G', 0);
+				map.put((byte) 'T', 0);
+				map.put((byte) 'N', 0);
+				forward.put(i, map);
+			}
+			
+			// Add nucleotides
+			forward.get(i).put(read[i], forward.get(i).get(read[i])+1 );
+			
+		}
+	}
+	
+	/**
+	 * Adds the nucleotide distribution of the randomized region to the meta data, categorized 
+	 * by the length of the region
+	 * @param sc
+	 * @param contig
+	 * @param randomized_region_start_index
+	 * @param randomized_region_end_index
+	 */
+	void addAcceptedNucleotideDistributions(SelectionCycle sc, byte[] contig, int randomized_region_start_index, int randomized_region_end_index) {
+		
+		int randomized_region_size = randomized_region_end_index - randomized_region_start_index;
+
+		// Make sure we have seen this randomized region size before, else create placeholder
+		if (!metadata.nucleotideDistributionAccepted.get(sc.getName()).contains(randomized_region_size)) {
+					
+			metadata.nucleotideDistributionAccepted.get(sc.getName()).put(randomized_region_size, new ConcurrentHashMap<Integer, ConcurrentHashMap<Byte, Integer>>());
+			
+		}
+		
+		ConcurrentHashMap<Integer, ConcurrentHashMap<Byte, Integer>> accepted = metadata.nucleotideDistributionAccepted.get(sc.getName()).get(randomized_region_size);
+		
+		int i = 0;
+		for (int x=randomized_region_start_index; x<randomized_region_end_index; x++) {
+			
+			// Make sure the entry exists prior to adding
+			if (!accepted.contains(i)) {
+				
+				ConcurrentHashMap<Byte,Integer> map = new ConcurrentHashMap<Byte,Integer>(5);
+				map.put((byte) 'A', 0); 
+				map.put((byte) 'C', 0);
+				map.put((byte) 'G', 0);
+				map.put((byte) 'T', 0);
+				map.put((byte) 'N', 0);
+				accepted.put(i, map);
+				
+			}
+			
+			// Add nucleotides
+			accepted.get(i).put(contig[x], accepted.get(i).get(contig[x])+1);
+			
+			i++;
+		}
+		
+	}
+	
+	
+	
 }

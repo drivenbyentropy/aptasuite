@@ -99,6 +99,12 @@ public class Experiment implements Serializable{
 	private ArrayList<SelectionCycle> allSelectionCycles = new ArrayList<SelectionCycle>();
 	
 	/**
+	 * Metadata instance for this experiment containing information which is not required for any of the 
+	 * algorithms implemented in AptaSUITE but which are of interest to the user.
+	 */
+	private Metadata metadata = null;
+	
+	/**
 	 * Constructs a new experiment. If <code>configFile</code> is null, an empty
 	 * experiment is created, otherwise the data as defined in the file, will be
 	 * loaded from disk.
@@ -220,6 +226,9 @@ public class Experiment implements Serializable{
 		for (int x=0; x<rounds.length; x++){
 			registerSelectionCycle(names[x], rounds[x], isControls[x], isCounters[x], newdb);
 		}
+		
+		// Set the metadata instance
+		this.metadata = new Metadata(newdb);
 		
 	}
 
@@ -706,6 +715,15 @@ public class Experiment implements Serializable{
 	 */
 	public ClusterContainer getClusterContainer(){
 		return this.clusters;
+	}
+	
+	
+	/**
+	 * Get reference to the metadata associated with this experiment
+	 * @return
+	 */
+	public Metadata getMetadata() {
+		return this.metadata;
 	}
 	
 }

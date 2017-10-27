@@ -1,10 +1,12 @@
 package benchmarks;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
@@ -13,13 +15,16 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
-import org.deeplearning4j.ui.UiServer;
+import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
+import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
+import org.mapdb.Atomic;
 import org.mapdb.BTreeMap;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
@@ -473,19 +478,19 @@ public class MapDB {
 	
 	
 	public static void main(String[] args) {
+
+		Test t = new MyStest();
 		
-		UiServer server;
-		try {
-			server = UiServer.getInstance();
-			System.out.println("");
-	        System.out.println("");
-	        System.out.println("");
-	        System.out.println("Server is available on http://localhost:"+ server.getPort()+"/ or via your external IP address with port " + server.getPort());
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		for (int x : t.bla) {
+			System.out.println(x);
 		}
-	    
+	
+		t = new MyTestTwo();
+		for (int x : t.bla) {
+			System.out.println(x);
+		}
+	
+		
 	}
 
 }

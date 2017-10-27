@@ -307,7 +307,6 @@ public class CapR {
 	}
 	
 
-//	TODO: MODIFY THIS TO RETURN ONE DOUBLE[] CONTAINING ALL PROBABILITIES TO STORE IN DBMAP
 	/**
 	 * Returns the structural profile in accordance with the StructurePool Interface 
 	 * @return array containing <code>[h1,h2,...hn,i1,i2,...,in,b1,b2,...,bn,m1,m2,...mn,d1,d2,...,dn]</code>

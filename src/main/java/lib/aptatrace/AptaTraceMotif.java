@@ -24,6 +24,7 @@ import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import lib.aptamer.datastructures.SelectionCycle;
 import utilities.Configuration;
+import utilities.Quicksort;
 
 /**
  * @author Phoung Dao, modifications by Jan Hoinka
@@ -1144,9 +1145,104 @@ public class AptaTraceMotif {
 		File out = new File(resultDirectory, outputPrefix + "_" + klength + "_fullsummary.pdf");
 		summary2.saveAsPDF(out.toString());
 
+		if (outputClusters) {
+
+			System.out.println();
+			AptaLogger.log(Level.INFO, this.getClass(),
+					"Outputing aptamers in the last cycle where the motifs occur...");
+			
+			//presort the aptamers by count
+			SelectionCycle lastRound= experiment.getSelectionCycles().get(experiment.getSelectionCycles().size()-1);
+			int[] aptamer_ids = new int[lastRound.getUniqueSize()];
+			int[] aptamer_counts = new int[lastRound.getUniqueSize()];
+			
+			int c = 0;
+			for ( Entry<Integer, Integer> aptamer_id : lastRound.iterator()) {
+				
+				aptamer_ids[c] = aptamer_id.getKey();
+				aptamer_counts[c] = aptamer_id.getValue();
+				
+				c++;
+			}
+			
+			Quicksort.sort(aptamer_ids, aptamer_counts);
+			
+			int aptamerCount;
+			numDone = 0;
+			startTime = System.nanoTime();
+			for (int x = aptamer_ids.length - 1; x >= 0; x--) {
+				
+				int aptamer_id = aptamer_ids[x];
+				
+				if (x < aptamer_ids.length - 1) {
+					int lastid = aptamer_ids[x + 1];
+					String thisS = new String(experiment.getAptamerPool().getAptamer(aptamer_id));
+					if (thisS.equals(aptamer)) {
+						System.out.println("Something wrong " + thisS + " " + aptamer + " " + aptamer_id + " " + lastid);
+						System.exit(0);
+					}
+				}
+
+				aptamer = new String(experiment.getAptamerPool().getAptamer(aptamer_id));
+				AptamerBounds aptamerBounds = experiment.getAptamerPool()
+						.getAptamerBounds(aptamer_id);
+				aptamerCount = aptamer_counts[x];
+
+				startPos = aptamerBounds.startIndex + klength - 1;
+				endPos = aptamerBounds.endIndex;
+
+				IntOpenHashSet seencid = new IntOpenHashSet();
+
+				// iterate through each kmer of the aptamer and decide whether
+				// the aptamer contains a motif
+				for (int k = startPos; k < endPos; k++) {
+					kmer = aptamer.substring(k - klength + 1, k + 1);
+					if (k == startPos)
+						id = calculateId(kmer);
+					else
+						id = calulateNewId(id, aptamer.charAt(k - klength), aptamer.charAt(k), klength);
+
+					if (kmer2Clus.containsKey(id)) {
+						mid = kmer2Clus.get(id);
+						if ((!filtered[mid]) && (!seencid.contains(mid))) {
+							clusterWriter.get(c2fc.get(mid)).format("%s\t%d\t%d\t%.2f%%\n", aptamer, aptamerCount,
+									(int) (aptamerCount * 1000000.0 / (rc[rc.length - 1] * 1.0)),
+									aptamerCount / (rc[rc.length - 1] * 1.0));
+							seencid.add(mid);
+						}
+					}
+				}
+
+				numDone++;
+				if ((numDone == poolSize) || (numDone % 10000 == 0)) {
+					endTime = System.nanoTime();
+					rms = (long) (((endTime - startTime) / (numDone * 1000000000.0))
+							* (lastRoundPool.size() - numDone));
+					rmh = (int) (rms / 3600.0);
+					rmm = (int) ((rms % 3600) / 60);
+					System.out.print("Finished reading " + numDone + "/" + lastRoundPool.size() + " structures, ETA "
+							+ String.format("%02d:%02d:%02d", rmh, rmm, rms % 60) + "\r");
+				}
+			}
+
+			// Final Update
+			endTime = System.nanoTime();
+			rms = (long) (((endTime - startTime) / (numDone * 1000000000.0)) * (lastRoundPool.size() - numDone));
+			rmh = (int) (rms / 3600.0);
+			rmm = (int) ((rms % 3600) / 60);
+			System.out.print("Finished reading " + numDone + "/" + lastRoundPool.size() + " structures, ETA "
+					+ String.format("%02d:%02d:%02d", 0, 0, 0) + "\n");
+
+			if (outputClusters) {
+				for (int i = 0; i < clusterWriter.size(); i++)
+					clusterWriter.get(i).close();
+			}
+		}		
+		
+		
 		// prints out the aptamers in the last selection round that have
 		// frequency more than singleton threshold and contain the motifs
-		if (outputClusters) {
+		if (false) {
 
 			System.out.println();
 			AptaLogger.log(Level.INFO, this.getClass(),

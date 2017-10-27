@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.ListIterator;
 import java.util.Map.Entry;
@@ -49,34 +50,6 @@ public class MapDBSelectionCycle implements SelectionCycle{
 	 * pool should have a value of 0.
 	 */
 	private int round;
-	
-	
-	/**
-	 * A unique identifier for this selection cycle. This id can be used for indexing
-	 * purposes in other data structures as required.
-	 */
-	private int id;
-	
-	/**
-	 * The 5' barcode should it be present in the raw sequencing file. It is typically
-	 * located at the 5' start of the 5' primer in the raw sequencing file. If no barcode 
-	 * is present at this location, the value is null.
-	 * 
-	 * Any parser implemented in this project will access this value in order to 
-	 * perform multiplexing.
-	 */
-	private String barcode5 = null;
-	
-	
-	/**
-	 * The 3' barcode should it be present in the raw sequencing file. It is typically
-	 * located at the 3' start of the 3' primer in the raw sequencing file. If no barcode 
-	 * is present at this location, the value is null.
-	 * 
-	 * Any parser implemented in this project will access this value in order to 
-	 * perform de-multiplexing.
-	 */
-	private String barcode3 = null;
 	
 	
 	/**
@@ -122,6 +95,7 @@ public class MapDBSelectionCycle implements SelectionCycle{
 	 * Counts the total number of unique aptamers belonging to this selection cycle
 	 */
 	private int unique_size = 0;
+	
 	
 	public MapDBSelectionCycle(String name, int round, boolean isControlSelection, boolean isCounterSelection, boolean newdb) throws IOException{
 		

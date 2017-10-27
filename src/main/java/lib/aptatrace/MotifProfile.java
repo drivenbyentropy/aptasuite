@@ -436,53 +436,7 @@ public class MotifProfile {
 	public int getLen(){
 		return len;
 	}
-	
-	/*
-	public double alignWith(MotifProfile m,int minOverlap){
-		if (m.getLen()<=len)
-			return getMatchScore(m.getLen(),len,m.getProfile(),pwm,minOverlap);
-		else
-			return getMatchScore(len,m.getLen(),pwm,m.getProfile(),minOverlap);
-	}
-	
-	private static double getMatchScore(int l1,int l2,double p1[][],double p2[][],int minOverlap){
-		double score;
-		double bestScore=0.0f;
-		int end=l2-1-minOverlap+1+l1-1;
-		int start1;
-		int start2;
-		int o;
-		for (int i=minOverlap-1;i<=end;i++){
-			if (i<=l1-1){
-				o=i+1;
-				start1=l1-1-o+1;
-				start2=0;
-			}
-			else if (i>l2-1){
-				o=l1-(i-(l2-1));
-				start1=0;
-				start2=l2-1-o+1;
-			}
-			else{
-				o=l1;
-				start1=0;
-				start2=i-o+1;
-			}
-						
-			score=0.0f;
-			for (int j=0;j<o;j++)
-			for (int k=0;k<4;k++){
-				score+=p1[start1+j][k]*p2[start2+j][k];
-			}
-			
-			if (score>bestScore)
-				bestScore=score;
-		}
-		
-		return bestScore;
-	}
-	*/
-	
+
 	public void printContextTrace(PrintWriter writer, ArrayList<String> roundArr){
 		writer.print("RD");
 		double sum;

@@ -8,27 +8,36 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.Map.Entry;
 import java.util.logging.Level;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.io.FileUtils;
 import org.deeplearning4j.api.storage.StatsStorage;
 import org.deeplearning4j.eval.RegressionEvaluation;
+import org.deeplearning4j.nn.api.OptimizationAlgorithm;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
+import org.deeplearning4j.nn.conf.Updater;
 import org.deeplearning4j.nn.conf.inputs.InputType;
 import org.deeplearning4j.nn.conf.layers.ConvolutionLayer;
 import org.deeplearning4j.nn.conf.layers.DenseLayer;
 import org.deeplearning4j.nn.conf.layers.OutputLayer;
 import org.deeplearning4j.nn.conf.layers.SubsamplingLayer;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
+import org.deeplearning4j.nn.weights.WeightInit;
+import org.deeplearning4j.optimize.api.IterationListener;
+import org.deeplearning4j.parallelism.ParallelWrapper;
 import org.deeplearning4j.ui.api.UIServer;
 import org.deeplearning4j.ui.stats.StatsListener;
 import org.deeplearning4j.ui.storage.InMemoryStatsStorage;
+import org.nd4j.jita.conf.CudaEnvironment;
 import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
+import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 
 import exceptions.InformationNotFoundException;
@@ -37,6 +46,7 @@ import lib.aptacluster.AptaCluster;
 import lib.aptacluster.HashAptaCluster;
 import lib.aptamer.datastructures.Experiment;
 import lib.aptamer.datastructures.SelectionCycle;
+import lib.aptanet.DataInputIterator;
 import lib.aptanet.DataType;
 import lib.aptanet.Inequality;
 import lib.aptanet.ScoreMethod;
@@ -49,6 +59,7 @@ import lib.structure.capr.CapRFactory;
 import lib.structure.rnafold.RNAFoldFactory;
 import utilities.AptaLogger;
 import utilities.Configuration;
+import utilities.Quicksort;
 import lib.aptatrace.AptaTraceMotif;
 /**
  * @author Jan Hoinka Implements the command line interface version of
@@ -113,6 +124,7 @@ public class CLI {
 				FileUtils.deleteDirectory(Paths.get(projectPath.toString(), "cycledata").toFile());
 				FileUtils.deleteDirectory(Paths.get(projectPath.toString(), "structuredata").toFile());
 				FileUtils.deleteDirectory(Paths.get(projectPath.toString(), "clusterdata").toFile());
+				FileUtils.deleteDirectory(Paths.get(projectPath.toString(), "bppmdata").toFile());
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -139,6 +151,7 @@ public class CLI {
 				FileUtils.deleteDirectory(Paths.get(projectPath.toString(), "cycledata").toFile());
 				FileUtils.deleteDirectory(Paths.get(projectPath.toString(), "structuredata").toFile());
 				FileUtils.deleteDirectory(Paths.get(projectPath.toString(), "clusterdata").toFile());
+				FileUtils.deleteDirectory(Paths.get(projectPath.toString(), "bppmdata").toFile());
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -334,14 +347,14 @@ public class CLI {
 		// final update
 		System.out.println(parser.Progress().getProgress() + "\r");
 
-		// now that we have the data set any file backed implementations of the
-		// pools and cycles to read only
-		experiment.getAptamerPool().setReadOnly();
-		for (SelectionCycle cycle : experiment.getAllSelectionCycles()) {
-			if (cycle != null) {
-				cycle.setReadOnly();
-			}
-		}
+//		// now that we have the data set any file backed implementations of the
+//		// pools and cycles to read only
+//		experiment.getAptamerPool().setReadOnly();
+//		for (SelectionCycle cycle : experiment.getAllSelectionCycles()) {
+//			if (cycle != null) {
+//				cycle.setReadOnly();
+//			}
+//		}
 
 		AptaLogger.log(Level.INFO, this.getClass(), String.format("Parsing Completed in %s seconds.\n",
 				((System.currentTimeMillis() - tParserStart) / 1000.0)));
@@ -421,15 +434,6 @@ public class CLI {
 							(c.getUniqueSize()/ new Double (c.getSize()) * 100 ) ));
 		}
 		
-		
-		// now that we have the data set any file backed implementations of the
-		// pools and cycles to read only
-		experiment.getAptamerPool().setReadOnly();
-		for (SelectionCycle cycle : experiment.getAllSelectionCycles()) {
-			if (cycle != null) {
-				cycle.setReadOnly();
-			}
-		}
 		
 		// clean up
 		parserThread = null;
@@ -684,23 +688,81 @@ public class CLI {
 			experiment.instantiateBppmPool(false);
 		}	
 		
+		// Hardware tuning
+		CudaEnvironment.getInstance().getConfiguration().allowMultiGPU(true).allowCrossDeviceAccess(true);
+		Nd4j.getMemoryManager().setAutoGcWindow(1000); // Garbage collection every XXX ms 
+		long max_chache_in_gb = 2L;
+		CudaEnvironment.getInstance().getConfiguration()
+	    .setMaximumDeviceCacheableLength(1024 * 1024 * 1024L)
+	    .setMaximumDeviceCache(max_chache_in_gb * 1024 * 1024 * 1024L)
+	    .setMaximumHostCacheableLength(1024 * 1024 * 1024L)
+	    .setMaximumHostCache(max_chache_in_gb * 1024 * 1024 * 1024L);
 		
 		System.out.println("Load Data");
+		
+		// Create a mask so that we balance positive and negative examples
+		SelectionCycle sc = experiment.getSelectionCycleById("R12");
+		BitSet mask = new BitSet(sc.getUniqueSize());
+		int[] indices = new int[sc.getUniqueSize()];
+		int[] counts = new int[sc.getUniqueSize()];
+		
+		int counter = 0;
+		for ( Entry<Integer, Integer> item : sc.iterator()) {
+			
+			indices[counter] = item.getKey();
+			counts[counter] = item.getValue();
+			counter++;
+			
+		}
+		Quicksort.sort(indices, counts);
+		
+		//Take the top and bottom pv percent of the data
+		double pv = 0.15;
+		int percentage = new Double(sc.getUniqueSize() * pv).intValue();
+		System.out.println("\nBottom:");
+		for (int x=0; x<percentage; x++) { mask.flip(indices[x]); if (x==0 || x==percentage-1) System.out.print(" " + counts[x]); }
+		System.out.println("\nTop:");
+		for (int x=sc.getUniqueSize()-1; x>sc.getUniqueSize()-percentage; x--) { mask.flip(indices[x]); if (x-1 == sc.getUniqueSize()-percentage || x==sc.getUniqueSize()-1) System.out.print(" " + counts[x]);}
+		
+		
 		// Create a dataiterator based on a single selection cycle
 		// using the raw count as the score, only accepting sequences 
 		// with a count >= 10, splitting the dataset 80% Train 20% test
-		SelectionCycleSplitDataInputIterator scsdii = new SelectionCycleSplitDataInputIterator(experiment.getSelectionCycleById("R12"), ScoreMethod.COUNT,10, Inequality.GREATER, 0.8);
+		DataInputIterator scsdii = new SelectionCycleSplitDataInputIterator(
+				sc, 
+				ScoreMethod.COUNT, 
+				1 , 
+				Inequality.GREATER, 
+				0.8,
+				mask);
 		
 		// Create a DataSetIterator for training data based on scsdii
 		DataSetIterator train_it = new SequenceStructureDatasetIterator(scsdii, DataType.TRAIN, true);
+		((SequenceStructureDatasetIterator)train_it).setBatchsize(32);
+		//((SequenceStructureDatasetIterator)train_it).setWithNoise(true);
+		//((SequenceStructureDatasetIterator)train_it).setNoisePercentage(0.05);
 		
 		// Do the same thing for testing
 		DataSetIterator test_it = new SequenceStructureDatasetIterator(scsdii, DataType.TEST, true);
 
+		
 		//Build model
 		int nChannels = 17; // Number of input channels
         int outputNum = 1; // The number of possible outcomes, one for regression
-        int nEpochs = 1; // Number of training epochs
+        
+        
+        // An epoch is defined as a full pass of the data set. 
+        // An iteration in DL4J is defined as the number of parameter 
+        // updates in a row, for each minibatch.
+        
+        // Generally, you want to use multiple epochs and one iteration 
+        // (.iterations(1) option) when training; multiple iterations are generally 
+        // only used when doing full-batch training on very small data sets.
+        //Too few epochs don’t give your network enough time to learn good parameters; 
+        //too many and you might overfit the training data. One way to choose the number 
+        //of epochs is to use early stopping. Early stopping can also help to prevent 
+        //the neural network from overfitting (i.e., can help the net generalize better to unseen data).
+        int nEpochs = 20; // Number of training epochs
         int iterations = 1; // Number of training iterations
         int seed = 123; //
 
@@ -713,42 +775,122 @@ public class CLI {
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
                 .seed(seed)
                 .iterations(iterations) // Training iterations as above
-                .regularization(true).l2(0.0005)
-                .learningRate(.01)//.biasLearningRate(0.02)
+                .regularization(true).l2(0.005)
+                .dropOut(0.5)
+                .learningRate(.001).biasLearningRate(0.02)
+                .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
+                .updater(Updater.ADAGRAD)
+                .weightInit(WeightInit.RELU)
                 .list()
+                //First two layer: Convolution on Base Pairs
                 .layer(0, new ConvolutionLayer.Builder()
+                		.name("Convolution on Base Pairs 1")
                         // nIn and nOut specify depth. nIn here is the nChannels and 
                 		// nOut is the number of filters to be applied
                         .nIn(nChannels)
                         .stride(1, 1)
-                        .nOut(40)
-                        .kernelSize(2,2)
-                        .activation(Activation.IDENTITY)
+                        .nOut(64) // We will gradually increase the depth while reducing width and height
+                        .kernelSize(1,1)
+                        .activation(Activation.RELU)
                         .build())
-                .layer(1, new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
-                        .kernelSize(2,2)
-                        .stride(2,2)
-                        .build())
-                .layer(2, new ConvolutionLayer.Builder()
-                        //Note that nIn need not be specified in later layers
+                .layer(1, new ConvolutionLayer.Builder()
+                		.name("Convolution on Base Pairs 2")
+                        // nIn and nOut specify depth. nIn here is the nChannels and 
+                		// nOut is the number of filters to be applied
                         .stride(1, 1)
-                        .kernelSize(4,4)
-                        .nOut(20)
-                        .activation(Activation.IDENTITY)
+                        .nOut(64) // We will gradually increase the depth while reducing width and height
+                        .kernelSize(1,1)
+                        .activation(Activation.RELU)
                         .build())
-                .layer(3, new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
+                // Now perform a max pool, this reduces spacial dimensions
+                .layer(2, new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
                         .kernelSize(2,2)
                         .stride(2,2)
                         .build())
-                .layer(4, new DenseLayer.Builder().activation(Activation.RELU)
-                        .nOut(500).build())
-                .layer(5, new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
-                        .nOut(1) //one vector with real values
-                        .activation(Activation.SOFTMAX)
+                // Capture higher order correlations such as tacks
+                .layer(3, new ConvolutionLayer.Builder()
+                		.name("Convolution on higher order features 1")
+                        //Note that nIn need not be specified in later layers
+                		.kernelSize(4,4)
+                		.stride(1, 1)
+                        .nOut(128)
+                        .activation(Activation.RELU)
+                        .build())
+                .layer(4, new ConvolutionLayer.Builder()
+                		.name("Convolution on higher order features 2")
+                        //Note that nIn need not be specified in later layers
+                		.kernelSize(2,2)
+                		.stride(1, 1)
+                        .nOut(256)
+                        .activation(Activation.RELU)
+                        .build())
+                // Pool these features
+                .layer(5, new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
+                        .kernelSize(2,2)
+                        .stride(2,2)
+                        .build())
+                // Perform regression on the selected features
+                .layer(6, new DenseLayer.Builder().activation(Activation.RELU)
+                		.name("Fully Connected Layer 1")
+                        .nOut(1024).build())
+                .layer(7, new DenseLayer.Builder().activation(Activation.RELU)
+                		.name("Fully Connected Layer 2")
+                        .nOut(1024).build())
+                .layer(8, new DenseLayer.Builder().activation(Activation.SOFTMAX)
+                		.name("Soft Max")
+                        .nOut(150).build())
+                .layer(9, new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
+                        .nOut(1) //one vector (scalar in this case) of one real value
+                        .activation(Activation.IDENTITY)
                         .build())
                 // 42 is randomized region size
                 .setInputType(InputType.convolutional(42,42,17)) //See note below 
-                .backprop(true).pretrain(false).build();
+                .backprop(true).pretrain(false).build();        
+        
+        
+//        MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+//                .seed(seed)
+//                .iterations(iterations) // Training iterations as above
+//                .regularization(true).l2(0.005)
+//                .dropOut(0.5)
+//                .learningRate(.005).biasLearningRate(0.02)
+//                .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
+//                .updater(Updater.ADAGRAD)
+//                .weightInit(WeightInit.RELU)
+//                .list()
+//                .layer(0, new ConvolutionLayer.Builder()
+//                        // nIn and nOut specify depth. nIn here is the nChannels and 
+//                		// nOut is the number of filters to be applied
+//                        .nIn(nChannels)
+//                        .stride(1, 1)
+//                        .nOut(40)
+//                        .kernelSize(4,4)
+//                        .activation(Activation.RELU)
+//                        .build())
+//                .layer(1, new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
+//                        .kernelSize(2,2)
+//                        .stride(1,1)
+//                        .build())
+//                .layer(2, new ConvolutionLayer.Builder()
+//                        //Note that nIn need not be specified in later layers
+//                        .stride(1, 1)
+//                        .kernelSize(2,2)
+//                        .nOut(20)
+//                        .activation(Activation.RELU)
+//                        .build())
+//                .layer(3, new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
+//                        .kernelSize(2,2)
+//                        .stride(2,2)
+//                        .build())
+//                .layer(4, new DenseLayer.Builder().activation(Activation.RELU)
+//                        .nOut(100).build())
+//                .layer(5, new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
+//                        .nOut(1) //one vector (scalar in this case) of one real value
+//                        .activation(Activation.IDENTITY)
+//                        .build())
+//                // 42 is randomized region size
+//                .setInputType(InputType.convolutional(42,42,17)) //See note below 
+//                .backprop(true).pretrain(false).build();
 
         /*
         Regarding the .setInputType(InputType.convolutionalFlat(28,28,1)) line: This does a few things.
@@ -767,6 +909,27 @@ public class CLI {
         MultiLayerNetwork model = new MultiLayerNetwork(conf);
         model.init();
 
+        
+//        // ParallelWrapper will take care of load balancing between GPUs.
+//        ParallelWrapper wrapper = new ParallelWrapper.Builder(model)
+//            // DataSets prefetching options. Set this value with respect to number of actual devices
+//            .prefetchBuffer(2)
+//
+//            // set number of workers equal or higher then number of available devices. x1-x2 are good values to start with
+//            .workers(4)
+//
+//            // rare averaging improves performance, but might reduce model accuracy
+//            .averagingFrequency(3)
+//
+//            // if set to TRUE, on every averaging model score will be reported
+//            .reportScoreAfterAveraging(true)
+//
+//            // optinal parameter, set to false ONLY if your system has support P2P memory access across PCIe (hint: AWS do not support P2P)
+//            .useLegacyAveraging(false)
+//
+//            .build();
+        
+        
         //Initialize the user interface backend
         UIServer uiServer = UIServer.getInstance();
 
@@ -779,7 +942,10 @@ public class CLI {
 
         //Then add the StatsListener to collect this information from the network, as it trains
 //        model.setListeners(new StatsListener(remoteUIRouter));
-        model.setListeners(new StatsListener(statsStorage));
+        ArrayList<IterationListener> listeners = new ArrayList<IterationListener>();
+        listeners.add(new StatsListener(statsStorage));
+        
+        model.setListeners(listeners);
 
         System.out.println("Train model....");
         for( int i=0; i<nEpochs; i++ ) {
@@ -797,33 +963,11 @@ public class CLI {
 
             }
             System.out.println(eval.stats());
-            //mnistTest.reset();
+            test_it.reset();
+            //train_it.reset();
         }
         System.out.println("****************Example finished********************");
         
-//		train_it.next();
-		
-//		int traincounter = 0;
-//		while(train_it.hasNext()) {
-//			train_it.next();
-//			traincounter++;
-//		}
-//		
-//		int testcounter = 0;
-//		while(test_it.hasNext()) {
-//			test_it.next();
-//			testcounter++;
-//		}
-//		
-//		System.out.println(String.format("TRAIN %s   TEST %s", traincounter, testcounter));
-		
-		// Get the instance of the StructurePool
-		//if (experiment.getStructurePool() == null)
-		//{
-		//	experiment.instantiateStructurePool(false);
-		//}	
-		
-		
 	}	
 	
 	/**

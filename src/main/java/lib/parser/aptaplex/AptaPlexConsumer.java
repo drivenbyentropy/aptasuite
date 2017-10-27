@@ -5,9 +5,12 @@ package lib.parser.aptaplex;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 
 import org.apache.commons.lang3.ArrayUtils;
@@ -20,11 +23,13 @@ import com.milaboratory.core.merger.PairedReadMergingResult;
 import com.milaboratory.core.merger.QualityMergingAlgorithm;
 import com.milaboratory.core.sequence.NSequenceWithQuality;
 import exceptions.InvalidConfigurationException;
+import lib.aptamer.datastructures.Metadata;
 import lib.aptamer.datastructures.SelectionCycle;
 import lib.parser.aptaplex.distances.BitapDistance;
 import lib.parser.aptaplex.distances.Distance;
 import lib.parser.aptaplex.distances.EditDistance;
 import lib.parser.aptaplex.distances.Result;
+import utilities.Accumulator;
 import utilities.AptaLogger;
 import utilities.Configuration;
 
@@ -101,6 +106,12 @@ public class AptaPlexConsumer implements Runnable {
 	 * randomized region to extract
 	 */
 	private Integer randomizedRegionSize = null;
+	
+	/**
+	 * Access to the data structures storing the Nucleotide distributions, 
+	 * Quality Scores etc of the data
+	 */
+	private Metadata metadata = Configuration.getExperiment().getMetadata();
 
 	/**
 	 * Instance of the MiTools merger used to create the contig sequences in
@@ -282,6 +293,12 @@ public class AptaPlexConsumer implements Runnable {
 							 //,randomized_region_start_index
 							 //,randomized_region_end_index
 							 );
+					 
+					 // Add metadata information
+					 addAcceptedNucleotideDistributions(read.selection_cycle, contig, randomized_region_start_index, randomized_region_end_index);
+					 addNuceotideDistributions();
+					 addQualityScores();
+					 
 					 progress.totalAcceptedReads.incrementAndGet();
 					 
 				 }else { // Handle errors
@@ -590,4 +607,152 @@ public class AptaPlexConsumer implements Runnable {
 		return false;
 	}
 
+	
+	/**
+	 * Takes the quality scores of the current read and adds them to the 
+	 * meta data accumulator of the selection cycle c. Note this function
+	 * assumes all reads are of the same length.
+	 * @param c the selection cycle corresponding to this read
+	 */
+	private void addQualityScores() {
+		
+		// Forward read
+		if (read.forward_quality != null) {
+		
+			ConcurrentHashMap<Integer, Accumulator> forward = metadata.qualityScoresForward.get(read.selection_cycle.getName());
+			
+			// Iterate over the read and add quality scores to the accumulators
+			for (int i= 0; i < read.forward_quality.length; i++) {
+				
+				if(!forward.contains(i)) forward.put(i, new Accumulator());
+				forward.get(i).addDataValue(read.forward_quality[i]-33);
+				
+			}
+			
+		}
+		
+		// Reverse read
+		if (read.reverse_quality != null) {
+		
+			ConcurrentHashMap<Integer, Accumulator> reverse = metadata.qualityScoresReverse.get(read.selection_cycle.getName());
+			
+			// Iterate over the read and add quality scores to the accumulators
+			for (int i= 0; i < read.reverse_quality.length; i++) {
+				
+				if(!reverse.contains(i)) reverse.put(i, new Accumulator());
+				reverse.get(i).addDataValue(read.reverse_quality[i]-33);
+				
+			}
+			
+		}
+		
+	}
+	
+	/**
+	 * Iterates over the forward and reverse read (if present) and adds 
+	 * the nucleotide counts to the meta data
+	 * @param c
+	 */
+	private void addNuceotideDistributions() {
+		
+		// Forward read
+		if (read.forward_read != null) {
+		
+			ConcurrentHashMap<Integer,ConcurrentHashMap<Byte,Integer>> forward = metadata.nucleotideDistributionForward.get(read.selection_cycle.getName());
+			
+			// Iterate over the read add add quality scores to the accumulators
+			for (int i= 0; i < read.forward_read.length; i++) {
+				
+				// Make sure the entry exists prior to adding
+				if(!forward.contains(i)) {
+					ConcurrentHashMap<Byte,Integer> map = new ConcurrentHashMap<Byte,Integer>();
+					map.put((byte) 'A', 0); 
+					map.put((byte) 'C', 0);
+					map.put((byte) 'G', 0);
+					map.put((byte) 'T', 0);
+					map.put((byte) 'N', 0);
+					forward.put(i, map);
+				}
+				
+				// Add nucleotides
+				forward.get(i).put(read.forward_read[i], forward.get(i).get(read.forward_read[i])+1 );
+				
+			}
+			
+		}
+		
+		// Reverse read
+		if (read.reverse_read != null) {
+		
+			ConcurrentHashMap<Integer,ConcurrentHashMap<Byte,Integer>> reverse = metadata.nucleotideDistributionReverse.get(read.selection_cycle.getName());
+			
+			// Iterate over the read add add quality scores to the accumulators
+			for (int i= 0; i < read.reverse_read.length; i++) {
+				
+				// Make sure the entry exists prior to adding
+				if(!reverse.contains(i)) {
+					ConcurrentHashMap<Byte,Integer> map = new ConcurrentHashMap<Byte,Integer>();
+					map.put((byte) 'A', 0); 
+					map.put((byte) 'C', 0);
+					map.put((byte) 'G', 0);
+					map.put((byte) 'T', 0);
+					map.put((byte) 'N', 0);
+					reverse.put(i, map);
+				}
+				
+				// Add nucleotides
+				reverse.get(i).put(read.reverse_read[i], reverse.get(i).get(read.reverse_read[i])+1 );
+				
+			}
+			
+		}
+		
+	}
+	
+	/**
+	 * Adds the nucleotide distribution of the randomized region to the meta data, categorized 
+	 * by the length of the region
+	 * @param sc
+	 * @param contig
+	 * @param randomized_region_start_index
+	 * @param randomized_region_end_index
+	 */
+	private void addAcceptedNucleotideDistributions(SelectionCycle sc, byte[] contig, int randomized_region_start_index, int randomized_region_end_index) {
+		
+		int randomized_region_size = randomized_region_end_index - randomized_region_start_index;
+
+		// Make sure we have seen this randomized region size before, else create placeholder
+		if (!metadata.nucleotideDistributionAccepted.get(sc.getName()).contains(randomized_region_size)) {
+					
+			metadata.nucleotideDistributionAccepted.get(sc.getName()).put(randomized_region_size, new ConcurrentHashMap<Integer, ConcurrentHashMap<Byte, Integer>>());
+			
+		}
+		
+		ConcurrentHashMap<Integer, ConcurrentHashMap<Byte, Integer>> accepted = metadata.nucleotideDistributionAccepted.get(sc.getName()).get(randomized_region_size);
+		
+		int i = 0;
+		for (int x=randomized_region_start_index; x<randomized_region_end_index; x++) {
+			
+			// Make sure the entry exists prior to adding
+			if (!accepted.contains(i)) {
+				
+				ConcurrentHashMap<Byte,Integer> map = new ConcurrentHashMap<Byte,Integer>(5);
+				map.put((byte) 'A', 0); 
+				map.put((byte) 'C', 0);
+				map.put((byte) 'G', 0);
+				map.put((byte) 'T', 0);
+				map.put((byte) 'N', 0);
+				accepted.put(i, map);
+				
+			}
+			
+			// Add nucleotides
+			accepted.get(i).put(contig[x], accepted.get(i).get(contig[x])+1);
+			
+			i++;
+		}
+		
+	}
+	
+	
 }

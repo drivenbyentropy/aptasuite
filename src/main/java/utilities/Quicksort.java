@@ -3,8 +3,6 @@
  */
 package utilities;
 
-import java.util.Comparator;
-
 /**
  * @author Jan Hoinka
  * Customized version of Quicksort with the option of using a 
@@ -46,7 +44,7 @@ public class Quicksort {
 	
 	
 	/**
-	 * Sorts a list of primitive ints in ascending order base on the data of
+	 * Sorts a list of primitive ints in ascending order based on the data of
 	 * another list. In other words, this function performs the same swapping 
 	 * operation on <code>values</code> while sorting <code>reference</code>.
 	 * Sorting will be in-place using quicksort

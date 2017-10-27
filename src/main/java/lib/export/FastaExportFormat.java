@@ -60,7 +60,7 @@ public class FastaExportFormat implements ExportFormat<byte[]> {
 				breakCounter = 0;
 			}
 			
-			formattedSequence.append(sequence[x]);
+			formattedSequence.append((char) sequence[x]);
 		}
 	
 		return String.format(">%s\n%s\n", 

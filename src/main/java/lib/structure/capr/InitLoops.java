@@ -17,9 +17,10 @@ import java.io.InputStream;
  */
 public final class InitLoops {
 	
-	public static int[][][][] int11_37 = new int[8][8][5][5];
-	static {
-		
+	public static  int[][][][] int11_37 = new int[8][8][5][5];
+	static
+	 {
+		 
 		//Get file from resources folder
 		InputStream is = ClassLoader.getSystemClassLoader().getResourceAsStream("capR_int11_37.txt");
 		BufferedInputStream bis = new BufferedInputStream(is);
@@ -51,8 +52,9 @@ public final class InitLoops {
 		}	
 	}
 	
-	public static int[][][][][] int21_37 = new int[8][8][5][5][5];	
-	static {
+	public static  int[][][][][] int21_37 = new int[8][8][5][5][5];	
+	static
+	 {
 		
 		//Get file from resources folder
 		InputStream is = ClassLoader.getSystemClassLoader().getResourceAsStream("capR_int21_37.txt");
@@ -86,11 +88,12 @@ public final class InitLoops {
 	}
 	
 	/**
-	 * Adding this array in a static way would exceed javas 64k limit.
+	 * Adding this array in a  way would exceed javas 64k limit.
 	 * Hence, we read it from file
 	 */
-	public static int[][][][][][] int22_37 = new int[8][8][5][5][5][5] ;
-	static {
+	public static  int[][][][][][] int22_37 = new int[8][8][5][5][5][5] ;
+	static
+	 {
 		
 		//Get file from resources folder
 		InputStream is = ClassLoader.getSystemClassLoader().getResourceAsStream("capR_int22_37.txt");
@@ -130,7 +133,7 @@ public final class InitLoops {
 	 * @param bis the stream to read from
 	 * @return null if eof
 	 */
-	private static String getNextToken(BufferedInputStream bis){
+	private static  String getNextToken(BufferedInputStream bis){
 		
 		try {
 			while (bis.available() > 0) {
