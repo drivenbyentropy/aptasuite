@@ -16,7 +16,7 @@ import java.io.File;
 import org.controlsfx.validation.ValidationSupport;
 import org.controlsfx.validation.Validator;
 
-import gui.misc.ControlFXValidators;
+import gui.misc.ControlFXValidatorFactory;
 
 /**
  * @author Jan Hoinka
@@ -148,7 +148,7 @@ public class SelectionCycleDetailsController {
 		
 		// Barcode
 		if (getDataModel().getIsDemultiplexed().not().get()) {
-			validationSupport.registerValidator(barcodeTextField, ControlFXValidators.DNAStringValidator);
+			validationSupport.registerValidator(barcodeTextField, ControlFXValidatorFactory.DNAStringValidator);
 		}
 		barcodeTextField.textProperty().addListener((ov, oldValue, newValue) -> { barcodeTextField.setText(newValue.toUpperCase());	});
 		

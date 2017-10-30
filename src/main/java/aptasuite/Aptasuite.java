@@ -8,6 +8,7 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.ParseException;
 
+import gui.core.RootClass;
 import utilities.AptaLogger;
 import utilities.CLIOptions;
 
@@ -58,7 +59,7 @@ public class Aptasuite {
 //			RootClass mainWindow = new RootClass();
 //			mainWindow.lauchMainWindow();
 //			System.out.println("Exiting");
-			System.exit(0);
+//			System.exit(0);
 		}
 
 		

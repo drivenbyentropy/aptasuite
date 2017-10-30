@@ -50,10 +50,11 @@ public class FastaExportFormat implements ExportFormat<byte[]> {
 		// Compute length depending whether primers should be exported or not
 		int length = withPrimers ? sequence.length : bounds.endIndex - bounds.startIndex;
 		
+		
 		// Build the sequence with newline if the total lengths exceeds the specification
 		StringBuilder formattedSequence = new StringBuilder(length + new Double(length/80.).intValue());
 		int breakCounter = 0;
-		for (int x = 0; x<length; x++,breakCounter++){
+		for (int x = withPrimers ?  0 : bounds.startIndex; x < (withPrimers ? sequence.length : bounds.endIndex); x++,breakCounter++){
 
 			if (breakCounter == 80){
 				formattedSequence.append("\n");

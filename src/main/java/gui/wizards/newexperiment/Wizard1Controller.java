@@ -5,26 +5,45 @@ import java.io.IOException;
 
 import javax.annotation.PostConstruct;
 
+import org.controlsfx.control.NotificationPane;
+import org.controlsfx.control.action.Action;
+import org.controlsfx.control.decoration.Decorator;
+import org.controlsfx.control.decoration.GraphicDecoration;
+import org.controlsfx.control.decoration.StyleClassDecoration;
 import org.controlsfx.validation.Severity;
 import org.controlsfx.validation.ValidationResult;
 import org.controlsfx.validation.ValidationSupport;
 import org.controlsfx.validation.Validator;
 
 import gui.core.RootLayoutController;
-import gui.misc.ControlFXValidators;
+import gui.misc.ControlFXValidatorFactory;
 import io.datafx.controller.ViewController;
+import io.datafx.controller.flow.FlowException;
+import io.datafx.controller.flow.action.ActionMethod;
+import io.datafx.controller.flow.action.ActionTrigger;
 import io.datafx.controller.flow.action.LinkAction;
+import io.datafx.controller.flow.context.ActionHandler;
+import io.datafx.controller.flow.context.FlowActionHandler;
+import io.datafx.controller.util.VetoException;
 import javafx.beans.binding.Bindings;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Pos;
+import javafx.geometry.Side;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Control;
 import javafx.scene.control.Label;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.Spinner;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TitledPane;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 import javafx.stage.FileChooser;
 
 /**
@@ -43,6 +62,9 @@ import javafx.stage.FileChooser;
 @ViewController(value="wizard1.fxml", title = "Wizard: Step 1")
 public class Wizard1Controller extends AbstractWizardController {
 
+	@FXML
+	private BorderPane rootBorderPane;
+	
 	@FXML
 	private VBox selectionCycleContainers;
 	
@@ -77,8 +99,16 @@ public class Wizard1Controller extends AbstractWizardController {
 	private Spinner<Integer> randomizedRegionSizeSpinner;
 	
     @FXML
-    @LinkAction(Wizard2Controller.class)
+    @ActionTrigger("validateData") //Calls method with corresponding @ActionMethod
     private Button nextButton;
+    
+    private NotificationPane notificationPane;
+    
+    /**
+     * Proides access to DataFX's flow action handler
+     */
+    @ActionHandler
+    protected FlowActionHandler actionHandler;
     
     /**
      * Validation Support to ensure correct user input
@@ -87,7 +117,7 @@ public class Wizard1Controller extends AbstractWizardController {
     
     @PostConstruct
     public void init() {
-    	
+    
     	// Bind the data to the content
     	primer5TextField.textProperty().bindBidirectional(getDataModel().getPrimer5());
     	primer3TextField.textProperty().bindBidirectional(getDataModel().getPrimer3());
@@ -123,8 +153,8 @@ public class Wizard1Controller extends AbstractWizardController {
     	}
     	
     	// Primers must be all DNA and at least for the 5' end, it must be present
-		validationSupport.registerValidator(primer5TextField, true, Validator.combine(ControlFXValidators.DNAStringValidator, Validator.createEmptyValidator("At least the 5' primer must be specified")) );
-		validationSupport.registerValidator(primer3TextField, true, ControlFXValidators.DNAStringOrEmptyValidator);
+		validationSupport.registerValidator(primer5TextField, true, Validator.combine(ControlFXValidatorFactory.DNAStringValidator, Validator.createEmptyValidator("At least the 5' primer must be specified")) );
+		validationSupport.registerValidator(primer3TextField, true, ControlFXValidatorFactory.DNAStringOrEmptyValidator);
 		
 		// Add some additional contraints to the fields
 		primer5TextField.textProperty().addListener((ov, oldValue, newValue) -> { primer5TextField.setText(newValue.toUpperCase()); });
@@ -146,6 +176,45 @@ public class Wizard1Controller extends AbstractWizardController {
         nextButton.disableProperty().bind(validationSupport.invalidProperty()); 
     }
     
+    
+    private Node createDecoratorNode(Color color) {
+    	Rectangle d = new Rectangle(7, 7);
+        d.setFill(color);
+        return d;
+    }
+    
+    /**
+     * Makes sure that all data fields are correct and valid
+     */
+    @ActionMethod("validateData")
+    public void validateData() {
+    	
+    	// Add some CSS for the validator
+    	rootBorderPane.getScene().getStylesheets().add(this.getClass().getResource("/gui/misc/decorations.css").toExternalForm());
+    	
+    	//First the trivial things
+    	Decorator.addDecoration(primer5TextField, new StyleClassDecoration("warning"));
+
+    	validationSupport.registerValidator(primer5TextField, ControlFXValidatorFactory.AllwaysWrongValidator("testttttttda d ass"));
+    	validationSupport.errorDecorationEnabledProperty().set(true);
+    	
+//    	write a function which does the following
+//    	1) sets validationSupport for a node (passed as paramter) with error message
+//		2) sets a handler which removes that valididator from the validationSupport when the node is clicked
+//
+//    	
+    	
+//    	try {
+//			actionHandler.navigate(Wizard2Controller.class);
+//		} catch (VetoException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		} catch (FlowException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+    	
+    }
     
     /**
      * Adds a new instance of the Selection Cycle Inputs to the VBOX
