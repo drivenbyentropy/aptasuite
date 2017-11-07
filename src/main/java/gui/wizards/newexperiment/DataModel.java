@@ -10,10 +10,12 @@ import io.datafx.controller.injection.scopes.FlowScoped;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import javafx.scene.control.TitledPane;
+import utilities.Configuration;
 
 /**
  * @author Jan Hoinka
@@ -43,15 +45,24 @@ public class DataModel {
 	
 	private StringProperty projectPath = new SimpleStringProperty();
 	
+	private StringProperty fileFormat = new SimpleStringProperty("FASTQ");
+	
+	private SimpleIntegerProperty mapDBAptamerPoolBloomFilterCapacity= new SimpleIntegerProperty((Integer) Configuration.getDefaults().get("MapDBAptamerPool.bloomFilterCapacity"));
+
+	private SimpleDoubleProperty mapDBAptamerPoolBloomFilterCollisionProbability = new SimpleDoubleProperty((Double) Configuration.getDefaults().get("MapDBAptamerPool.bloomFilterCollisionProbability"));
+	
+	private SimpleIntegerProperty mapDBAptamerPoolMaxTreeMapCapacity =  new SimpleIntegerProperty((Integer) Configuration.getDefaults().get("MapDBAptamerPool.maxTreeMapCapacity"));
+	
+	private SimpleDoubleProperty mapDBSelectionCycleBloomFilterCollisionProbability = new SimpleDoubleProperty((Double) Configuration.getDefaults().get("MapDBSelectionCycle.bloomFilterCollisionProbability"));
+	
+	private ObjectProperty<Integer> performanceMaxNumberOfCores  = new SimpleObjectProperty<Integer>(50);
+	
+	
 	/**
 	 * Container storing all instances of the selectionCycleDetails for later access
 	 */
-	private List<SelectionCycleDetailsController> selectionCycleDetailControllers = new ArrayList<SelectionCycleDetailsController>();
+	private List<SelectionCycleDataModel> selectionCycleDataModels = new ArrayList<SelectionCycleDataModel>();
 	
-	/**
-	 * We also need to store the panes 
-	 */
-	private List<TitledPane> selectionCycleDetailPanes = new ArrayList<TitledPane>();
 	
 	/**
 	 * @return the experimentName
@@ -112,15 +123,8 @@ public class DataModel {
 	/**
 	 * @return the selectionCycleDetailControllers
 	 */
-	public List<SelectionCycleDetailsController> getSelectionCycleDetailControllers() {
-		return selectionCycleDetailControllers;
-	}
-
-	/**
-	 * @return the selectionCycleDetailPanes
-	 */
-	public List<TitledPane> getSelectionCycleDetailPanes() {
-		return selectionCycleDetailPanes;
+	public List<SelectionCycleDataModel> getSelectionCycleDataModels() {
+		return selectionCycleDataModels;
 	}
 
 	/**
@@ -192,7 +196,55 @@ public class DataModel {
 	public void setProjectPath(StringProperty projectPath) {
 		this.projectPath = projectPath;
 	}
-	
+
+	/**
+	 * @return the fileFormat
+	 */
+	public StringProperty getFileFormat() {
+		return fileFormat;
+	}
+
+	/**
+	 * @param fileFormat the fileFormat to set
+	 */
+	public void setFileFormat(StringProperty fileFormat) {
+		this.fileFormat = fileFormat;
+	}
+
+	/**
+	 * @return the mapDBAptamerPoolBloomFilterCapacityTextField
+	 */
+	public SimpleIntegerProperty getMapDBAptamerPoolBloomFilterCapacity() {
+		return mapDBAptamerPoolBloomFilterCapacity;
+	}
+
+	/**
+	 * @return the mapDBAptamerPoolBloomFilterCollisionProbabilityTextField
+	 */
+	public SimpleDoubleProperty getMapDBAptamerPoolBloomFilterCollisionProbability() {
+		return mapDBAptamerPoolBloomFilterCollisionProbability;
+	}
+
+	/**
+	 * @return the mapDBAptamerPoolMaxTreeMapCapacityTextField
+	 */
+	public SimpleIntegerProperty  getMapDBAptamerPoolMaxTreeMapCapacity() {
+		return mapDBAptamerPoolMaxTreeMapCapacity;
+	}
+
+	/**
+	 * @return the mapDBStructurePoolBloomFilterCollisionProbabilityTextField
+	 */
+	public SimpleDoubleProperty getMapDBSelectionCycleBloomFilterCollisionProbability() {
+		return mapDBSelectionCycleBloomFilterCollisionProbability;
+	}
+
+	/**
+	 * @return the performanceMaxNumberOfCoresSpinner
+	 */
+	public ObjectProperty<Integer> getPerformanceMaxNumberOfCores() {
+		return performanceMaxNumberOfCores;
+	}
 	
 	
 }

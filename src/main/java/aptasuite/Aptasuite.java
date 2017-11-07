@@ -18,7 +18,16 @@ import utilities.CLIOptions;
  *         the graphical user interface.
  */
 public class Aptasuite {
-
+	
+	// Turn off debugging logs of third party libraies
+	//TODO: make this work...
+	static {
+	      System.setProperty("org.apache.commons.logging.Log",
+	                         "org.apache.commons.logging.impl.NoOpLog");
+	      System.setProperty("org.apache.commons.beanutils.level" , "SEVERE");
+	   }
+	
+	
 	public static void main(String[] args) {
 
 		// case command line interface
@@ -56,10 +65,10 @@ public class Aptasuite {
 		// case gui
 		else {
 //			// TODO: implement the gui handling
-//			RootClass mainWindow = new RootClass();
-//			mainWindow.lauchMainWindow();
-//			System.out.println("Exiting");
-//			System.exit(0);
+			RootClass mainWindow = new RootClass();
+			mainWindow.lauchMainWindow();
+			System.out.println("Exiting");
+			System.exit(0);
 		}
 
 		

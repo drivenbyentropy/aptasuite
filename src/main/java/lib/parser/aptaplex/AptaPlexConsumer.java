@@ -561,7 +561,7 @@ public class AptaPlexConsumer implements Runnable {
 		
 		// If both barcodes are present, the identified cycles have to coincide
 		if (barcodes5.size() != 0 && barcodes3.size() != 0){
-			if (barcode_index3 == barcode_index5){
+			if (barcode_index3 == barcode_index5 && barcode_index5 != null){
 				return cycles.get(barcode_index5);
 			}
 		}

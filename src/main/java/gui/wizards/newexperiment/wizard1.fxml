@@ -91,7 +91,7 @@
             </Label>
             <HBox alignment="CENTER_LEFT">
                <children>
-                  <Button fx:id="addSelectionCycleButtonAction" minWidth="-Infinity" mnemonicParsing="false" onAction="#addSelectionCycleButtonAction" text="Add Selection Cycle">
+                  <Button fx:id="addSelectionCycleButton" minWidth="-Infinity" mnemonicParsing="false" onAction="#addSelectionCycleButtonAction" text="Add Selection Cycle">
                      <font>
                         <Font size="12.0" />
                      </font>
@@ -107,7 +107,7 @@
                         <Insets right="10.0" />
                      </HBox.margin>
                   </Label>
-                  <TextField fx:id="forwardReadsFileTextField" disable="true" editable="false" HBox.hgrow="ALWAYS">
+                  <TextField fx:id="forwardReadsFileTextField" editable="false" HBox.hgrow="ALWAYS">
                      <HBox.margin>
                         <Insets right="5.0" />
                      </HBox.margin>
@@ -128,7 +128,7 @@
                         <Insets right="10.0" />
                      </HBox.margin>
                   </Label>
-                  <TextField fx:id="reverseReadsFileTextField" disable="true" editable="false" HBox.hgrow="ALWAYS">
+                  <TextField fx:id="reverseReadsFileTextField" editable="false" HBox.hgrow="ALWAYS">
                      <HBox.margin>
                         <Insets right="5.0" />
                      </HBox.margin>

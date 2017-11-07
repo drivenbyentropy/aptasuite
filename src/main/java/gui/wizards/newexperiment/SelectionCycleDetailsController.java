@@ -6,6 +6,7 @@ package gui.wizards.newexperiment;
 import javafx.beans.binding.Bindings;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Spinner;
 import javafx.scene.control.TextField;
@@ -42,7 +43,10 @@ public class SelectionCycleDetailsController {
 	private TextField reverseReadsFileTextField;
 	
 	@FXML
-	private TextField barcodeTextField;
+	private TextField barcode5TextField;
+	
+	@FXML
+	private TextField barcode3TextField;
 	
 	@FXML
 	private CheckBox isControlCycleCheckBox;
@@ -58,6 +62,9 @@ public class SelectionCycleDetailsController {
 	
 	@FXML 
 	private HBox barcodeHBox;
+	
+	@FXML
+	private Button chooseForwardReadFileButton;
 	
 	/**
 	 * The container holding the data for this selection cycle
@@ -78,24 +85,28 @@ public class SelectionCycleDetailsController {
      * Validation Support to ensure correct user input
      */
     private ValidationSupport validationSupport = new ValidationSupport();
-	
+
+    
     /**
      * Sets default parameters. Must be called after constructor and after setting the data models
      */
-    public void init() {
+    public void init(boolean isNewCycle) {
 		
 		// Set up the spinner, we will set the initial values according 
 		// to SelectionCycles already defined. set the round number to previous plus 1
-		if (!dataModel.getSelectionCycleDetailControllers().isEmpty()) {
+		if (!dataModel.getSelectionCycleDataModels().isEmpty() && isNewCycle) {
 
-			roundNumberSpinner.getValueFactory().setValue(
-					dataModel.getSelectionCycleDetailControllers()
-					.get(dataModel.getSelectionCycleDetailControllers().size()-1)
-					.getSelectionCycleDataModel()
-					.getRoundNumber().get()+1
-					);
+			selectionCycleDataModel.getRoundNumber().set(dataModel.getSelectionCycleDataModels()
+					.get(dataModel.getSelectionCycleDataModels().size()-1)
+					.getRoundNumber().get()+1);
 			
 		}
+		else {
+			
+			selectionCycleDataModel.getRoundNumber().set(0);
+			
+		}
+			
 		
 		// Bind the title to a combination of round number and round name
 		//containerTitledPane.textProperty().bind(Bindings.concat(this.roundNameTextField.textProperty(), " (Cycle # ",this.roundNumberSpinner.getValueFactory().valueProperty(), ")"));
@@ -124,18 +135,17 @@ public class SelectionCycleDetailsController {
 		
 		
 		// Bind the content to the data model
-		selectionCycleDataModel.getRoundNumber().bind(roundNumberSpinner.getValueFactory().valueProperty());
-		selectionCycleDataModel.getRoundName().bind(roundNameTextField.textProperty());
+		roundNumberSpinner.getValueFactory().valueProperty().bindBidirectional(selectionCycleDataModel.getRoundNumber());
+		roundNameTextField.textProperty().bindBidirectional(selectionCycleDataModel.getRoundName());
 		
-		selectionCycleDataModel.getForwardReadsFile().bind(forwardReadsFileTextField.textProperty());
-		selectionCycleDataModel.getReverseReadsFile().bind(reverseReadsFileTextField.textProperty());
+		forwardReadsFileTextField.textProperty().bindBidirectional(selectionCycleDataModel.getForwardReadsFile());
+		reverseReadsFileTextField.textProperty().bindBidirectional(selectionCycleDataModel.getReverseReadsFile());
 		
-		selectionCycleDataModel.getBarcode().bind(roundNameTextField.textProperty());
-		selectionCycleDataModel.getRoundName().bind(roundNameTextField.textProperty());
-		selectionCycleDataModel.getRoundName().bind(roundNameTextField.textProperty());
+		barcode5TextField.textProperty().bindBidirectional(selectionCycleDataModel.getBarcode5());
+		barcode3TextField.textProperty().bindBidirectional(selectionCycleDataModel.getBarcode3());
 		
-		selectionCycleDataModel.getIsControlCycle().bind(this.isControlCycleCheckBox.selectedProperty());
-		selectionCycleDataModel.getIsCounterSelectionCycle().bind(this.isCounterSelectionCycleCheckBox.selectedProperty());
+		isControlCycleCheckBox.selectedProperty().bindBidirectional(selectionCycleDataModel.getIsControlCycle());
+		isCounterSelectionCycleCheckBox.selectedProperty().bindBidirectional(selectionCycleDataModel.getIsCounterSelectionCycle());
 	
 		// Add validation to the field to make sure we have correct user input
 		validationSupport.registerValidator(roundNameTextField, Validator.createEmptyValidator("The round name cannot be empty"));
@@ -148,9 +158,16 @@ public class SelectionCycleDetailsController {
 		
 		// Barcode
 		if (getDataModel().getIsDemultiplexed().not().get()) {
-			validationSupport.registerValidator(barcodeTextField, ControlFXValidatorFactory.DNAStringValidator);
+			validationSupport.registerValidator(barcode5TextField, ControlFXValidatorFactory.DNAStringValidator);
 		}
-		barcodeTextField.textProperty().addListener((ov, oldValue, newValue) -> { barcodeTextField.setText(newValue.toUpperCase());	});
+		barcode5TextField.textProperty().addListener((ov, oldValue, newValue) -> { barcode5TextField.setText(newValue.toUpperCase()); });
+		
+		if (getDataModel().getIsDemultiplexed().not().get()) {
+			validationSupport.registerValidator(barcode3TextField, false, ControlFXValidatorFactory.DNAStringValidator);
+		}
+		barcode3TextField.textProperty().addListener((ov, oldValue, newValue) -> { barcode3TextField.setText(newValue.toUpperCase()); });
+		
+		
 		
     }
 
@@ -160,7 +177,7 @@ public class SelectionCycleDetailsController {
     @FXML
     private void deleteCycleActionButton() {
     	
-    	parent.removeSelectionCycle(this);
+    	parent.removeSelectionCycle(getSelectionCycleDataModel());
     	
     }
     
@@ -255,6 +272,98 @@ public class SelectionCycleDetailsController {
 	 */
 	public void setParent(Wizard1Controller parent) {
 		this.parent = parent;
+	}
+
+	/**
+	 * @return the roundNameTextField
+	 */
+	public TextField getRoundNameTextField() {
+		return roundNameTextField;
+	}
+
+	/**
+	 * @return the containerTitledPane
+	 */
+	public TitledPane getContainerTitledPane() {
+		return containerTitledPane;
+	}
+
+	/**
+	 * @return the forwardReadsFileTextField
+	 */
+	public TextField getForwardReadsFileTextField() {
+		return forwardReadsFileTextField;
+	}
+
+	/**
+	 * @return the reverseReadsFileTextField
+	 */
+	public TextField getReverseReadsFileTextField() {
+		return reverseReadsFileTextField;
+	}
+
+	/**
+	 * @return the barcodeTextField
+	 */
+	public TextField getBarcode5TextField() {
+		return barcode5TextField;
+	}
+	
+	/**
+	 * @return the barcodeTextField
+	 */
+	public TextField getBarcode3TextField() {
+		return barcode3TextField;
+	}
+
+
+	/**
+	 * @return the isControlCycleCheckBox
+	 */
+	public CheckBox getIsControlCycleCheckBox() {
+		return isControlCycleCheckBox;
+	}
+
+	/**
+	 * @return the isCounterSelectionCycleCheckBox
+	 */
+	public CheckBox getIsCounterSelectionCycleCheckBox() {
+		return isCounterSelectionCycleCheckBox;
+	}
+
+	/**
+	 * @return the forwardReadFileChooserHBox
+	 */
+	public HBox getForwardReadFileChooserHBox() {
+		return forwardReadFileChooserHBox;
+	}
+
+	/**
+	 * @return the reverseReadFileChooserHBox
+	 */
+	public HBox getReverseReadFileChooserHBox() {
+		return reverseReadFileChooserHBox;
+	}
+
+	/**
+	 * @return the barcodeHBox
+	 */
+	public HBox getBarcodeHBox() {
+		return barcodeHBox;
+	}
+
+	/**
+	 * @return the validationSupport
+	 */
+	public ValidationSupport getValidationSupport() {
+		return validationSupport;
+	}
+
+	/**
+	 * @return the chooseForwardReadFileButton
+	 */
+	public Button getChooseForwardReadFileButton() {
+		return chooseForwardReadFileButton;
 	}
 	
 }

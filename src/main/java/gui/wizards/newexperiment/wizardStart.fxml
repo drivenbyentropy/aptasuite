@@ -2,6 +2,7 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.RadioButton?>
 <?import javafx.scene.control.TextArea?>
@@ -9,6 +10,7 @@
 <?import javafx.scene.control.ToggleGroup?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
@@ -30,9 +32,6 @@
                </font>
             </Label>
             <Label text="General Information">
-               <padding>
-                  <Insets top="20.0" />
-               </padding>
                <font>
                   <Font name="System Bold" size="14.0" />
                </font>
@@ -42,7 +41,7 @@
                   <Font size="12.0" />
                </font>
             </Label>
-            <TextField fx:id="newExperimentName" promptText="e.g. MyExperiment">
+            <TextField fx:id="newExperimentName" promptText="e.g. MyExperiment (avoid spaces and special characters)">
                <font>
                   <Font size="12.0" />
                </font>
@@ -59,13 +58,13 @@
             </TextArea>
             <Label text="Project Location">
                <padding>
-                  <Insets top="20.0" />
+                  <Insets top="10.0" />
                </padding>
                <font>
                   <Font name="System Bold" size="14.0" />
                </font>
             </Label>
-            <Label minHeight="-Infinity" text="Please select a folder which will be used to store any files associated with this experiment. If you choose an existing folder with content from a previous experiment, the data will be overwritten." wrapText="true">
+            <Label minHeight="-Infinity" text="Please select a folder which will be used to store any files associated with this experiment. A new folder with the experiment name will be created in this folder into which all files related to AptaSUITE are stored. If a folder with the experiment name already exists in the project path, it will be overwritten." wrapText="true">
                <font>
                   <Font size="12.0" />
                </font>
@@ -80,7 +79,7 @@
                         <Insets right="10.0" />
                      </HBox.margin>
                   </Label>
-                  <TextField fx:id="projectPathTextField" disable="true" editable="false" HBox.hgrow="ALWAYS">
+                  <TextField fx:id="projectPathTextField" editable="false" HBox.hgrow="ALWAYS">
                      <HBox.margin>
                         <Insets right="10.0" />
                      </HBox.margin>
@@ -97,7 +96,7 @@
             </HBox>
             <Label text="Sequencing Information">
                <padding>
-                  <Insets top="20.0" />
+                  <Insets top="10.0" />
                </padding>
                <font>
                   <Font name="System Bold" size="14.0" />
@@ -136,7 +135,7 @@
                   <Insets top="15.0" />
                </padding>
             </Label>
-            <HBox>
+            <HBox alignment="CENTER_LEFT">
                <children>
                   <RadioButton fx:id="newExperimentIsSingleEnd" mnemonicParsing="false" text="Single End">
                      <font>
@@ -154,12 +153,25 @@
                         <Font size="12.0" />
                      </font>
                   </RadioButton>
+                  <Region HBox.hgrow="ALWAYS" />
+                  <Label text="File Format:">
+                     <font>
+                        <Font size="12.0" />
+                     </font>
+                     <HBox.margin>
+                        <Insets right="10.0" />
+                     </HBox.margin>
+                  </Label>
+                  <ComboBox fx:id="fileFormatComboBox" prefWidth="150.0" />
                </children>
             </HBox>
          </children>
          <BorderPane.margin>
             <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
          </BorderPane.margin>
+         <padding>
+            <Insets top="10.0" />
+         </padding>
       </VBox>
       </center>
 </BorderPane>

@@ -31,9 +31,9 @@ public class SelectionCycleDataModel {
 	
 	private StringProperty reverseReadsFile = new SimpleStringProperty();
 	
-	private StringProperty barcode = new SimpleStringProperty();
+	private StringProperty barcode5 = new SimpleStringProperty();
 	
-
+	private StringProperty barcode3 = new SimpleStringProperty();
 
 	/**
 	 * @return the roundNumber
@@ -122,15 +122,30 @@ public class SelectionCycleDataModel {
 	/**
 	 * @return the barcode
 	 */
-	public StringProperty getBarcode() {
-		return barcode;
+	public StringProperty getBarcode5() {
+		return barcode5;
 	}
 
 	/**
 	 * @param barcode the barcode to set
 	 */
-	public void setBarcode(StringProperty barcode) {
-		this.barcode = barcode;
+	public void setBarcode5(StringProperty barcode5) {
+		this.barcode5 = barcode5;
+	}
+	
+
+	/**
+	 * @return the barcode
+	 */
+	public StringProperty getBarcode3() {
+		return barcode3;
+	}
+
+	/**
+	 * @param barcode the barcode to set
+	 */
+	public void setBarcode3(StringProperty barcode3) {
+		this.barcode3 = barcode3;
 	}
 
 }

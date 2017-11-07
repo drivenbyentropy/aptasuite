@@ -22,6 +22,6 @@ import javafx.scene.control.Button;
 public class Wizard2Controller extends AbstractWizardController {
 
     @FXML
-    @LinkAction(Wizard3Controller.class)
+    @LinkAction(WizardAdvancedOptionsController.class)
     private Button nextButton;
 }

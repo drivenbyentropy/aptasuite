@@ -3,7 +3,7 @@
 	<id>package</id>
 	<formats>
 		<format>dir</format>
-		<format>zip</format>
+		<!-- <format>zip</format> -->
 	</formats>
 	<includeBaseDirectory>true</includeBaseDirectory>
 	<fileSets>

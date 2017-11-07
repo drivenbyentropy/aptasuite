@@ -16,7 +16,10 @@
               <menus>
                 <Menu mnemonicParsing="false" text="File">
                   <items>
-                        <MenuItem mnemonicParsing="false" onAction="#fileNewExperimentButtonAction" text="New Experiment" />
+                        <MenuItem mnemonicParsing="false" onAction="#fileNewExperimentButtonAction" text="New Experiment">
+                           <accelerator>
+                              <KeyCodeCombination alt="UP" code="N" control="ANY" meta="UP" shift="UP" shortcut="UP" />
+                           </accelerator></MenuItem>
                         <MenuItem mnemonicParsing="false" onAction="#fileOpenExperimentButtonAction" text="Open Experiment">
                            <accelerator>
                               <KeyCodeCombination alt="UP" code="O" control="ANY" meta="UP" shift="UP" shortcut="UP" />

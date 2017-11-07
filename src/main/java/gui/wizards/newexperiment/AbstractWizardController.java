@@ -41,7 +41,6 @@ public class AbstractWizardController {
 	private Button backButton;
 
 	@FXML
-	@LinkAction(WizardDoneController.class)
 	private Button finishButton;
 
 	public Button getBackButton() {
