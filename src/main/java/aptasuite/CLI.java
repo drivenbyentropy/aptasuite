@@ -1081,14 +1081,15 @@ public class CLI {
 							cycles_to_export.add(sc);
 						}
 						
-						// Now run the export
-						for (SelectionCycle sc : cycles_to_export){
-							Path cycleexportpath = Paths.get(exportPath.toString(), "clusters_" + sc.getName() + "." + extension);
-							AptaLogger.log(Level.INFO, this.getClass(), "Exporting clusters of selection cycle " + sc.getName() + " to file " + cycleexportpath.toString());
-							export.Clusters(sc, experiment.getClusterContainer(), cycleexportpath );
-						}
-						
 					}
+					
+					// Now run the export
+					for (SelectionCycle sc : cycles_to_export){
+						Path cycleexportpath = Paths.get(exportPath.toString(), "clusters_" + sc.getName() + "." + extension);
+						AptaLogger.log(Level.INFO, this.getClass(), "Exporting clusters of selection cycle " + sc.getName() + " to file " + cycleexportpath.toString());
+						export.Clusters(sc, experiment.getClusterContainer(), cycleexportpath );
+					}
+					
 					break;
 					
 				case "structures":
