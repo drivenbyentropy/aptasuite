@@ -1039,14 +1039,12 @@ public class CLI {
 							
 							cycles_to_export.add(sc);
 						}
-						
-						// Now run the export
-						for (SelectionCycle sc : cycles_to_export){
-							Path cycleexportpath = Paths.get(exportPath.toString(), sc.getName() + "." + extension);
-							AptaLogger.log(Level.INFO, this.getClass(), "Exporting selection cycle " + sc.getName() + " to file " + cycleexportpath.toString());
-							export.Cycle(sc, cycleexportpath );
-						}
-						
+					}
+					// Now run the export
+					for (SelectionCycle sc : cycles_to_export){
+						Path cycleexportpath = Paths.get(exportPath.toString(), sc.getName() + "." + extension);
+						AptaLogger.log(Level.INFO, this.getClass(), "Exporting selection cycle " + sc.getName() + " to file " + cycleexportpath.toString());
+						export.Cycle(sc, cycleexportpath );
 					}
 					break;
 					

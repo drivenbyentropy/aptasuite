@@ -106,7 +106,7 @@
                         <TextField fx:id="mapDBAptamerPoolBloomFilterCollisionProbabilityTextField" GridPane.columnIndex="1" GridPane.rowIndex="2" />
                         <TextField fx:id="mapDBAptamerPoolMaxTreeMapCapacityTextField" GridPane.columnIndex="1" GridPane.rowIndex="3" />
                         <TextField fx:id="mapDBSelectionCycleBloomFilterCollisionProbabilityTextField" GridPane.columnIndex="1" GridPane.rowIndex="4" />
-                        <Spinner fx:id="performanceMaxNumberOfCoresSpinner" GridPane.columnIndex="1" GridPane.rowIndex="6" />
+                        <Spinner fx:id="performanceMaxNumberOfCoresSpinner" max="1000" min="1" GridPane.columnIndex="1" GridPane.rowIndex="6" />
                      </children>
                      <VBox.margin>
                         <Insets />

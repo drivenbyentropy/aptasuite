@@ -78,6 +78,8 @@ public class WizardAdvancedOptionsController extends AbstractWizardController {
     	mapDBAptamerPoolMaxTreeMapCapacityTextField.textProperty().bindBidirectional(getDataModel().getMapDBAptamerPoolMaxTreeMapCapacity(), new NumberStringConverter());
     	mapDBSelectionCycleBloomFilterCollisionProbabilityTextField.textProperty().bindBidirectional(getDataModel().getMapDBSelectionCycleBloomFilterCollisionProbability(), new NumberStringConverter());
     	
+    	performanceMaxNumberOfCoresSpinner.getValueFactory().valueProperty().bindBidirectional(getDataModel().getPerformanceMaxNumberOfCores());
+    	
     }
     
     

@@ -102,7 +102,7 @@ public class Wizard1Controller extends AbstractWizardController {
     private List<SelectionCycleDetailsController> selectionCycleDetailsControllers = new ArrayList<SelectionCycleDetailsController>();
     
     /**
-     * Provdes access to DataFX's flow action handler
+     * Provides access to DataFX's flow action handler
      */
     @ActionHandler
     protected FlowActionHandler actionHandler;
