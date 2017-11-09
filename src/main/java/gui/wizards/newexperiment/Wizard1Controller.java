@@ -334,29 +334,32 @@ public class Wizard1Controller extends AbstractWizardController {
     		
     	}
     	
-    	// Make sure that if the user specified a 3' primer barcode once, they specify it everywhere
-    	Map<Boolean, Long> num_true = hasBarcode3.stream().collect(Collectors.groupingBy(e -> e, Collectors.counting()));
-    	
-    	if (num_true.get(true) != 0 || num_true.get(true) != this.selectionCycleDetailsControllers.size()) {
-    	
-	    	for (int x=0; x<this.selectionCycleDetailsControllers.size(); x++) {
-	    		
-	    		if (!hasBarcode3.get(x)) {
-	    			
-	    			ControlFXValidatorFactory.setTemporaryValidation(
-	    					selectionCycleDetailsControllers.get(x).getBarcode3TextField(),
-	            			ControlFXValidatorFactory.AllwaysWrongValidator("Please specify the 3' barcode/index for this round"), 
-	            			this.validationSupport, 
-	            			Validator.createEmptyValidator("The 3' barcode/index for this round must be specified"),
-	            			false
-	            			);
-				    			
-	    			is_valid = false;
-	    			
-	    		}
-	    		
+    	if(getDataModel().getIsDemultiplexed().not().get()) {
+    		
+	    	// Make sure that if the user specified a 3' primer barcode once, they specify it everywhere
+	    	Map<Boolean, Long> num_true = hasBarcode3.stream().collect(Collectors.groupingBy(e -> e, Collectors.counting()));
+	    	
+	    	if (num_true.get(true) != 0 || num_true.get(true) != this.selectionCycleDetailsControllers.size()) {
+	    	
+		    	for (int x=0; x<this.selectionCycleDetailsControllers.size(); x++) {
+		    		
+		    		if (!hasBarcode3.get(x)) {
+		    			
+		    			ControlFXValidatorFactory.setTemporaryValidation(
+		    					selectionCycleDetailsControllers.get(x).getBarcode3TextField(),
+		            			ControlFXValidatorFactory.AllwaysWrongValidator("Please specify the 3' barcode/index for this round"), 
+		            			this.validationSupport, 
+		            			Validator.createEmptyValidator("The 3' barcode/index for this round must be specified"),
+		            			false
+		            			);
+					    			
+		    			is_valid = false;
+		    			
+		    		}
+		    		
+		    	}
+	    	
 	    	}
-    	
     	}
     	
     	
@@ -458,6 +461,10 @@ public class Wizard1Controller extends AbstractWizardController {
     		List<String> names = new ArrayList<String>();
     		List<String> forwardFiles = new ArrayList<String>();
     		List<String> reverseFiles = new ArrayList<String>();
+    		
+    		List<String> barcodes5 = new ArrayList<String>();
+    		List<String> barcodes3 = new ArrayList<String>();
+    		
     		List<Integer> round = new ArrayList<Integer>();
     		List<Boolean> isControl = new ArrayList<Boolean>();
     		List<Boolean> isCounter = new ArrayList<Boolean>();
@@ -477,10 +484,19 @@ public class Wizard1Controller extends AbstractWizardController {
     				}
     				
     			}
+    			else {
+    				
+    				barcodes5.add(selection_cycle_model.getBarcode5().get());
+    				if (selection_cycle_model.getBarcode3().isEmpty().not().get()) {
+    					
+    					barcodes3.add(selection_cycle_model.getBarcode3().get());
+    					
+    				}
+    				
+    			}
     			
     			isControl.add(selection_cycle_model.getIsControlCycle().get());
     			isCounter.add(selection_cycle_model.getIsCounterSelectionCycle().get());
-    			
     			
     		}
     		

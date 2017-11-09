@@ -127,10 +127,15 @@ public class Configuration {
 		defaults.put("Export.IncludePrimerRegions", true); // If false, the 5' and 3' primers will not be exported
 		defaults.put("Export.MinimalClusterSize", 1); // The smallest amount of members a cluster should contain in
 														// order to be exported
+		defaults.put("Export.ClusterFilterCriteria", "ClusterSize"); 	// [ClusterDiversity, ClusterSize] Defines by which criteria Export.MinimalClusterSize should filter clusters. 
+															// ClusterDiversity measures the total number of unique sequences in a cluster.
+															// Cluster Size measures the sum of aptamer cardinalities over all cluster members. 
 		defaults.put("Export.PoolCardinalityFormat", "frequencies"); // [counts, frequencies] The format in which the
 																		// cardinalities of the aptamers should be
 																		// exported for in each selection cycle.
-
+		
+		
+		
 		// Performance Options
 		defaults.put("Performance.maxNumberOfCores", 30); // if larger than available, min of both is taken
 

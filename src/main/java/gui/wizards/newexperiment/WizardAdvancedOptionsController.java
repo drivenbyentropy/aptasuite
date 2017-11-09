@@ -3,11 +3,13 @@ package gui.wizards.newexperiment;
 import java.util.logging.Level;
 
 import javax.annotation.PostConstruct;
+import javax.validation.Validator;
+
+import org.controlsfx.validation.ValidationSupport;
 
 import io.datafx.controller.ViewController;
 import io.datafx.controller.flow.action.ActionMethod;
 import io.datafx.controller.flow.action.ActionTrigger;
-import io.datafx.controller.flow.action.LinkAction;
 import io.datafx.controller.flow.context.ActionHandler;
 import io.datafx.controller.flow.context.FlowActionHandler;
 import javafx.fxml.FXML;
@@ -64,6 +66,11 @@ public class WizardAdvancedOptionsController extends AbstractWizardController {
     @ActionHandler
     protected FlowActionHandler actionHandler;
     
+    /**
+     * Validation Support to ensure correct user input
+     */
+    private ValidationSupport validationSupport = new ValidationSupport();
+    
     @PostConstruct
     public void init() {
     	
@@ -77,9 +84,8 @@ public class WizardAdvancedOptionsController extends AbstractWizardController {
     	mapDBAptamerPoolBloomFilterCollisionProbabilityTextField.textProperty().bindBidirectional(getDataModel().getMapDBAptamerPoolBloomFilterCollisionProbability(), new NumberStringConverter());
     	mapDBAptamerPoolMaxTreeMapCapacityTextField.textProperty().bindBidirectional(getDataModel().getMapDBAptamerPoolMaxTreeMapCapacity(), new NumberStringConverter());
     	mapDBSelectionCycleBloomFilterCollisionProbabilityTextField.textProperty().bindBidirectional(getDataModel().getMapDBSelectionCycleBloomFilterCollisionProbability(), new NumberStringConverter());
-    	
     	performanceMaxNumberOfCoresSpinner.getValueFactory().valueProperty().bindBidirectional(getDataModel().getPerformanceMaxNumberOfCores());
-    	
+
     }
     
     
