@@ -11,6 +11,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -30,11 +31,14 @@ import javafx.beans.binding.Bindings;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.Spinner;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TitledPane;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
@@ -398,63 +402,89 @@ public class Wizard1Controller extends AbstractWizardController {
     		String safe_experiment_name = getDataModel().getExperimentName().get().replaceAll("[^a-zA-Z0-9]+", "").trim();
         	Path experiment_path = Paths.get(getDataModel().getProjectPath().get(), safe_experiment_name);
     		
-        	try {
+        	// Attempt to delete the folder if it exists. Note that this will fail on certain OSes if
+        	// a file or folder is being accessed by a third party. In that case, the user must delete 
+        	// the folder manually.
+        	boolean success = false;
+        	while (!success) {
         		
-	        	if ( Files.exists(experiment_path) ) {
+	        	try {
 	        		
-//	        			Files.walk - return all files/directories below rootPath including
-//  	      			.sorted - sort the list in reverse order, so the directory itself comes after the including subdirectories and files
-//      	  			.map - map the Path to File
-//        				.forEach - calls the .delete() method on every File object
-						Files.walk(experiment_path, FileVisitOption.FOLLOW_LINKS)
-						.sorted(Comparator.reverseOrder())
-						.map(Path::toFile)
-						.forEach(File::delete);
+		        	if ( Files.exists(experiment_path) ) {
+		        		
+		        		deleteFolderContent(experiment_path.toFile(),experiment_path.toFile());
+		        		
+		        	} else {
+		        		
+		        		Files.createDirectories(experiment_path);
+		        		
+		        	}
+
 	        		
-	        	}
-	        	
-        		Files.createDirectories(experiment_path);
+	        	} catch (Exception e) {
+					e.printStackTrace();
+					AptaLogger.log(Level.SEVERE, this.getClass(), e);
+					
+					//Inform the user
+					Alert alert = new Alert(AlertType.CONFIRMATION);
+		    		alert.setTitle("Error in deleting existing folder.");
+		    		alert.setHeaderText("The experiment folder " + experiment_path.toAbsolutePath() + " could not be deleted. \nPlease make sure that no third party applications are accessing the folder/files\nin that directory and click 'OK' to try again.");
+		    		alert.setContentText("Error message: " + e.toString());
+
+		    		Optional<ButtonType> result = alert.showAndWait();
+
+		    		if (result.get() == ButtonType.OK){
+			    		continue;
+		    		}
+		    		else { // Return to the previous screen
+		    			
+		    			return;
+		    			
+		    		}
+					
+				}
         		
-        	} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				AptaLogger.log(Level.SEVERE, this.getClass(), e);
-			}
+        		success = true;
+        	
+        	}
         	
     		// Write this configuration to file before going to the next screen
         	Path configuration_file = Paths.get(experiment_path.toAbsolutePath().toString(), "configuration.aptasuite");
     		utilities.Configuration.createConfiguration(configuration_file);
     		
+    		
     		// Experiment Name and Description
-    		utilities.Configuration.getParameters().addProperty("Experiment.name", getDataModel().getExperimentName().get());
-    		utilities.Configuration.getParameters().addProperty("Experiment.description", getDataModel().getExperimentDescription().get());
+    		utilities.Configuration.getParameters().setProperty("Experiment.name", getDataModel().getExperimentName().get());
+    		utilities.Configuration.getParameters().setProperty("Experiment.description", getDataModel().getExperimentDescription().get());
     		
     		// Project Path
-    		utilities.Configuration.getParameters().addProperty("Experiment.projectPath", experiment_path.toAbsolutePath().toFile());
+    		utilities.Configuration.getParameters().setProperty("Experiment.projectPath", experiment_path.toAbsolutePath().toFile());
     		
     		// Primers and RR size
-    		utilities.Configuration.getParameters().addProperty("Experiment.primer5", getDataModel().getPrimer5().get());
+    		utilities.Configuration.getParameters().setProperty("Experiment.primer5", getDataModel().getPrimer5().get());
     		if (getDataModel().getPrimer3().isEmpty().not().get()) {
     		
-    			utilities.Configuration.getParameters().addProperty("Experiment.primer3", getDataModel().getPrimer3().get());
+    			utilities.Configuration.getParameters().setProperty("Experiment.primer3", getDataModel().getPrimer3().get());
     		
     		}
     		
     		if (getDataModel().getRandomizedRegionSize().isEqualTo(0).not().get()) {
     			
-    			utilities.Configuration.getParameters().addProperty("Experiment.randomizedRegionSize", getDataModel().getRandomizedRegionSize().get());
+    			utilities.Configuration.getParameters().setProperty("Experiment.randomizedRegionSize", getDataModel().getRandomizedRegionSize().get());
     			
     		}
     		
     		// isPerFile
-    		utilities.Configuration.getParameters().addProperty("AptaplexParser.isPerFile", getDataModel().getIsDemultiplexed().get());
+    		utilities.Configuration.getParameters().setProperty("AptaplexParser.isPerFile", getDataModel().getIsDemultiplexed().get());
     		
     		// File format
     		switch ( getDataModel().getFileFormat().get()) {
     		
-    			case "FASTQ":	utilities.Configuration.getParameters().addProperty("AptaplexParser.reader", "FastqReader");
-    		
-    			case "RAW":		utilities.Configuration.getParameters().addProperty("AptaplexParser.reader", "RawReader");
+    			case "FASTQ":	utilities.Configuration.getParameters().setProperty("AptaplexParser.reader", "FastqReader");
+    							break;
+    							
+    			case "RAW":		utilities.Configuration.getParameters().setProperty("AptaplexParser.reader", "RawReader");
+    							break;
     		}
     		
     		// Selection cycle details
@@ -500,10 +530,70 @@ public class Wizard1Controller extends AbstractWizardController {
     			
     		}
     		
+    		utilities.Configuration.getParameters().setProperty("SelectionCycle.name", names);
+    		utilities.Configuration.getParameters().setProperty("SelectionCycle.round", round);
+    		utilities.Configuration.getParameters().setProperty("SelectionCycle.isControlSelection", isControl);
+    		utilities.Configuration.getParameters().setProperty("SelectionCycle.isCounterSelection", isCounter);
     		
-    		utilities.Configuration.getParameters().addProperty("listtest", new String[] {"this" , "is", "a", "test"});
+    		if (getDataModel().getIsDemultiplexed().get()) {
+    			
+    			utilities.Configuration.getParameters().setProperty("AptaplexParser.forwardFiles", forwardFiles);
+    			if (getDataModel().getIsPairedEnd().get()) {
+					
+    				utilities.Configuration.getParameters().setProperty("AptaplexParser.reverseFiles", reverseFiles);
+					
+				}
+    			
+    		}
+    		else {
+    			
+    			utilities.Configuration.getParameters().setProperty("AptaplexParser.forwardFiles", getDataModel().getForwardReadsFile().get());
+    			
+    			if (getDataModel().getIsPairedEnd().get()) {
+    				
+    				utilities.Configuration.getParameters().setProperty("AptaplexParser.reverseFiles", getDataModel().getReverseReadsFile().get());
+    				
+    			}
+    			
+    			utilities.Configuration.getParameters().setProperty("AptaplexParser.barcodes5Prime", barcodes5);
+    			if (barcodes3.size() == barcodes5.size()) {
+    				utilities.Configuration.getParameters().setProperty("AptaplexParser.barcodes3Prime", barcodes3);
+    			}
+    			
+    		}
     		
+    		// Finally, add changes from the advanced option scene
+    		if (getDataModel().getMapDBAptamerPoolBloomFilterCapacity().get() != utilities.Configuration.getDefaults().getInt("MapDBAptamerPool.bloomFilterCapacity")) {
+    			
+    			utilities.Configuration.getParameters().setProperty("MapDBAptamerPool.bloomFilterCapacity", getDataModel().getMapDBAptamerPoolBloomFilterCapacity().get());
+    			
+    		}
     		
+    		if (getDataModel().getMapDBAptamerPoolBloomFilterCollisionProbability().get() != utilities.Configuration.getDefaults().getDouble("MapDBAptamerPool.bloomFilterCollisionProbability")) {
+    			
+    			utilities.Configuration.getParameters().setProperty("MapDBAptamerPool.bloomFilterCollisionProbability", getDataModel().getMapDBAptamerPoolBloomFilterCollisionProbability().get());
+    			
+    		}
+    		
+    		if (getDataModel().getMapDBAptamerPoolMaxTreeMapCapacity().get() != utilities.Configuration.getDefaults().getInt("MapDBAptamerPool.maxTreeMapCapacity")) {
+    			
+    			utilities.Configuration.getParameters().setProperty("MapDBAptamerPool.maxTreeMapCapacity", getDataModel().getMapDBAptamerPoolMaxTreeMapCapacity().get());
+    			
+    		}
+    		
+    		if (getDataModel().getMapDBSelectionCycleBloomFilterCollisionProbability().get() != utilities.Configuration.getDefaults().getDouble("MapDBSelectionCycle.bloomFilterCollisionProbability")) {
+    			
+    			utilities.Configuration.getParameters().setProperty("MapDBSelectionCycle.bloomFilterCollisionProbability", getDataModel().getMapDBSelectionCycleBloomFilterCollisionProbability().get());
+    			
+    		}
+    		
+    		if (getDataModel().getPerformanceMaxNumberOfCores().get() != utilities.Configuration.getDefaults().getInt("Performance.maxNumberOfCores")) {
+    			
+    			utilities.Configuration.getParameters().setProperty("Performance.maxNumberOfCores", getDataModel().getPerformanceMaxNumberOfCores().get());
+    			
+    		}
+    		
+    		// Save to file
     		utilities.Configuration.writeConfiguration();
     		
     		try {
@@ -627,7 +717,10 @@ public class Wizard1Controller extends AbstractWizardController {
     	// Get the configuration file path
     	FileChooser fileChooser = new FileChooser();
     	fileChooser.setTitle("Choose the sequencing data file");
-    	FileChooser.ExtensionFilter fileExtensions = new FileChooser.ExtensionFilter("Sequencing Files", "*.fastq", ".fastq.gz", "*.txt", "*.txt.gz");
+    	if (getDataModel().getProjectPath().isNotEmpty().get()) {
+    		fileChooser.setInitialDirectory(new File(getDataModel().getProjectPath().get()));
+    	}
+    	FileChooser.ExtensionFilter fileExtensions = new FileChooser.ExtensionFilter("Sequencing Files", "*.fastq", "*.fastq.gz", "*.txt", "*.txt.gz");
     	fileChooser.getExtensionFilters().add(fileExtensions);
     	File cfp = fileChooser.showOpenDialog(null);
     	
@@ -639,4 +732,28 @@ public class Wizard1Controller extends AbstractWizardController {
     	}
     }
 
+    
+    /**
+     * Deletes the content of a folder recursively without deleting the folder itself
+     * @param file
+     */
+    private static void deleteFolderContent(File file, File rootfolder) {
+        
+    	//to end the recursive loop
+        if (!file.exists())
+            return;
+         
+        //if directory, go inside and call recursively
+        if (file.isDirectory()) {
+            for (File f : file.listFiles()) {
+                //call recursively
+            	deleteFolderContent(f, rootfolder);
+            }
+        }
+        //call delete to delete files and empty directory
+        if (!file.equals(rootfolder)) {
+        	file.delete();
+        }
+    }
+    
 }

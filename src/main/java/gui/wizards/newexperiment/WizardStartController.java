@@ -142,7 +142,6 @@ public class WizardStartController extends AbstractWizardController {
         // For this, we temporarly highjack the Finish Button
         this.finishButton.setText("Advanced Options");
         
-        
     }
     
     
@@ -155,7 +154,11 @@ public class WizardStartController extends AbstractWizardController {
     	// Get the configuration file path
     	DirectoryChooser chooser = new DirectoryChooser();
     	chooser.setTitle("Choose the project location");
+    	if (getDataModel().getProjectPath().isNotEmpty().get()) {
+    		chooser.setInitialDirectory(new File(getDataModel().getProjectPath().get()));
+    	}
     	File selectedDirectory = chooser.showDialog(null);
+    	
     	
     	// Load configuration unless the user has chosen not to complete the dialog
     	if (selectedDirectory != null) {
@@ -165,6 +168,7 @@ public class WizardStartController extends AbstractWizardController {
     	}
     	
     }
+    
     
     /**
      * Makes sure that all data fields are correct and valid
@@ -215,6 +219,7 @@ public class WizardStartController extends AbstractWizardController {
     	}
     	
     }
+    
     
     /**
      * Goes to the advanced options page

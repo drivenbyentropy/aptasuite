@@ -7,16 +7,20 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Properties;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 
+import org.apache.commons.configuration2.CompositeConfiguration;
 import org.apache.commons.configuration2.FileBasedConfiguration;
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.builder.BasicConfigurationBuilder;
+import org.apache.commons.configuration2.builder.ConfigurationBuilder;
 import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder;
 import org.apache.commons.configuration2.builder.fluent.Parameters;
 import org.apache.commons.configuration2.convert.DefaultListDelimiterHandler;
 import org.apache.commons.configuration2.ex.ConfigurationException;
+
 
 import lib.aptamer.datastructures.Experiment;
 
@@ -137,7 +141,7 @@ public class Configuration {
 		
 		
 		// Performance Options
-		defaults.put("Performance.maxNumberOfCores", 30); // if larger than available, min of both is taken
+		defaults.put("Performance.maxNumberOfCores", 50); // if larger than available, min of both is taken
 
 	}
 
@@ -164,6 +168,11 @@ public class Configuration {
 	private static FileBasedConfigurationBuilder<org.apache.commons.configuration2.FileBasedConfiguration> builder;
 
 	/**
+	 * In-memory configuration builder for the default values
+	 */
+	private static BasicConfigurationBuilder<PropertiesConfiguration> defaultBuilder = null;
+	
+	/**
 	 * Adds the configuration stored on disk to the current set of parameters. The
 	 * file <code>fileName</code> must be a valid configuration file as per Javas
 	 * <code>Properties</code> class.
@@ -180,8 +189,18 @@ public class Configuration {
 							.configure(new Parameters().properties().setFileName(fileName)
 									.setListDelimiterHandler(new DefaultListDelimiterHandler(',')));
 
-			parameters = builder.getConfiguration();
+			
+			// Create a composite configuration which allows to keep user parameters and defaults separated
+			CompositeConfiguration  cc = new CompositeConfiguration(builder.getConfiguration()); //changes will be saved in the user config
+			cc.addConfiguration(getDefaultParametersBuilder().getConfiguration());
+						
+			parameters = cc;
+			
+			
+			//parameters = builder.getConfiguration();
 
+			
+			
 		} catch (Exception e) {
 
 			AptaLogger.log(Level.SEVERE, Configuration.class,
@@ -190,12 +209,12 @@ public class Configuration {
 			e.printStackTrace();
 		}
 
-		// add defaults to parameters only if they have not been defined in the file
-		for (Entry<String, Object> item : defaults.entrySet()) {
-			if (!parameters.containsKey(item.getKey())) {
-				parameters.setProperty(item.getKey(), item.getValue());
-			}
-		}
+//		// add defaults to parameters only if they have not been defined in the file
+//		for (Entry<String, Object> item : defaults.entrySet()) {
+//			if (!parameters.containsKey(item.getKey())) {
+//				parameters.setProperty(item.getKey(), item.getValue());
+//			}
+//		}
 
 		// TODO: Sanity checks!
 	}
@@ -213,18 +232,18 @@ public class Configuration {
 			        //.setFile(filePath.toFile())
 			        .setListDelimiterHandler(new DefaultListDelimiterHandler(',')));
 			
-			parameters = builder.getConfiguration();
+			org.apache.commons.configuration2.Configuration userParameters = builder.getConfiguration();
 			
-			// add defaults to parameters 
-			for (Entry<String, Object> item : defaults.entrySet()) {
-				System.out.println(item.getKey());
-				parameters.setProperty(item.getKey(), item.getValue());
-			}
-			
-			//We need to explicitly save the file befor setting it in the builder, for whatever reason...
+
+			//We need to explicitly save the file before setting it in the builder, for whatever reason...
 			builder.getFileHandler().save(filePath.toFile());
 			builder.getFileHandler().setFile(filePath.toFile());
-				
+			
+			// Create a composite configuration which allows to keep user parameters and defaults separated
+			CompositeConfiguration  cc = new CompositeConfiguration(builder.getConfiguration()); //changes will be saved in the user config
+			cc.addConfiguration(getDefaultParametersBuilder().getConfiguration());
+			
+			parameters = cc;
 			
 		} catch (Exception e) {
 
@@ -236,6 +255,42 @@ public class Configuration {
 
 	}
 
+	
+	private static BasicConfigurationBuilder<PropertiesConfiguration> getDefaultParametersBuilder(){
+		
+		// If we already have an instance, return it
+		if(defaultBuilder != null) {
+			
+			return defaultBuilder;
+			
+		}
+		
+		// Create an in-memory configuration instance
+		defaultBuilder = new BasicConfigurationBuilder<PropertiesConfiguration>(PropertiesConfiguration.class);
+		
+		PropertiesConfiguration config = null;
+		
+		try {
+			
+			config = defaultBuilder.getConfiguration();
+			
+			
+		} catch (ConfigurationException e) {
+			AptaLogger.log(Level.SEVERE, Configuration.class, e);
+			e.printStackTrace();
+		}
+		
+		// Fill it with the default configuration
+		for (Entry<String, Object> item : defaults.entrySet()) {
+			if (!config.containsKey(item.getKey())) {
+				config.setProperty(item.getKey(), item.getValue());
+			}
+		}
+		
+		return defaultBuilder;
+		
+	}
+	
 	/**
 	 * Returns the parameter set including the return value default parameters as
 	 * well the properties imported via file. The individual parameters can the be
@@ -274,6 +329,7 @@ public class Configuration {
 		try {
 			
 			builder.save();
+			AptaLogger.log(Level.CONFIG, Configuration.class, "Written Configuration file to " + builder.getFileHandler().getPath());
 			
 		} catch (ConfigurationException e) {
 			
@@ -289,9 +345,18 @@ public class Configuration {
 	 * Returns a HashMap of the default values
 	 * @return
 	 */
-	public static HashMap<String, Object> getDefaults(){
+	public static PropertiesConfiguration getDefaults(){
 		
-		return defaults;
+		PropertiesConfiguration default_configuration = null;
+		
+		try {
+			default_configuration = getDefaultParametersBuilder().getConfiguration();
+		} catch (ConfigurationException e) {
+			AptaLogger.log(Level.SEVERE, Configuration.class, e);
+			e.printStackTrace();
+		}
+		
+		return default_configuration;
 		
 	}
 	

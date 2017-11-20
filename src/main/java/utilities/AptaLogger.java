@@ -50,7 +50,7 @@ public class AptaLogger {
     }	
 	
 	
-    private static Logger getLogger(){
+    public static Logger getLogger(){
         if(logger == null){
             try {
                 new AptaLogger();

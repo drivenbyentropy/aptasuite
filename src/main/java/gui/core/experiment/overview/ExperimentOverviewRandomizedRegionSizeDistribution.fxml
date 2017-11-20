@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.chart.BarChart?>
+<?import javafx.scene.chart.CategoryAxis?>
+<?import javafx.scene.chart.NumberAxis?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.text.Font?>
+
+<Pane xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.core.experiment.overview.ExperimentOverviewRandomizedRegionSizeDistributionController">
+   <children>
+      <HBox alignment="CENTER_LEFT" minHeight="-Infinity" minWidth="-Infinity" spacing="10.0">
+         <children>
+            <Label prefWidth="150.0" text="Histogram of the sizes of all randomized regions identified during parsing. Regions are found by matching both, 3'' and 5'' primers to the sequence and extracting the region between them. The blue bar corresponds to the accpeted aptamers wheres red denotes rejected cases in which the size of the randomized region did not correspond to the one specified in the configuration." wrapText="true">
+               <font>
+                  <Font size="12.0" />
+               </font>
+            </Label>
+            <Separator orientation="VERTICAL" prefHeight="200.0">
+               <HBox.margin>
+                  <Insets left="20.0" right="20.0" />
+               </HBox.margin>
+            </Separator>
+            <BarChart fx:id="randomizedRegionSizeDistributionBarChart" minHeight="-Infinity" HBox.hgrow="ALWAYS">
+              <xAxis>
+                <CategoryAxis side="BOTTOM" />
+              </xAxis>
+              <yAxis>
+                <NumberAxis side="LEFT" />
+              </yAxis>
+            </BarChart>
+         </children>
+      </HBox>
+   </children>
+</Pane>

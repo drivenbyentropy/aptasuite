@@ -66,6 +66,8 @@ public class Metadata {
 	 */
 	public HashMap<String, ConcurrentHashMap<Integer, ConcurrentHashMap<Integer,ConcurrentHashMap<Byte,Integer>>>> nucleotideDistributionAccepted = null;
 
+	
+	
 	/**
 	 * Contains the parsing statistics after all the data has been processed. Currently, the following
 	 * keys are expected to exist:

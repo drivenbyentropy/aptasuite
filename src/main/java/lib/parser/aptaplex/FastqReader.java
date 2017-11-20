@@ -63,16 +63,16 @@ public class FastqReader implements Reader {
 		// compressed or not
 		
 		// Forward file
-		try { // This fill fail if the file is not gzip compressed
+		try { // This will fail if the file is not gzip compressed
 			
 			forward_reader = new BufferedReader(new InputStreamReader(new GZIPInputStream((new FileInputStream(forward_file.toFile())))));
-			AptaLogger.log(Level.CONFIG, this.getClass(), "Opened gzip compressed forward file in fastq format" + forward_file.toString());
+			AptaLogger.log(Level.CONFIG, this.getClass(), "Opened gzip compressed forward file in fastq format " + forward_file.toString());
 		
 		} catch (IOException e) {
 			// Not in GZip Format
 			try {
 				forward_reader = new BufferedReader(new InputStreamReader(new FileInputStream(forward_file.toFile())));
-				AptaLogger.log(Level.CONFIG, this.getClass(), "Opened forward file in fastq format" + forward_file.toString());	
+				AptaLogger.log(Level.CONFIG, this.getClass(), "Opened forward file in fastq format " + forward_file.toString());	
 			} catch (FileNotFoundException e1) {
 				AptaLogger.log(Level.SEVERE, this.getClass(), "Error opening forward file " + forward_file.toString());
 				AptaLogger.log(Level.SEVERE, this.getClass(), org.apache.commons.lang.exception.ExceptionUtils.getStackTrace(e1));
@@ -86,14 +86,14 @@ public class FastqReader implements Reader {
 			try {
 				
 				reverse_reader = new BufferedReader(new InputStreamReader(new GZIPInputStream((new FileInputStream(reverse_file.toFile())))));
-				AptaLogger.log(Level.CONFIG, this.getClass(), "Opened gzip compressed reverse file in fastq format" + reverse_file.toString());
+				AptaLogger.log(Level.CONFIG, this.getClass(), "Opened gzip compressed reverse file in fastq format " + reverse_file.toString());
 				
 			} catch (IOException e) {
 				// Not in GZip Format
 				try {
 	
 					reverse_reader = new BufferedReader(new InputStreamReader(new FileInputStream(reverse_file.toFile())));
-					AptaLogger.log(Level.CONFIG, this.getClass(), "Opened forward reverse in fastq format" + reverse_file.toString());	
+					AptaLogger.log(Level.CONFIG, this.getClass(), "Opened forward reverse in fastq format " + reverse_file.toString());	
 					
 				} catch (FileNotFoundException e1) {
 					AptaLogger.log(Level.SEVERE, this.getClass(), "Error opening reverse file " + reverse_file.toString());

@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Menu?>
 <?import javafx.scene.control.MenuBar?>
 <?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.TabPane?>
 <?import javafx.scene.input.KeyCodeCombination?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.StackPane?>
 
-<StackPane fx:id="rootStackPane" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.core.RootLayoutController">
+<StackPane fx:id="rootStackPane" minHeight="600.0" minWidth="800.0" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.core.RootLayoutController">
    <children>
-      <BorderPane fx:id="rootLayout" prefHeight="600.0" prefWidth="800.0">
+      <BorderPane fx:id="rootLayout">
          <top>
             <MenuBar BorderPane.alignment="CENTER">
               <menus>
@@ -26,6 +26,7 @@
                            </accelerator>
                         </MenuItem>
                     <MenuItem mnemonicParsing="false" onAction="#menuFileCloseButtonAction" text="Close" />
+                        <MenuItem mnemonicParsing="false" onAction="#addExperimentOverviewTab" text="Debug" />
                   </items>
                 </Menu>
                 <Menu fx:id="preferencesMenu" disable="true" mnemonicParsing="false" text="Preferences">
@@ -42,7 +43,7 @@
             </MenuBar>
          </top>
          <center>
-            <Button fx:id="testit" mnemonicParsing="false" onAction="#testitButton" text="Button" BorderPane.alignment="CENTER" />
+            <TabPane fx:id="rootTabPane" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE" BorderPane.alignment="CENTER" />
          </center>
       </BorderPane>
    </children>

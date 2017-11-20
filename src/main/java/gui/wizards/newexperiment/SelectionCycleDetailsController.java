@@ -101,7 +101,7 @@ public class SelectionCycleDetailsController {
 					.getRoundNumber().get()+1);
 			
 		}
-		else {
+		else if (dataModel.getSelectionCycleDataModels().isEmpty() && isNewCycle) {
 			
 			selectionCycleDataModel.getRoundNumber().set(0);
 			
@@ -213,7 +213,10 @@ public class SelectionCycleDetailsController {
     	// Get the configuration file path
     	FileChooser fileChooser = new FileChooser();
     	fileChooser.setTitle("Choose the sequencing data file");
-    	FileChooser.ExtensionFilter fileExtensions = new FileChooser.ExtensionFilter("Sequencing Files", "*.fastq", ".fastq.gz", "*.txt", "*.txt.gz");
+    	if (getDataModel().getProjectPath().isNotEmpty().get()) {
+    		fileChooser.setInitialDirectory(new File(getDataModel().getProjectPath().get()));
+    	}
+    	FileChooser.ExtensionFilter fileExtensions = new FileChooser.ExtensionFilter("Sequencing Files", "*.fastq", "*.fastq.gz", "*.txt", "*.txt.gz");
     	fileChooser.getExtensionFilters().add(fileExtensions);
     	File cfp = fileChooser.showOpenDialog(null);
     	

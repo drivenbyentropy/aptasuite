@@ -124,7 +124,7 @@ public class AptaPlexProducer implements Runnable{
 					
 					// are we multiplexing?
 					if(isPerFile){
-						
+
 						// add cycle information to read
 						read.selection_cycle = Configuration.getExperiment().getAllSelectionCycles().get(x);
 						

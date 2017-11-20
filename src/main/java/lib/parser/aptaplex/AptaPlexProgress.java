@@ -88,6 +88,6 @@ public class AptaPlexProgress implements ParserProgress {
 				totalPrimerOverlaps.get()
 				);
 	}
-	
+
 	
 }

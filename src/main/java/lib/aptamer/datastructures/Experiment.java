@@ -689,7 +689,7 @@ public class Experiment implements Serializable{
 	 * Get the description of this experiment
 	 * @return
 	 */
-	public String getDescriptio(){
+	public String getDescription(){
 		return this.description;
 	}
 	

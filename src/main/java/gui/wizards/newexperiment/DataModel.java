@@ -47,15 +47,17 @@ public class DataModel {
 	
 	private StringProperty fileFormat = new SimpleStringProperty("FASTQ");
 	
-	private SimpleIntegerProperty mapDBAptamerPoolBloomFilterCapacity= new SimpleIntegerProperty((Integer) Configuration.getDefaults().get("MapDBAptamerPool.bloomFilterCapacity"));
+	private SimpleIntegerProperty mapDBAptamerPoolBloomFilterCapacity= new SimpleIntegerProperty((Integer) Configuration.getDefaults().getInt("MapDBAptamerPool.bloomFilterCapacity"));
 
-	private SimpleDoubleProperty mapDBAptamerPoolBloomFilterCollisionProbability = new SimpleDoubleProperty((Double) Configuration.getDefaults().get("MapDBAptamerPool.bloomFilterCollisionProbability"));
+	private SimpleDoubleProperty mapDBAptamerPoolBloomFilterCollisionProbability = new SimpleDoubleProperty((Double) Configuration.getDefaults().getDouble("MapDBAptamerPool.bloomFilterCollisionProbability"));
 	
-	private SimpleIntegerProperty mapDBAptamerPoolMaxTreeMapCapacity =  new SimpleIntegerProperty((Integer) Configuration.getDefaults().get("MapDBAptamerPool.maxTreeMapCapacity"));
+	private SimpleIntegerProperty mapDBAptamerPoolMaxTreeMapCapacity =  new SimpleIntegerProperty((Integer) Configuration.getDefaults().getInt("MapDBAptamerPool.maxTreeMapCapacity"));
 	
-	private SimpleDoubleProperty mapDBSelectionCycleBloomFilterCollisionProbability = new SimpleDoubleProperty((Double) Configuration.getDefaults().get("MapDBSelectionCycle.bloomFilterCollisionProbability"));
+	private SimpleDoubleProperty mapDBSelectionCycleBloomFilterCollisionProbability = new SimpleDoubleProperty((Double) Configuration.getDefaults().getDouble("MapDBSelectionCycle.bloomFilterCollisionProbability"));
 	
-	private ObjectProperty<Integer> performanceMaxNumberOfCores  = new SimpleObjectProperty<Integer>(50);
+	private ObjectProperty<Integer> performanceMaxNumberOfCores  = new SimpleObjectProperty<Integer>(utilities.Configuration.getDefaults().getInt("Performance.maxNumberOfCores"));
+	
+	
 	
 	
 	/**

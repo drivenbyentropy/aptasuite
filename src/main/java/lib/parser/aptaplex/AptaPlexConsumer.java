@@ -624,7 +624,7 @@ public class AptaPlexConsumer implements Runnable {
 			// Iterate over the read and add quality scores to the accumulators
 			for (int i= 0; i < read.forward_quality.length; i++) {
 				
-				if(!forward.contains(i)) forward.put(i, new Accumulator());
+				if(!forward.containsKey(i)) forward.put(i, new Accumulator());
 				forward.get(i).addDataValue(read.forward_quality[i]-33);
 				
 			}
@@ -639,7 +639,7 @@ public class AptaPlexConsumer implements Runnable {
 			// Iterate over the read and add quality scores to the accumulators
 			for (int i= 0; i < read.reverse_quality.length; i++) {
 				
-				if(!reverse.contains(i)) reverse.put(i, new Accumulator());
+				if(!reverse.containsKey(i)) reverse.put(i, new Accumulator());
 				reverse.get(i).addDataValue(read.reverse_quality[i]-33);
 				
 			}
@@ -664,7 +664,7 @@ public class AptaPlexConsumer implements Runnable {
 			for (int i= 0; i < read.forward_read.length; i++) {
 				
 				// Make sure the entry exists prior to adding
-				if(!forward.contains(i)) {
+				if(!forward.containsKey(i)) {
 					ConcurrentHashMap<Byte,Integer> map = new ConcurrentHashMap<Byte,Integer>();
 					map.put((byte) 'A', 0); 
 					map.put((byte) 'C', 0);
@@ -690,7 +690,7 @@ public class AptaPlexConsumer implements Runnable {
 			for (int i= 0; i < read.reverse_read.length; i++) {
 				
 				// Make sure the entry exists prior to adding
-				if(!reverse.contains(i)) {
+				if(!reverse.containsKey(i)) {
 					ConcurrentHashMap<Byte,Integer> map = new ConcurrentHashMap<Byte,Integer>();
 					map.put((byte) 'A', 0); 
 					map.put((byte) 'C', 0);
@@ -722,7 +722,7 @@ public class AptaPlexConsumer implements Runnable {
 		int randomized_region_size = randomized_region_end_index - randomized_region_start_index;
 
 		// Make sure we have seen this randomized region size before, else create placeholder
-		if (!metadata.nucleotideDistributionAccepted.get(sc.getName()).contains(randomized_region_size)) {
+		if (!metadata.nucleotideDistributionAccepted.get(sc.getName()).containsKey(randomized_region_size)) {
 					
 			metadata.nucleotideDistributionAccepted.get(sc.getName()).put(randomized_region_size, new ConcurrentHashMap<Integer, ConcurrentHashMap<Byte, Integer>>());
 			
@@ -734,7 +734,7 @@ public class AptaPlexConsumer implements Runnable {
 		for (int x=randomized_region_start_index; x<randomized_region_end_index; x++) {
 			
 			// Make sure the entry exists prior to adding
-			if (!accepted.contains(i)) {
+			if (!accepted.containsKey(i)) {
 				
 				ConcurrentHashMap<Byte,Integer> map = new ConcurrentHashMap<Byte,Integer>(5);
 				map.put((byte) 'A', 0); 
