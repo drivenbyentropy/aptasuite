@@ -5,34 +5,105 @@
 <?import javafx.scene.chart.CategoryAxis?>
 <?import javafx.scene.chart.NumberAxis?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.RadioButton?>
 <?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<Pane xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.core.experiment.overview.ExperimentOverviewRandomizedRegionSizeDistributionController">
+<AnchorPane xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.core.experiment.overview.ExperimentOverviewRandomizedRegionSizeDistributionController">
    <children>
-      <HBox alignment="CENTER_LEFT" minHeight="-Infinity" minWidth="-Infinity" spacing="10.0">
+      <HBox alignment="CENTER_LEFT" spacing="10.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
-            <Label prefWidth="150.0" text="Histogram of the sizes of all randomized regions identified during parsing. Regions are found by matching both, 3'' and 5'' primers to the sequence and extracting the region between them. The blue bar corresponds to the accpeted aptamers wheres red denotes rejected cases in which the size of the randomized region did not correspond to the one specified in the configuration." wrapText="true">
-               <font>
-                  <Font size="12.0" />
-               </font>
-            </Label>
-            <Separator orientation="VERTICAL" prefHeight="200.0">
+            <VBox alignment="CENTER_LEFT" HBox.hgrow="NEVER">
+               <children>
+                  <Region VBox.vgrow="ALWAYS" />
+                  <Label prefWidth="150.0" text="Histogram of the sizes of all randomized regions identified during parsing. &#10;&#10;The sizes are computed by matching both, 3'' and 5'' primers to the sequence and extracting the region between them. &#10;" wrapText="true">
+                     <font>
+                        <Font size="12.0" />
+                     </font>
+                  </Label>
+                  <Region VBox.vgrow="ALWAYS" />
+                  <Separator />
+                  <Region VBox.vgrow="ALWAYS" />
+                  <Label prefWidth="150.0" text="To change the default units of the Number Axis, select one of the options below:" wrapText="true">
+                     <font>
+                        <Font size="12.0" />
+                     </font>
+                     <VBox.margin>
+                        <Insets bottom="10.0" />
+                     </VBox.margin>
+                  </Label>
+                  <HBox spacing="10.0">
+                     <children>
+                        <RadioButton mnemonicParsing="false" onAction="#updateBarChart" selected="true" text="Count">
+                           <font>
+                              <Font size="12.0" />
+                           </font>
+                           <toggleGroup>
+                              <ToggleGroup fx:id="DefaultUnitsToggleGroup" />
+                           </toggleGroup>
+                        </RadioButton>
+                        <RadioButton fx:id="percentageRadioButton" mnemonicParsing="false" onAction="#updateBarChart" text="Percentage" toggleGroup="$DefaultUnitsToggleGroup">
+                           <font>
+                              <Font size="12.0" />
+                           </font>
+                        </RadioButton>
+                     </children>
+                  </HBox>
+                  <Region VBox.vgrow="ALWAYS" />
+                  <Separator />
+                  <Region VBox.vgrow="ALWAYS" />
+                  <Label prefWidth="150.0" text="To change the default scale of the Numer Axis, select one of the options below:" wrapText="true">
+                     <font>
+                        <Font size="12.0" />
+                     </font>
+                     <VBox.margin>
+                        <Insets bottom="10.0" />
+                     </VBox.margin>
+                  </Label>
+                  <HBox spacing="10.0">
+                     <children>
+                        <RadioButton mnemonicParsing="false" onAction="#updateBarChart" selected="true" text="Linear">
+                           <font>
+                              <Font size="12.0" />
+                           </font>
+                           <toggleGroup>
+                              <ToggleGroup fx:id="DefaultScaleToggleGroup" />
+                           </toggleGroup>
+                        </RadioButton>
+                        <RadioButton fx:id="logarithmicRadioButton" mnemonicParsing="false" onAction="#updateBarChart" text="Logarithmic" toggleGroup="$DefaultScaleToggleGroup">
+                           <font>
+                              <Font size="12.0" />
+                           </font>
+                        </RadioButton>
+                     </children>
+                  </HBox>
+                  <Region VBox.vgrow="ALWAYS" />
+               </children>
+            </VBox>
+            <Separator orientation="VERTICAL" prefHeight="200.0" HBox.hgrow="NEVER">
                <HBox.margin>
                   <Insets left="20.0" right="20.0" />
                </HBox.margin>
             </Separator>
-            <BarChart fx:id="randomizedRegionSizeDistributionBarChart" minHeight="-Infinity" HBox.hgrow="ALWAYS">
-              <xAxis>
-                <CategoryAxis side="BOTTOM" />
-              </xAxis>
-              <yAxis>
-                <NumberAxis side="LEFT" />
-              </yAxis>
-            </BarChart>
+            <StackPane HBox.hgrow="ALWAYS">
+               <children>
+                  <BarChart fx:id="randomizedRegionSizeDistributionBarChart" barGap="0.0" categoryGap="4.0" minHeight="-Infinity">
+                    <xAxis>
+                      <CategoryAxis label="Randomized Region Size" side="BOTTOM" />
+                    </xAxis>
+                    <yAxis>
+                      <NumberAxis label="Frequency of Occurrence" side="LEFT" />
+                    </yAxis>
+                  </BarChart>
+               </children>
+            </StackPane>
          </children>
       </HBox>
    </children>
-</Pane>
+</AnchorPane>

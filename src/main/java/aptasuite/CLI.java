@@ -1013,7 +1013,7 @@ public class CLI {
 			
 			switch(token){
 				case "pool":
-					Path poolexportpath = Paths.get(exportPath.toString(), "pool." + extension);
+					Path poolexportpath = Paths.get(exportPath.toString(), "pool.txt" + (compress ? ".gz" : ""));
 					AptaLogger.log(Level.INFO, this.getClass(), "Exporting pool data to file " + poolexportpath.toString());
 					export.Pool(Configuration.getExperiment().getAptamerPool(), poolexportpath);
 					break;

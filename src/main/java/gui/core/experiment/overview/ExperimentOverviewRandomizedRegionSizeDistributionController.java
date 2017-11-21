@@ -15,33 +15,48 @@ import javafx.scene.chart.BarChart;
 import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
+import javafx.scene.chart.XYChart.Data;
+import javafx.scene.chart.XYChart.Series;
+import javafx.scene.control.RadioButton;
 import lib.aptamer.datastructures.Experiment;
 import utilities.Configuration;
 
 /**
  * @author Jan Hoinka
- * Controlls the chart displaying the randomized region size distribution
+ * Controls the chart displaying the randomized region size distribution
  */
 public class ExperimentOverviewRandomizedRegionSizeDistributionController {
 
 	@FXML
 	BarChart<String,Number> randomizedRegionSizeDistributionBarChart;
 	
+	@FXML
+	RadioButton percentageRadioButton;
+	
+	@FXML
+	RadioButton logarithmicRadioButton;
+	
 	private Experiment experiment = Configuration.getExperiment(); 
+	
+	/**
+	 * Contains the orignial data for the barchart
+	 */
+	private Series<String, Number> chartData;
+	
+	/**
+	 * Total number of items, for normalization
+	 */
+	private Integer total = 0;
 	
 	@PostConstruct
 	public void initialize() {
 		
-		// Create the barchart
-		CategoryAxis xAxis = new CategoryAxis();
-        final Axis<Number> yAxis = new NumberAxis();
-        xAxis.setLabel("Randomized Region Size");       
-        yAxis.setLabel("Frequency");
-        
-			
-        // Add data
-        randomizedRegionSizeDistributionBarChart.getData().add(computeStatistics());
-        
+        // Store the data to be used
+		Series<String, Number> chartData = computeStatistics();
+		
+		// Add initial data to barchart
+        randomizedRegionSizeDistributionBarChart.getData().add(chartData);
+
 	}
 
 	
@@ -76,10 +91,8 @@ public class ExperimentOverviewRandomizedRegionSizeDistributionController {
 		chart_data.setName("Randomized Region Sizes in the Aptamer Pool");
 		for ( Entry<Integer, Integer> item : totals.entrySet()) {
 			
-			chart_data.getData().add(new XYChart.Data<String,Number>(item.getKey().toString(), 55));
-			
-			System.out.println(String.format("Key: %s, Value: %s", item.getKey().toString(), item.getValue()));
-			
+			chart_data.getData().add(new XYChart.Data<String,Number>(item.getKey().toString(), item.getValue()));
+			total += item.getValue();
 		}
 		
 		return chart_data;
@@ -101,7 +114,7 @@ public class ExperimentOverviewRandomizedRegionSizeDistributionController {
 			for ( Entry<Byte, Integer> nucleotide : rand_size.getValue().get(0).entrySet() ) {
 				
 				sum += nucleotide.getValue();
-				System.out.println(nucleotide.getValue());
+				
 			}
 			
 			// Add it to the cache
@@ -113,5 +126,65 @@ public class ExperimentOverviewRandomizedRegionSizeDistributionController {
 		return cache;
 	}
 	
+	/**
+	 * Updates the bar chart according to the selection of the radio buttons 
+	 */
+	@FXML
+	private void updateBarChart() { 
+		
+		XYChart.Series<String,Number> chart_data = new XYChart.Series(); 
+		
+		// prevent running if not ready yet
+		if (this.chartData == null) {
+			
+			return;
+			
+		}
+		
+		// Iterate over the orginial data and adjust
+		for ( Data<String, Number> item : this.chartData.getData() ) {
+			
+			Number value = item.getYValue();
+			
+			// Units 
+			if (this.percentageRadioButton.selectedProperty().get()) {
+				
+				value = value.doubleValue() / total;
+				
+			}
+			
+			// Scale 
+			if (this.logarithmicRadioButton.selectedProperty().get()) {
+				
+				value = Math.log(value.doubleValue()+1);
+				
+			}
+			
+					
+		}
+		
+		// Adjust axis labels
+		// Units 
+		if (this.percentageRadioButton.selectedProperty().get()) {
+			
+			randomizedRegionSizeDistributionBarChart.getYAxis().setLabel("Percentage of Occurence");
+			
+		} else {
+			
+			randomizedRegionSizeDistributionBarChart.getYAxis().setLabel("Frequency of Occurence");
+			
+		}
+		
+		// Scale 
+		if (this.logarithmicRadioButton.selectedProperty().get()) {
+			
+			randomizedRegionSizeDistributionBarChart.getXAxis().setLabel( randomizedRegionSizeDistributionBarChart.getXAxis().getLabel() + " ( log(x + 1) )");
+			
+		}
+		
+		// Set the new data
+		randomizedRegionSizeDistributionBarChart.getData().clear();
+		randomizedRegionSizeDistributionBarChart.getData().add(chart_data);
+	}
 	
 }

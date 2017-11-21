@@ -69,49 +69,49 @@ public class RootLayoutController {
 	@PostConstruct
 	public void initialize() {
 		
-////		BEGIN TEMP AUTO LOAD DATASET
-//		File cfp = Paths.get("C:\\Users\\hoinkaj\\Downloads\\SmallTest\\configuration.aptasuite").toFile();
-//		
-//		// Read config file and set defaults
-//		Configuration.setConfiguration(cfp.getAbsolutePath());
-//		
-//		ProgressPaneController pp = ProgressPaneController.getProgressPane(this.rootStackPane, new Runnable() {
-//    			
-//			@Override
-//			public void run() {
-//				
-//				//AptaLogger.log(Level.INFO, Configuration.class, "Using the following parameters: " + "\n" +  Configuration.printParameters());
-//				
-//				// Make sure the project folder exists and create it if not
-//				Path projectPath = Paths.get(Configuration.getParameters().getString("Experiment.projectPath"));
-//				if (Files.notExists(projectPath)){
-//						AptaLogger.log(Level.INFO, this.getClass(), "The project path does not exist on the file system. Creating folder " + projectPath);
-//						try {
-//							Files.createDirectories(Paths.get(projectPath.toString()));
-//						} catch (IOException e) {
-//							// TODO Auto-generated catch block
-//							e.printStackTrace();
-//						}
-//				}
-//				
-//				// Initialize the experiment
-//				experiment = new Experiment(cfp.getAbsolutePath(), false);
-//				preferencesMenu.setDisable(false);
-//				
-//				// Initialize the GUI elements
-//				Platform.runLater(() -> {
-//					
-//					AptaLogger.log(Level.INFO, this.getClass(), "Initializing GUI elements");
-//					addExperimentOverviewTab();
-//					
-//                });
-//				
-//			}
-//		
-//		});
-//		
-//		pp.run();
-//		// END TEMP AUTOLOAD DATASET
+//		BEGIN TEMP AUTO LOAD DATASET
+		File cfp = Paths.get("C:\\Users\\hoinkaj\\Downloads\\SmallTest\\configuration.aptasuite").toFile();
+		
+		// Read config file and set defaults
+		Configuration.setConfiguration(cfp.getAbsolutePath());
+		
+		ProgressPaneController pp = ProgressPaneController.getProgressPane(this.rootStackPane, new Runnable() {
+    			
+			@Override
+			public void run() {
+				
+				//AptaLogger.log(Level.INFO, Configuration.class, "Using the following parameters: " + "\n" +  Configuration.printParameters());
+				
+				// Make sure the project folder exists and create it if not
+				Path projectPath = Paths.get(Configuration.getParameters().getString("Experiment.projectPath"));
+				if (Files.notExists(projectPath)){
+						AptaLogger.log(Level.INFO, this.getClass(), "The project path does not exist on the file system. Creating folder " + projectPath);
+						try {
+							Files.createDirectories(Paths.get(projectPath.toString()));
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+				}
+				
+				// Initialize the experiment
+				experiment = new Experiment(cfp.getAbsolutePath(), false);
+				preferencesMenu.setDisable(false);
+				
+				// Initialize the GUI elements
+				Platform.runLater(() -> {
+					
+					AptaLogger.log(Level.INFO, this.getClass(), "Initializing GUI elements");
+					addExperimentOverviewTab();
+					
+                });
+				
+			}
+		
+		});
+		
+		pp.run();
+		// END TEMP AUTOLOAD DATASET
 		
 	}
 
