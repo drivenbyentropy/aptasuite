@@ -26,13 +26,18 @@ import javax.annotation.PostConstruct;
 import org.controlsfx.validation.ValidationSupport;
 import org.controlsfx.validation.Validator;
 
+import gui.core.RootLayoutController;
 import io.datafx.controller.ViewController;
+import io.datafx.controller.context.ApplicationContext;
+import io.datafx.controller.context.FXMLApplicationContext;
 import io.datafx.controller.flow.FlowException;
 import io.datafx.controller.flow.action.ActionMethod;
 import io.datafx.controller.flow.action.ActionTrigger;
 import io.datafx.controller.flow.action.LinkAction;
 import io.datafx.controller.flow.context.ActionHandler;
+import io.datafx.controller.flow.context.FXMLViewFlowContext;
 import io.datafx.controller.flow.context.FlowActionHandler;
+import io.datafx.controller.flow.context.ViewFlowContext;
 import io.datafx.controller.util.VetoException;
 
 /**
@@ -94,6 +99,7 @@ public class WizardStartController extends AbstractWizardController {
     @ActionTrigger("advancedOptions")
     private Button finishButton;
     
+    
     /**
      * Provdes access to DataFX's flow action handler
      */
@@ -109,6 +115,7 @@ public class WizardStartController extends AbstractWizardController {
     
     @PostConstruct
     public void init() {
+    	
         getBackButton().setDisable(true);
 
         // Fill the combobox
@@ -164,7 +171,7 @@ public class WizardStartController extends AbstractWizardController {
     	if (selectedDirectory != null) {
     		
     		projectPathTextField.setText(selectedDirectory.getAbsolutePath());
-
+    		getDataModel().setLastSelectedDirectory(selectedDirectory);
     	}
     	
     }
@@ -238,5 +245,6 @@ public class WizardStartController extends AbstractWizardController {
 		}
     	
     }
+    
     
 }

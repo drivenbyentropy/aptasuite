@@ -135,7 +135,7 @@
                               <Insets right="10.0" />
                            </HBox.margin>
                         </Label>
-                        <TextField fx:id="barcode3TextField" promptText="A,C,G, or T only">
+                        <TextField fx:id="barcode3TextField" promptText="A,C,G, or T only" HBox.hgrow="ALWAYS">
                            <font>
                               <Font size="12.0" />
                            </font>

@@ -79,6 +79,11 @@ public interface SelectionCycle extends Serializable{
 	 * @see SelectionCycle#containsAptamer(String a)
 	 */
 	public boolean containsAptamer(byte[] a);
+
+	/**
+	 * @see SelectionCycle#containsAptamer(String a)
+	 */
+	public boolean containsAptamer(int a);
 	
 	/**
 	 * Return the cardinality of a particular aptamer in this pool.
@@ -215,5 +220,29 @@ public interface SelectionCycle extends Serializable{
 	 * cycle.
 	 */
 	public Iterable<Integer> id_iterator();
+	
+	/**
+	 * Sets the 5' barcode used to demultiplex the data
+	 * @param barcode
+	 */
+	public void setBarcodeFivePrime(byte[] barcode);
+	
+	/**
+	 * The index on the 5' side used for demultiplexing
+	 * @return the barcode sequence or null if data was demultiplexed
+	 */
+	public byte[] getBarcodeFivePrime();
+	
+	/**
+	 * Sets the 3' barcode used to demultiplex the data
+	 * @param barcode
+	 */
+	public void setBarcodeThreePrime(byte[] barcode);
+	
+	/**
+	 * The index on the 5' side used for demultiplexing
+	 * @return the barcode sequence or null if data was demultiplexed
+	 */
+	public byte[] getBarcodeThreePrime();
 	
 }

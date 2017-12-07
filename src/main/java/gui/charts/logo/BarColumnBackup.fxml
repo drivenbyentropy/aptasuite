@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.RowConstraints?>
+
+<GridPane minHeight="5.0" minWidth="5.0" prefHeight="400.0" prefWidth="400.0" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.charts.logo.BarColumnController">
+  <columnConstraints>
+    <ColumnConstraints hgrow="ALWAYS" minWidth="5.0" />
+  </columnConstraints>
+  <rowConstraints>
+    <RowConstraints minHeight="5.0" vgrow="ALWAYS" />
+    <RowConstraints minHeight="5.0" vgrow="ALWAYS" />
+    <RowConstraints minHeight="5.0" vgrow="ALWAYS" />
+  </rowConstraints>
+   <children>
+      <AnchorPane fx:id="anchorPane1" minHeight="5.0" minWidth="5.0" style="-fx-background-color: green;" GridPane.hgrow="ALWAYS" GridPane.vgrow="ALWAYS" />
+      <AnchorPane fx:id="anchorPane2" minHeight="5.0" minWidth="5.0" style="-fx-background-color: blue;" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1" GridPane.vgrow="ALWAYS">
+         <children>
+            <Button layoutX="176.0" layoutY="56.0" mnemonicParsing="false" text="Button" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+         </children></AnchorPane>
+      <AnchorPane fx:id="anchorPane3" minHeight="5.0" minWidth="5.0" style="-fx-background-color: red;" GridPane.hgrow="ALWAYS" GridPane.rowIndex="2" GridPane.vgrow="ALWAYS" />
+   </children>
+</GridPane>

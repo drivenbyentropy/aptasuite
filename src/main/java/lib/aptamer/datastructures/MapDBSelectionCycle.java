@@ -97,6 +97,17 @@ public class MapDBSelectionCycle implements SelectionCycle{
 	private int unique_size = 0;
 	
 	
+	/**
+	 * The 5' barcode used to demultiplex the cycle data, null if non present 
+	 */
+	private byte[] barcodeFive = null;
+	
+	
+	/**
+	 * The 3' barcode used to demultiplex the cycle data, null if non present
+	 */
+	private byte[] barcodeThree = null;
+	
 	public MapDBSelectionCycle(String name, int round, boolean isControlSelection, boolean isCounterSelection, boolean newdb) throws IOException{
 		
 		AptaLogger.log(Level.INFO, this.getClass(), "Processing selection cycle " + name );
@@ -213,6 +224,17 @@ public class MapDBSelectionCycle implements SelectionCycle{
 		// Get the corresponding aptamer id from the pool
 		int id_a = Configuration.getExperiment().getAptamerPool().getIdentifier(a);
 		
+		return containsAptamer(id_a);
+		
+	}
+	
+	public boolean containsAptamer(String a){
+		return containsAptamer(a.getBytes());
+	}
+
+	@Override
+	public boolean containsAptamer(int id_a) {
+		
 		if (! poolContent.contains(id_a)){
 			return false;
 		}
@@ -221,11 +243,6 @@ public class MapDBSelectionCycle implements SelectionCycle{
 			
 		return current_count != null;
 	}
-	
-	public boolean containsAptamer(String a){
-		return containsAptamer(a.getBytes());
-	}
-
 
 	public int getAptamerCardinality(byte[] a) {
 		
@@ -536,5 +553,25 @@ public class MapDBSelectionCycle implements SelectionCycle{
 	public Iterable<Integer> id_iterator() {
 		return new IdIterator();
 	}
-	
+
+	@Override
+	public void setBarcodeFivePrime(byte[] barcode) {
+		this.barcodeFive = barcode;
+	}
+
+	@Override
+	public byte[] getBarcodeFivePrime() {
+		return this.barcodeFive;
+	}
+
+	@Override
+	public void setBarcodeThreePrime(byte[] barcode) {
+		this.barcodeThree = barcode;
+	}
+
+	@Override
+	public byte[] getBarcodeThreePrime() {
+		return this.barcodeThree;
+	}
+
 }

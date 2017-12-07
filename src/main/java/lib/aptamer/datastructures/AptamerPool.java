@@ -22,7 +22,10 @@ public interface AptamerPool extends Serializable{
 	/**
 	 * Adds (i.e. registers) an aptamer in the pool and assigns a unique identifier to it.
 	 * This identifier corresponds to an integer which can be used for indexing purposes for
-	 * additional properties of the aptamer (e.g. to which selection cycles it belongs, counts, etc)
+	 * additional properties of the aptamer (e.g. to which selection cycles it belongs, counts, etc).
+	 * 
+	 * The identifier _must_ be continuous and start at 0 such that after parsing, all unique aptamers
+	 * can be addressed from [0..poolsize-1]
 	 * 
 	 * If the aptamer already exists in the pool, it will not be inserted again, but 
 	 * the existing identifier will be returned. 
@@ -121,8 +124,7 @@ public interface AptamerPool extends Serializable{
 	 */
 	public void setReadWrite();
 	
-	
-	
+		
 	/**
 	 * Provides an iterator over every aptamer in the pool  
 	 * together with its unique id.

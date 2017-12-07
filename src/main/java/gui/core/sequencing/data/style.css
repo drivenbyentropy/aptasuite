@@ -1,0 +1,30 @@
+/*Define line width and colors*/
+
+.chart-series-line {
+	-fx-stroke-width: 1px;
+}
+
+/*A*/
+.default-color0.chart-series-line { -fx-background-color: green, white; }
+
+/*C*/
+.default-color1.chart-series-line { -fx-background-color: #FFCC00, white; }
+
+/*G*/
+.default-color2.chart-series-line { -fx-background-color: blue, white; }
+
+/*T*/
+.default-color3.chart-series-line { -fx-background-color: red, white; }
+
+/*N*/
+.default-color4.chart-series-line { -fx-background-color: gray, white; }
+
+
+
+
+/*Do the same for the symbols*/
+
+.chart-line-symbol {
+    -fx-background-radius: 0px;
+    -fx-padding: 2px;
+}

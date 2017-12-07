@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.RowConstraints?>
+
+<GridPane fx:id="columnGridPane" gridLinesVisible="true" minHeight="5.0" minWidth="5.0" prefHeight="400.0" prefWidth="400.0" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.charts.logo.BarColumnController">
+  <columnConstraints>
+    <ColumnConstraints hgrow="ALWAYS" minWidth="5.0" />
+  </columnConstraints>
+  <rowConstraints>
+    <RowConstraints minHeight="5.0" vgrow="ALWAYS" />
+  </rowConstraints>
+   <children>
+      <AnchorPane minHeight="5.0" minWidth="5.0" GridPane.hgrow="ALWAYS" GridPane.vgrow="ALWAYS" />
+   </children>
+</GridPane>

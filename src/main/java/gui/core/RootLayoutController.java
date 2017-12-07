@@ -8,19 +8,35 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.logging.Level;
 
 import javax.annotation.PostConstruct;
 
 import gui.activity.ProgressPaneController;
 import gui.wizards.newexperiment.WizardStartController;
+import io.datafx.controller.context.ApplicationContext;
+import io.datafx.controller.context.FXMLApplicationContext;
 import io.datafx.controller.flow.Flow;
 import io.datafx.controller.flow.FlowException;
+import io.datafx.controller.flow.FlowHandler;
+import io.datafx.controller.flow.context.FXMLViewFlowContext;
+import io.datafx.controller.flow.context.ViewFlowContext;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.BooleanBinding;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Menu;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.layout.BorderPane;
@@ -54,6 +70,37 @@ public class RootLayoutController {
     @FXML
     private TabPane rootTabPane;
     
+    @FXML
+    private MenuItem showOverviewTabMenuItem;    
+    
+    @FXML
+    private MenuItem showSequencingDataTabMenuItem;
+    
+    @FXML
+    private MenuItem showAptamerPoolTabMenuItem;
+    
+    @FXMLApplicationContext
+    private ApplicationContext context;
+    
+    /**
+     * Contains all currently opened tabs
+     */
+    private ObservableList<Tab> tabs = FXCollections.observableArrayList( new ArrayList<Tab>() );
+    
+    /**
+     * Handle to the overview tab 
+     */
+    private Tab overviewTab;
+    
+    /**
+     * Handle to the overview tab 
+     */
+    private Tab sequencingDataTab;
+    
+    /**
+     * Handle to the aptamer pool 
+     */
+    private Tab aptamerPoolTab;
     
     /**
      * Handle to the primary stage 
@@ -69,49 +116,89 @@ public class RootLayoutController {
 	@PostConstruct
 	public void initialize() {
 		
+		
+		// Bind menu button availability
+		showOverviewTabMenuItem.disableProperty().bind( Bindings.createBooleanBinding( () -> tabs.contains( overviewTab ), tabs ) );
+		showSequencingDataTabMenuItem.disableProperty().bind( Bindings.createBooleanBinding( () -> tabs.contains( sequencingDataTab ), tabs ) );
+		showAptamerPoolTabMenuItem.disableProperty().bind( Bindings.createBooleanBinding( () -> tabs.contains( aptamerPoolTab ), tabs ) );
+		
+		testAction();
+		
 //		BEGIN TEMP AUTO LOAD DATASET
-		File cfp = Paths.get("C:\\Users\\hoinkaj\\Downloads\\SmallTest\\configuration.aptasuite").toFile();
+//		File cfp = Paths.get("C:\\Users\\hoinkaj\\Downloads\\TestMultiplexedPaired\\configuration.aptasuite").toFile();
+//		
+//		// Read config file and set defaults
+//		Configuration.setConfiguration(cfp.getAbsolutePath());
+//		
+//		ProgressPaneController pp = ProgressPaneController.getProgressPane(this.rootStackPane, new Runnable() {
+//    			
+//			@Override
+//			public void run() {
+//				
+//				//AptaLogger.log(Level.INFO, Configuration.class, "Using the following parameters: " + "\n" +  Configuration.printParameters());
+//				
+//				// Make sure the project folder exists and create it if not
+//				Path projectPath = Paths.get(Configuration.getParameters().getString("Experiment.projectPath"));
+//				if (Files.notExists(projectPath)){
+//						AptaLogger.log(Level.INFO, this.getClass(), "The project path does not exist on the file system. Creating folder " + projectPath);
+//						try {
+//							Files.createDirectories(Paths.get(projectPath.toString()));
+//						} catch (IOException e) {
+//							// TODO Auto-generated catch block
+//							e.printStackTrace();
+//						}
+//				}
+//				
+//				// Initialize the experiment
+//				experiment = new Experiment(cfp.getAbsolutePath(), false);
+//				preferencesMenu.setDisable(false);
+//				
+//				// Initialize the GUI elements
+//				Platform.runLater(() -> {
+//					
+//					AptaLogger.log(Level.INFO, this.getClass(), "Initializing GUI elements");
+//					showInitialTabs();
+//					
+//                });
+//				
+//			}
+//		
+//		});
+//		
+//		pp.run();
+		// END TEMP AUTOLOAD DATASET
 		
-		// Read config file and set defaults
-		Configuration.setConfiguration(cfp.getAbsolutePath());
+	}
+	
+	
+	/**
+	 * Opens a series of tabs depending on the data
+	 * Will return immediately
+	 */
+	public void showInitialTabs() {
 		
-		ProgressPaneController pp = ProgressPaneController.getProgressPane(this.rootStackPane, new Runnable() {
-    			
-			@Override
-			public void run() {
-				
-				//AptaLogger.log(Level.INFO, Configuration.class, "Using the following parameters: " + "\n" +  Configuration.printParameters());
-				
-				// Make sure the project folder exists and create it if not
-				Path projectPath = Paths.get(Configuration.getParameters().getString("Experiment.projectPath"));
-				if (Files.notExists(projectPath)){
-						AptaLogger.log(Level.INFO, this.getClass(), "The project path does not exist on the file system. Creating folder " + projectPath);
-						try {
-							Files.createDirectories(Paths.get(projectPath.toString()));
-						} catch (IOException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-				}
-				
-				// Initialize the experiment
-				experiment = new Experiment(cfp.getAbsolutePath(), false);
-				preferencesMenu.setDisable(false);
-				
-				// Initialize the GUI elements
-				Platform.runLater(() -> {
-					
-					AptaLogger.log(Level.INFO, this.getClass(), "Initializing GUI elements");
-					addExperimentOverviewTab();
-					
-                });
-				
+		// Reset in case a previous experiment was open
+		this.overviewTab = null;
+		this.sequencingDataTab = null;
+		this.tabs.clear();
+		this.rootTabPane.getTabs().clear();
+		
+		Platform.runLater(() -> {
+		
+			// only add them if they are not already open
+			if (!this.tabs.contains(overviewTab)) {
+				addExperimentOverviewTab();
+			}
+			
+			if (!this.tabs.contains(sequencingDataTab)) {
+				addSequencingDataTab();
+			}
+			
+			if (!this.tabs.contains(aptamerPoolTab)) {
+				addAptamerPoolTab();
 			}
 		
 		});
-		
-		pp.run();
-		// END TEMP AUTOLOAD DATASET
 		
 	}
 
@@ -157,13 +244,19 @@ public class RootLayoutController {
 					// Make sure the project folder exists and create it if not
 					Path projectPath = Paths.get(Configuration.getParameters().getString("Experiment.projectPath"));
 					if (Files.notExists(projectPath)){
-							AptaLogger.log(Level.INFO, this.getClass(), "The project path does not exist on the file system. Creating folder " + projectPath);
-							try {
-								Files.createDirectories(Paths.get(projectPath.toString()));
-							} catch (IOException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
+						
+							AptaLogger.log(Level.SEVERE, this.getClass(), "The configuration file contains invalid entries. The project path does not exist.");
+
+							Platform.runLater(() -> {
+								Alert alert = new Alert(AlertType.INFORMATION);
+								alert.setTitle("Error Opening Experiment");
+								alert.setHeaderText("An error occured while opening the experiment.");
+								alert.setContentText("The project path specified in the configuration file does not exists. Please make sure your configuration file is valid and try again.");
+								alert.showAndWait();
+							});
+							
+							
+							return;
 					}
 					
 					// Initialize the experiment
@@ -174,7 +267,7 @@ public class RootLayoutController {
 					Platform.runLater(() -> {
 						
 						AptaLogger.log(Level.INFO, this.getClass(), "Initializing GUI elements");
-						addExperimentOverviewTab();
+						showInitialTabs();
 						
 	                });
 					
@@ -196,15 +289,22 @@ public class RootLayoutController {
     @FXML
     private void fileNewExperimentButtonAction(ActionEvent event) {
     	
+    	// Create a context with the main class as content so that we can inistialize the 
+    	// main GUI after parsing is completed
+    	context = ApplicationContext.getInstance();
+    	
     	// Run the wizard
+    	Flow wizard = null;
     	try {
-			new Flow(WizardStartController.class).startInStage(new Stage());
+    		
+			wizard = new Flow(WizardStartController.class);
+			context.register("RootLayoutController", this);
+			
+			wizard.startInStage(new Stage());
+			
 		} catch (FlowException e) {
 			e.printStackTrace();
 		}
-    	
-    	
-    	// TODO: Only start the GUI if the user acctually clickend on FINISH
     	
     }
     
@@ -217,45 +317,114 @@ public class RootLayoutController {
     @FXML
     private void addExperimentOverviewTab() {
     	
-    	// create a new tab 
-    	Tab tab = new Tab("Experiment Overview");
+    	// Only create a new instance if this tab has not been opened before
+    	if ( overviewTab == null) {
     	
-    	// load the content 
-    	try {
-			tab.setContent(FXMLLoader.load(getClass().getResource("/gui/core/experiment/overview/ExperimentOverviewRoot.fxml")));
-		} catch (IOException e) {
-			AptaLogger.log(Level.SEVERE, this.getClass(), e);
-			e.printStackTrace();
-		}
+	    	// create a new tab 
+	    	overviewTab = new Tab("Experiment Overview");
+	    	
+	    	
+	    	// set properties
+	    	overviewTab.setClosable(true);
+    	    // remove the instance from the tabs list
+	    	overviewTab.setOnCloseRequest(e -> { tabs.remove(overviewTab); });
+	    	
+	    	
+	    	
+	    	// load the content 
+	    	try {
+	    		overviewTab.setContent(FXMLLoader.load(getClass().getResource("/gui/core/experiment/overview/ExperimentOverviewRoot.fxml")));
+			} catch (IOException e) {
+				AptaLogger.log(Level.SEVERE, this.getClass(), e);
+				e.printStackTrace();
+			}
+	    	
+    	}
     	
     	// and add it to the tabs of the pane
-    	this.rootTabPane.getTabs().add(tab);
+    	this.rootTabPane.getTabs().add(0, overviewTab);
+    	this.tabs.add(overviewTab);
+    	
+    	
+    }
+    
+    
+    /**
+     * Once data has been loaded by either creating a new experiment
+     * or opening and existing one, this function takes care of 
+     * adding the Sequencing data tab to the main view
+     */
+    @FXML
+    private void addSequencingDataTab() {
+    	
+    	// Only create a new instance if this tab has not been opened before
+    	if ( sequencingDataTab == null) {
+    	
+	    	// create a new tab 
+    		sequencingDataTab = new Tab("Sequencing Data");
+	    	
+	    	// set properties
+    		sequencingDataTab.setClosable(true);
+    		
+    	    // remove the instance from the tabs list
+    		sequencingDataTab.setOnCloseRequest(e -> { tabs.remove(sequencingDataTab); });
+	    	
+	    	
+	    	
+	    	// load the content 
+	    	try {
+	    		sequencingDataTab.setContent(FXMLLoader.load(getClass().getResource("/gui/core/sequencing/data/SequencingDataRoot.fxml")));
+			} catch (IOException e) {
+				AptaLogger.log(Level.SEVERE, this.getClass(), e);
+				e.printStackTrace();
+			}
+	    	
+    	}
+    	
+    	// and add it to the tabs of the pane
+    	this.rootTabPane.getTabs().add(1, sequencingDataTab);
+    	this.tabs.add(sequencingDataTab);
     	   	
     }
     
+    /**
+     * Once data has been loaded by either creating a new experiment
+     * or opening and existing one, this function takes care of 
+     * adding the aptamer pool tab to the main view
+     */
     @FXML
-    private void testitButton(ActionEvent event) {
-
-//    	ProgressPaneController pane = ProgressPaneController.getProgressPane();
-
-    	ProgressPaneController pp = ProgressPaneController.getProgressPane(this.rootStackPane, new Runnable() {
-		
-		@Override
-		public void run() {
-			try {
-				Thread.sleep(5000);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
+    private void addAptamerPoolTab() {
+    	
+    	// Only create a new instance if this tab has not been opened before
+    	if ( aptamerPoolTab == null) {
+    	
+	    	// create a new tab 
+    		aptamerPoolTab = new Tab("Aptamer Pool");
+	    	
+	    	// set properties
+    		aptamerPoolTab.setClosable(true);
+    		
+    	    // remove the instance from the tabs list
+    		aptamerPoolTab.setOnCloseRequest(e -> { tabs.remove(aptamerPoolTab); });
+	    	
+	    	
+	    	
+	    	// load the content 
+	    	try {
+	    		aptamerPoolTab.setContent(FXMLLoader.load(getClass().getResource("/gui/core/aptamer/pool/AptamerPoolRoot.fxml")));
+			} catch (IOException e) {
+				AptaLogger.log(Level.SEVERE, this.getClass(), e);
 				e.printStackTrace();
 			}
-		}
-		
-	});
-	
-	pp.run();
+	    	
+    	}
     	
-    	
+    	// and add it to the tabs of the pane
+    	this.rootTabPane.getTabs().add(2, aptamerPoolTab);
+    	this.tabs.add(aptamerPoolTab);
+    	   	
     }
+    
 
     public void setPrimaryStage(Stage primaryStage) {
     	
@@ -263,6 +432,32 @@ public class RootLayoutController {
     	
     }
 
-
+    @FXML
+    private void testAction() {
+    	
+    	Stage stage = new Stage();
+        
+    	stage.setMinWidth(5);
+    	stage.setMinHeight(5);
+    	
+    	Parent root = null;
+		try {
+			root = FXMLLoader.load(getClass().getResource("/gui/charts/logo/LogoChartPanel.fxml"));
+			
+			root.minHeight(5);
+			root.minWidth(5);
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    	
+    	//Fill stage with content
+    	stage.setScene(new Scene(root));
+    	
+    	
+        stage.show();
+    	
+    }
     
 }

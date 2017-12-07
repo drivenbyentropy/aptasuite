@@ -608,7 +608,7 @@ public class AptaSimParser implements Parser, Runnable{
 			// If this cycle was not specified by the user, we create a temporary cycle and
 			// flag it for removal.
 			if (cycle == null){
-				cycle = Configuration.getExperiment().registerSelectionCycle("Temp"+x, x, false, false, true);			
+				cycle = Configuration.getExperiment().registerSelectionCycle("Temp"+x, x, false, false, null, null, true);			
 				temporary_cycles.add(cycle);
 				AptaLogger.log(Level.CONFIG, this.getClass(), "Created temporary cycle for round " + x);
 			}

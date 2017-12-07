@@ -88,9 +88,7 @@ public class ProgressPaneController {
 	@PostConstruct
 	public void initialize() {
 		
-		
-		
-		System.out.println("ProgressPaneInitialized");
+
 		
 	}
 

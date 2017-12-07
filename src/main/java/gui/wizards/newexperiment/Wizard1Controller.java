@@ -284,6 +284,21 @@ public class Wizard1Controller extends AbstractWizardController {
     		
     		round_name_map.get(selection_cycle_controller.getSelectionCycleDataModel().getRoundName().get()).add(selection_cycle_controller.getRoundNameTextField());
     	
+        	// Make sure there are no empty round names
+        	if ( selection_cycle_controller.getSelectionCycleDataModel().getRoundName().isEmpty().get() ) {
+        		
+        		ControlFXValidatorFactory.setTemporaryValidation(
+    					selection_cycle_controller.getRoundNameTextField(), 
+            			ControlFXValidatorFactory.AllwaysWrongValidator("The round name must not be empty."), 
+            			this.validationSupport, 
+            			Validator.createEmptyValidator("Please specify a name for this round."),
+            			false
+            			);
+			    			
+    			is_valid = false;
+        		
+        	}
+    		
     		// Make sure we have the sequencing files if data is demultiplexed
     		if(getDataModel().getIsDemultiplexed().get()) {
     			
@@ -365,7 +380,6 @@ public class Wizard1Controller extends AbstractWizardController {
 	    	
 	    	}
     	}
-    	
     	
     	// Make sure we have no duplicate round names
     	for ( Entry<String, ArrayList<TextField>> item : round_name_map.entrySet()) {
@@ -722,13 +736,16 @@ public class Wizard1Controller extends AbstractWizardController {
     	}
     	FileChooser.ExtensionFilter fileExtensions = new FileChooser.ExtensionFilter("Sequencing Files", "*.fastq", "*.fastq.gz", "*.txt", "*.txt.gz");
     	fileChooser.getExtensionFilters().add(fileExtensions);
+    	fileChooser.setInitialDirectory(new File(getDataModel().getLastSelectedDirectory().getAbsolutePath()));
     	File cfp = fileChooser.showOpenDialog(null);
     	
     	// Load configuration unless the user has chosen not to complete the dialog
     	if (cfp != null) {
     		
     		target.setText(cfp.getAbsolutePath());
-
+    		getDataModel().setLastSelectedDirectory(cfp.getParentFile());
+    		
+    		
     	}
     }
 

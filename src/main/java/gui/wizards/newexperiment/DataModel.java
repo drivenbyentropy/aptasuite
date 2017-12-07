@@ -3,6 +3,7 @@
  */
 package gui.wizards.newexperiment;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -57,7 +58,7 @@ public class DataModel {
 	
 	private ObjectProperty<Integer> performanceMaxNumberOfCores  = new SimpleObjectProperty<Integer>(utilities.Configuration.getDefaults().getInt("Performance.maxNumberOfCores"));
 	
-	
+	private File lastSelectedDirectory = null;
 	
 	
 	/**
@@ -246,6 +247,20 @@ public class DataModel {
 	 */
 	public ObjectProperty<Integer> getPerformanceMaxNumberOfCores() {
 		return performanceMaxNumberOfCores;
+	}
+
+	/**
+	 * @return the lastSelectedDirectory
+	 */
+	public File getLastSelectedDirectory() {
+		return lastSelectedDirectory;
+	}
+
+	/**
+	 * @param lastSelectedDirectory the lastSelectedDirectory to set
+	 */
+	public void setLastSelectedDirectory(File lastSelectedDirectory) {
+		this.lastSelectedDirectory = lastSelectedDirectory;
 	}
 	
 	

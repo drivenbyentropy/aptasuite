@@ -1,0 +1,387 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.embed.swing.SwingNode?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.RadioButton?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+
+<AnchorPane xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.core.aptamer.pool.AptamerPoolRootController">
+   <children>
+      <StackPane fx:id="aptamerPoolRootStackPane" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <children>
+            <BorderPane>
+               <top>
+                  <HBox prefWidth="150.0" BorderPane.alignment="CENTER">
+                     <children>
+                        <VBox maxWidth="200.0" minWidth="200.0">
+                           <children>
+                              <Label text="To show or hide the primer regions in the table, select one of the options below" wrapText="true">
+                                 <font>
+                                    <Font size="12.0" />
+                                 </font>
+                                 <VBox.margin>
+                                    <Insets bottom="10.0" />
+                                 </VBox.margin>
+                              </Label>
+                              <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                 <children>
+                                    <RadioButton fx:id="showPrimersRadioButton" minWidth="-Infinity" mnemonicParsing="false" onAction="#redrawTableContent" selected="true" text="Show Primers">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                       <toggleGroup>
+                                          <ToggleGroup fx:id="primersToggleGroup" />
+                                       </toggleGroup>
+                                    </RadioButton>
+                                    <RadioButton fx:id="hidePrimersRadioButton" minWidth="-Infinity" mnemonicParsing="false" onAction="#redrawTableContent" text="Hide Primers" toggleGroup="$primersToggleGroup">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                    </RadioButton>
+                                 </children>
+                              </HBox>
+                           </children>
+                        </VBox>
+                        <Separator orientation="VERTICAL">
+                           <HBox.margin>
+                              <Insets left="10.0" right="10.0" />
+                           </HBox.margin>
+                        </Separator>
+                        <VBox maxWidth="200.0" minWidth="200.0" HBox.hgrow="ALWAYS">
+                           <children>
+                              <Label text="To toggle between raw counts and counts per million (CPM), select the corresponding option" wrapText="true">
+                                 <font>
+                                    <Font size="12.0" />
+                                 </font>
+                                 <VBox.margin>
+                                    <Insets bottom="10.0" />
+                                 </VBox.margin>
+                              </Label>
+                              <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                 <children>
+                                    <RadioButton fx:id="cmpRadioButton" minWidth="-Infinity" mnemonicParsing="false" onAction="#redrawTableContent" selected="true" text="CMP">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                       <toggleGroup>
+                                          <ToggleGroup fx:id="countFormatToggleGroup" />
+                                       </toggleGroup>
+                                    </RadioButton>
+                                    <RadioButton fx:id="rawCountsRadionButton" minWidth="-Infinity" mnemonicParsing="false" onAction="#redrawTableContent" text="Raw Counts" toggleGroup="$countFormatToggleGroup">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                    </RadioButton>
+                                 </children>
+                              </HBox>
+                           </children>
+                        </VBox>
+                        <Separator orientation="VERTICAL">
+                           <HBox.margin>
+                              <Insets left="10.0" right="10.0" />
+                           </HBox.margin>
+                        </Separator>
+                        <VBox maxWidth="200.0" minWidth="200.0">
+                           <children>
+                              <Label text="To change the number of items to show per page, change the value below to the desired value" wrapText="true">
+                                 <font>
+                                    <Font size="12.0" />
+                                 </font>
+                                 <VBox.margin>
+                                    <Insets bottom="5.0" />
+                                 </VBox.margin>
+                              </Label>
+                              <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                 <children>
+                                    <Label minWidth="-Infinity" text="Items per page:">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                    </Label>
+                                    <TextField fx:id="itemsPerPageTextField" />
+                                 </children>
+                              </HBox>
+                           </children>
+                        </VBox>
+                        <Separator orientation="VERTICAL">
+                           <HBox.margin>
+                              <Insets left="10.0" right="10.0" />
+                           </HBox.margin>
+                        </Separator>
+                        <VBox maxWidth="325.0" minWidth="325.0">
+                           <children>
+                              <Label text="To display only a subset of the aptamer pool (in compliance with the sorting/searching criteria), select the threshold below. This may speed up sorting and searching operations" wrapText="true">
+                                 <font>
+                                    <Font size="12.0" />
+                                 </font>
+                                 <VBox.margin>
+                                    <Insets bottom="5.0" />
+                                 </VBox.margin>
+                              </Label>
+                              <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                 <children>
+                                    <Label minWidth="-Infinity" text="Max items:">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                    </Label>
+                                    <TextField fx:id="maxItemTextField" />
+                                    <Label text="/" />
+                                    <Label fx:id="totalItemsLabel" text="Label" />
+                                    <Button mnemonicParsing="false" onAction="#recomputeAptamerIds" text="GO">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                    </Button>
+                                 </children>
+                              </HBox>
+                           </children>
+                        </VBox>
+                        <Separator orientation="VERTICAL">
+                           <HBox.margin>
+                              <Insets left="10.0" right="10.0" />
+                           </HBox.margin>
+                        </Separator>
+                        <VBox maxWidth="400.0" minWidth="400.0">
+                           <children>
+                              <Label text="To modify the order of the aptamers in the table, adopt the contraints by selecting a sorting critera as well a reference cycle&#10; " wrapText="true">
+                                 <font>
+                                    <Font size="12.0" />
+                                 </font>
+                                 <VBox.margin>
+                                    <Insets bottom="5.0" />
+                                 </VBox.margin>
+                              </Label>
+                              <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                 <children>
+                                    <Label text="Sort by">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                    </Label>
+                                    <ComboBox fx:id="sortByComboBox" />
+                                    <Label text="on cycle">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                    </Label>
+                                    <ComboBox fx:id="onCycleComboBox" HBox.hgrow="ALWAYS" />
+                                    <Button mnemonicParsing="false" onAction="#recomputeAptamerIds" text="GO">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                    </Button>
+                                 </children>
+                              </HBox>
+                           </children>
+                        </VBox>
+                        <Separator orientation="VERTICAL">
+                           <HBox.margin>
+                              <Insets left="10.0" right="10.0" />
+                           </HBox.margin>
+                        </Separator>
+                        <VBox maxWidth="325.0" minWidth="325.0">
+                           <children>
+                              <Label text="Search for any sub-sequence in the pool. Regular expressions are supported. Primers will be excluded from the search. Refine your search using multiple queries.&#10;" wrapText="true">
+                                 <font>
+                                    <Font size="12.0" />
+                                 </font>
+                                 <VBox.margin>
+                                    <Insets bottom="5.0" />
+                                 </VBox.margin>
+                              </Label>
+                              <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                 <children>
+                                    <Label minWidth="-Infinity" text="Query:">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                    </Label>
+                                    <TextField fx:id="searchTextField" />
+                                    <Button fx:id="goSearchButton" mnemonicParsing="false" onAction="#goSearchButtonAction" text="GO">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                    </Button>
+                                    <Button mnemonicParsing="false" onAction="#resetSearchAction" text="Reset">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                    </Button>
+                                 </children>
+                              </HBox>
+                           </children>
+                        </VBox>
+                     </children>
+                     <BorderPane.margin>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                     </BorderPane.margin>
+                  </HBox>
+               </top>
+               <center>
+                  <SplitPane fx:id="tableDetailsSplitPane" dividerPositions="0.7686318131256952">
+                    <items>
+                        <StackPane fx:id="poolTableViewStackPane" />
+                        <StackPane>
+                           <children>
+                              <SplitPane fx:id="detailsSplitPane" dividerPositions="0.41, 0.78" orientation="VERTICAL">
+                                <items>
+                                    <TitledPane maxHeight="1.7976931348623157E308" text="Secondary Structure (Prediction: RNAFold4J, Visualization: Varna)">
+                                      <content>
+                                          <StackPane>
+                                             <children>
+                                                <VBox fx:id="secondaryStructureVBox">
+                                                   <children>
+                                                      <Label fx:id="varnaSequenceLabel" VBox.vgrow="ALWAYS">
+                                                         <font>
+                                                            <Font name="Monospaced Regular" size="12.0" />
+                                                         </font>
+                                                      </Label>
+                                                      <Label fx:id="varnaStructureLabel" VBox.vgrow="ALWAYS">
+                                                         <font>
+                                                            <Font name="Monospaced Regular" size="12.0" />
+                                                         </font>
+                                                      </Label>
+                                                      <Label fx:id="varnaMFELabel" VBox.vgrow="ALWAYS">
+                                                         <font>
+                                                            <Font name="Monospaced Regular" size="12.0" />
+                                                         </font>
+                                                      </Label>
+                                                      <SwingNode fx:id="varnaSwingNode" VBox.vgrow="ALWAYS" />
+                                                   </children>
+                                                </VBox>
+                                             </children>
+                                          </StackPane>
+                                      </content>
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                    </TitledPane>
+                                    <TitledPane maxHeight="1.7976931348623157E308" text="Base Pair Probability Matrix (Prediction: RNAFold4J)">
+                                      <content>
+                                        <AnchorPane>
+                                             <children>
+                                                <StackPane layoutX="9.600000381469727" layoutY="9.600000381469727" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                                   <children>
+                                                      <GridPane fx:id="bppmGridPane" alignment="CENTER">
+                                                        <rowConstraints>
+                                                          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                                          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                                          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                                        </rowConstraints>
+                                                      </GridPane>
+                                                   </children>
+                                                </StackPane>
+                                             </children>
+                                          </AnchorPane>
+                                      </content>
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                    </TitledPane>
+                                    <TitledPane maxHeight="1.7976931348623157E308" text="Structural Context Distribution (Prediction: CapR4J)">
+                                       <content>
+                                          <AnchorPane>
+                                             <children>
+                                                <StackPane layoutX="9.600000381469727" layoutY="9.600000381469727" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                                   <children>
+                                                      <VBox prefHeight="200.0" prefWidth="100.0">
+                                                         <children>
+                                                            <GridPane>
+                                                              <columnConstraints>
+                                                                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                                                                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                                                                  <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                                                              </columnConstraints>
+                                                              <rowConstraints>
+                                                                <RowConstraints vgrow="SOMETIMES" />
+                                                                <RowConstraints vgrow="SOMETIMES" />
+                                                              </rowConstraints>
+                                                               <children>
+                                                                  <Label style="-fx-text-fill: #FF7070;" text="H: Hairpin">
+                                                                     <font>
+                                                                        <Font name="Monospaced Regular" size="12.0" />
+                                                                     </font>
+                                                                     <GridPane.margin>
+                                                                        <Insets />
+                                                                     </GridPane.margin>
+                                                                  </Label>
+                                                                  <Label style="-fx-text-fill: #FA9600;" text="B: Buldge Loop" GridPane.columnIndex="1">
+                                                                     <font>
+                                                                        <Font name="Monospaced Regular" size="12.0" />
+                                                                     </font>
+                                                                  </Label>
+                                                                  <Label style="-fx-text-fill: #A0A0FF;" text="I: Inner Loop" GridPane.columnIndex="2">
+                                                                     <font>
+                                                                        <Font name="Monospaced Regular" size="12.0" />
+                                                                     </font>
+                                                                  </Label>
+                                                                  <Label style="-fx-text-fill: CYAN;" text="M: Multiple Loop" GridPane.rowIndex="1">
+                                                                     <font>
+                                                                        <Font name="Monospaced Regular" size="12.0" />
+                                                                     </font>
+                                                                  </Label>
+                                                                  <Label style="-fx-text-fill: PINK;" text="D: Dangling End" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                                                                     <font>
+                                                                        <Font name="Monospaced Regular" size="12.0" />
+                                                                     </font>
+                                                                  </Label>
+                                                                  <Label style="-fx-text-fill: #C8C8C8;" text="P: Paired" GridPane.columnIndex="2" GridPane.rowIndex="1">
+                                                                     <font>
+                                                                        <Font name="Monospaced Regular" size="12.0" />
+                                                                     </font>
+                                                                  </Label>
+                                                               </children>
+                                                            </GridPane>
+                                                            <ScrollPane style="-fx-background-color: transparent;" vbarPolicy="NEVER">
+                                                               <content>
+                                                                  <VBox>
+                                                                     <children>
+                                                                        <SwingNode fx:id="contextProbabilitySwingNode" />
+                                                                        <Region prefHeight="30.0" prefWidth="0.0" />
+                                                                     </children>
+                                                                  </VBox>
+                                                               </content>
+                                                            </ScrollPane>
+                                                         </children>
+                                                      </VBox>
+                                                   </children>
+                                                </StackPane>
+                                             </children>
+                                          </AnchorPane>
+                                       </content>
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                    </TitledPane>
+                                </items>
+                              </SplitPane>
+                           </children>
+                        </StackPane>
+                    </items>
+                  </SplitPane>
+               </center>
+            </BorderPane>
+         </children>
+      </StackPane>
+   </children>
+</AnchorPane>

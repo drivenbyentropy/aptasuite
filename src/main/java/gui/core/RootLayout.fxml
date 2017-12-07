@@ -29,6 +29,13 @@
                         <MenuItem mnemonicParsing="false" onAction="#addExperimentOverviewTab" text="Debug" />
                   </items>
                 </Menu>
+                  <Menu mnemonicParsing="false" text="View">
+                    <items>
+                      <MenuItem fx:id="showOverviewTabMenuItem" mnemonicParsing="false" onAction="#addExperimentOverviewTab" text="Show Overview Tab" />
+                        <MenuItem fx:id="showSequencingDataTabMenuItem" mnemonicParsing="false" onAction="#addSequencingDataTab" text="Show Sequencing Data Tab" />
+                        <MenuItem fx:id="showAptamerPoolTabMenuItem" mnemonicParsing="false" onAction="#addAptamerPoolTab" text="Show Aptamer Pool Tab" />
+                    </items>
+                  </Menu>
                 <Menu fx:id="preferencesMenu" disable="true" mnemonicParsing="false" text="Preferences">
                   <items>
                     <MenuItem mnemonicParsing="false" text="Delete" />
@@ -36,14 +43,14 @@
                 </Menu>
                 <Menu fx:id="helpMenu" mnemonicParsing="false" text="Help">
                   <items>
-                    <MenuItem mnemonicParsing="false" text="About" />
+                    <MenuItem mnemonicParsing="false" onAction="#testAction" text="About" />
                   </items>
                 </Menu>
               </menus>
             </MenuBar>
          </top>
          <center>
-            <TabPane fx:id="rootTabPane" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE" BorderPane.alignment="CENTER" />
+            <TabPane fx:id="rootTabPane" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="ALL_TABS" BorderPane.alignment="CENTER" />
          </center>
       </BorderPane>
    </children>

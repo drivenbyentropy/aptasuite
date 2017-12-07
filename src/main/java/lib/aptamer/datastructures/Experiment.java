@@ -116,6 +116,8 @@ public class Experiment implements Serializable{
 	 */
 	public Experiment(String configFile, boolean newdb) {
 		
+		long startTime = System.currentTimeMillis();
+		
 		// Register the Experiment with the configuration class
 		Configuration.setExperiment(this);
 
@@ -170,6 +172,10 @@ public class Experiment implements Serializable{
 		Boolean[] isControls = null;
 		Boolean[] isCounters = null;
 		
+		String[] barcodes5 = Configuration.getParameters().getStringArray("AptaplexParser.barcodes5Prime");
+		String[] barcodes3 = Configuration.getParameters().getStringArray("AptaplexParser.barcodes3Prime");
+		boolean isPerFile = Configuration.getParameters().getBoolean("AptaplexParser.isPerFile");
+				
 		try{
 			rounds = (Integer[]) Configuration.getParameters().getArray(Integer.class, "SelectionCycle.round");
 		}
@@ -224,11 +230,17 @@ public class Experiment implements Serializable{
 		
 		// Now we can instantiate the selection cycles
 		for (int x=0; x<rounds.length; x++){
-			registerSelectionCycle(names[x], rounds[x], isControls[x], isCounters[x], newdb);
+			
+			byte[] barcode5 = isPerFile ? null : barcodes5[x].getBytes();
+			byte[] barcode3 = !isPerFile && barcodes3.length != 0 && barcodes3.length == barcodes5.length ? barcodes3[x].getBytes() : null;
+			
+			registerSelectionCycle(names[x], rounds[x], isControls[x], isCounters[x], barcode5, barcode3, newdb);
 		}
 		
 		// Set the metadata instance
 		this.metadata = new Metadata(newdb);
+		
+		AptaLogger.log(Level.INFO, this.getClass(), "Loading took " + (System.currentTimeMillis() - startTime) + " milliseconds");
 		
 	}
 
@@ -403,7 +415,7 @@ public class Experiment implements Serializable{
 	 * @param newdb true if a new instance should be created, false, if an existing instance should be loaded from disk
 	 * @return the instance of the SelectionCycle that was created in the process
 	 */
-	public SelectionCycle registerSelectionCycle(String name, int round, boolean isControlSelection, boolean isCounterSelection, boolean newdb){
+	public SelectionCycle registerSelectionCycle(String name, int round, boolean isControlSelection, boolean isCounterSelection, byte[] barcode5, byte[] barcode3, boolean newdb){
 		
 		// Sanity Checks
 		// We cannot add this cycle if another cycle with the same name is already present
@@ -432,6 +444,7 @@ public class Experiment implements Serializable{
 			System.exit(0);
 		}
 		
+
 		// Try to instantiate the class
 		boolean instanceSuccess = false; 
 		try {
@@ -482,6 +495,10 @@ public class Experiment implements Serializable{
 			// Now we can add the cycle
 			counterSelectionCycles.get(cycle.getRound()).add(cycle);
 		}
+		
+		// add barcodes
+		cycle.setBarcodeFivePrime(barcode5);
+		cycle.setBarcodeThreePrime(barcode3);
 		
 		// finally, add it to the complete list of cyckes
 		allSelectionCycles.add(cycle);
@@ -579,7 +596,11 @@ public class Experiment implements Serializable{
 	
 	/**
 	 * Provides access to all registered positive selection cycles of this experiment
-	 * @return
+	 * @return The main selection cycles, sorted in increasing order.
+	 * The size of this ArrayList should be equal to the highest sequenced 
+	 * selection cycles of the experiment including the initial round which is
+	 * assumed to always corresponding to index 0. The position of any selection cycle 
+	 * which was not sequenced will be set to <code>null</code>.
 	 */
 	public ArrayList<SelectionCycle> getSelectionCycles(){
 		return this.selectionCycles;
@@ -588,7 +609,9 @@ public class Experiment implements Serializable{
 	
 	/**
 	 * Provides access to all registered counter selection cycles of this experiment
-	 * @return
+	 * @return The counter selection cycles. The index of the outer list, corresponds to the index
+	 * of <code>selectionCycles</code>. If no counter selection exists for a specified round
+	 * the value of that position is expected to be null
 	 */
 	public ArrayList<ArrayList<SelectionCycle>> getCounterSelectionCycles(){
 		return this.counterSelectionCycles;
@@ -597,7 +620,9 @@ public class Experiment implements Serializable{
 	
 	/**
 	 * Provides access to all registered control selection cycles of this experiment
-	 * @return
+	 * @return The control cycles. The index of the outer list, corresponds to the index
+	 * of <code>selectionCycles</code>. If no counter selection exists for a specified round
+	 * the value of that position is expected to be null
 	 */
 	public ArrayList<ArrayList<SelectionCycle>> getControlSelectionCycles(){
 		return this.controlSelectionCycles;

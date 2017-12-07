@@ -86,7 +86,7 @@ public class Configuration {
 
 		// AptaplexParser Options
 		defaults.put("AptaplexParser.reader", "FastqReader"); //Current options are FastqReader and RawReader
-		defaults.put("AptaplexParser.isPerFile", false);
+		defaults.put("AptaplexParser.isPerFile", false); 
 		defaults.put("AptaplexParser.BlockingQueueSize", 500); // 10
 		defaults.put("AptaplexParser.PairedEndMinOverlap", 15); // Milab option: smallest overlap required when creating
 																// contig
@@ -191,15 +191,12 @@ public class Configuration {
 
 			
 			// Create a composite configuration which allows to keep user parameters and defaults separated
-			CompositeConfiguration  cc = new CompositeConfiguration(builder.getConfiguration()); //changes will be saved in the user config
-			cc.addConfiguration(getDefaultParametersBuilder().getConfiguration());
+			CompositeConfiguration  cc = new CompositeConfiguration(); 
+			
+			cc.addConfiguration(builder.getConfiguration(), true); // changes will be saved in the user config
+			cc.addConfiguration(getDefaultParametersBuilder().getConfiguration(), false);
 						
 			parameters = cc;
-			
-			
-			//parameters = builder.getConfiguration();
-
-			
 			
 		} catch (Exception e) {
 
@@ -209,12 +206,6 @@ public class Configuration {
 			e.printStackTrace();
 		}
 
-//		// add defaults to parameters only if they have not been defined in the file
-//		for (Entry<String, Object> item : defaults.entrySet()) {
-//			if (!parameters.containsKey(item.getKey())) {
-//				parameters.setProperty(item.getKey(), item.getValue());
-//			}
-//		}
 
 		// TODO: Sanity checks!
 	}
@@ -240,8 +231,10 @@ public class Configuration {
 			builder.getFileHandler().setFile(filePath.toFile());
 			
 			// Create a composite configuration which allows to keep user parameters and defaults separated
-			CompositeConfiguration  cc = new CompositeConfiguration(builder.getConfiguration()); //changes will be saved in the user config
-			cc.addConfiguration(getDefaultParametersBuilder().getConfiguration());
+			CompositeConfiguration  cc = new CompositeConfiguration();
+			
+			cc.addConfiguration(builder.getConfiguration(), true); // changes will be saved in the user config
+			cc.addConfiguration(getDefaultParametersBuilder().getConfiguration(), false);
 			
 			parameters = cc;
 			

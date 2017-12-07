@@ -188,16 +188,8 @@ public class MapDBAptamerPool implements AptamerPool {
     				AptaLogger.log(Level.INFO, this.getClass(), "Processing " + file.toString());
     				long tParserStart = System.currentTimeMillis();
     		
-    				DB db = DBMaker
-    					    .fileDB(file.toFile())
-    					    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
-    					    .fileMmapPreclearDisable() // Make mmap file faster
-    					    .fileChannelEnable()
-    					    .cleanerHackEnable() // Unmap (release resources) file when its closed.
-    					    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
-    					    .executorEnable()
-    					    .make();
-
+    				DB db = this.getMapDBInstance(file.toFile(),false);
+    				
     				HTreeMap<byte[], Integer> dbmap = db.hashMap("map")
     						.keySerializer(new SerializerCompressionWrapper<byte[]>(Serializer.BYTE_ARRAY))
     						.valueSerializer(Serializer.INTEGER)
@@ -220,15 +212,7 @@ public class MapDBAptamerPool implements AptamerPool {
     				
     				AptaLogger.log(Level.CONFIG, this.getClass(), "Reading inverse view from " + inverseFile.toString());
     				
-    				DB db_inverse = DBMaker
-    					    .fileDB(inverseFile.toFile())
-    					    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
-    					    .fileMmapPreclearDisable() // Make mmap file faster
-    					    .fileChannelEnable()
-    					    .cleanerHackEnable() // Unmap (release resources) file when its closed.
-    					    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
-    					    .executorEnable()
-    					    .make();
+    				DB db_inverse = this.getMapDBInstance(inverseFile.toFile(),false);
 
     				BTreeMap<Integer, byte[]> inverse_dbmap = db_inverse.treeMap("map")
     						.valuesOutsideNodesEnable()
@@ -259,15 +243,7 @@ public class MapDBAptamerPool implements AptamerPool {
     				
     				AptaLogger.log(Level.CONFIG, this.getClass(), "Reading bounds data from " + boundsFile.toString());
     				
-    				DB db_bounds = DBMaker
-    					    .fileDB(boundsFile.toFile())
-    					    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
-    					    .fileMmapPreclearDisable() // Make mmap file faster
-    					    .fileChannelEnable()
-    					    .cleanerHackEnable() // Unmap (release resources) file when its closed.
-    					    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
-    					    .executorEnable()
-    					    .make();
+    				DB db_bounds = this.getMapDBInstance(boundsFile.toFile(),false);
 
     				BTreeMap<Integer, int[]> bounds_dbmap = db_bounds.treeMap("map")
     						.valuesOutsideNodesEnable()
@@ -295,14 +271,7 @@ public class MapDBAptamerPool implements AptamerPool {
 			
 		// Create an empty instance of the MapDB Container...
 		Path file = Paths.get(poolDataPath.toString(), "data" + String.format("%04d", poolData.size()) + ".mapdb");
-		DB db = DBMaker
-			    .fileDB(file.toFile())
-			    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
-			    .fileMmapPreclearDisable() // Make mmap file faster
-			    .cleanerHackEnable() // Unmap (release resources) file when its closed.
-			    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
-			    .executorEnable()
-			    .make();
+		DB db = this.getMapDBInstance(file.toFile(),false);
 
 		HTreeMap<byte[], Integer> dbmap = db.hashMap("map")
 				.keySerializer(Serializer.BYTE_ARRAY)
@@ -324,14 +293,7 @@ public class MapDBAptamerPool implements AptamerPool {
 		// ... as well as a new bounds file
 		Path boundsfile = Paths.get(file.getParent().toString(), "bounds_" + file.getFileName().toString());
 		
-		DB db_bounds = DBMaker
-			    .fileDB(boundsfile.toFile())
-			    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
-			    .fileMmapPreclearDisable() // Make mmap file faster
-			    .cleanerHackEnable() // Unmap (release resources) file when its closed.
-			    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
-			    .executorEnable()
-			    .make();
+		DB db_bounds = this.getMapDBInstance(boundsfile.toFile(),false);
 
 		BTreeMap<Integer, int[]> dbmap_bounds = db_bounds.treeMap("map")
 				.valuesOutsideNodesEnable()
@@ -347,14 +309,7 @@ public class MapDBAptamerPool implements AptamerPool {
 	
 		// Create the inverse view files
 		Path inverse_file = Paths.get(file.getParent().toString(), "inverse_" + file.getFileName().toString());
-		DB db_inverse = DBMaker
-			    .fileDB(inverse_file.toFile())
-			    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
-			    .fileMmapPreclearDisable() // Make mmap file faster
-			    .cleanerHackEnable() // Unmap (release resources) file when its closed.
-			    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
-			    .executorEnable()
-			    .make();
+		DB db_inverse = this.getMapDBInstance(inverse_file.toFile(),false);
 
 		BTreeMap<Integer, byte[]> dbmap_inverse = db_inverse.treeMap("map")
 				.valuesOutsideNodesEnable()
@@ -397,14 +352,7 @@ public class MapDBAptamerPool implements AptamerPool {
 					"Total number of aptamers: " + poolSize 
 					);
 			
-			DB db = DBMaker
-				    .fileDB(file.toFile())
-				    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
-				    .fileMmapPreclearDisable() // Make mmap file faster
-				    .cleanerHackEnable() // Unmap (release resources) file when its closed.
-				    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
-				    .executorEnable()
-				    .make();
+			DB db = this.getMapDBInstance(file.toFile(),false);
 
 			HTreeMap<byte[], Integer> dbmap = db.hashMap("map")
 					.keySerializer(Serializer.BYTE_ARRAY)
@@ -420,14 +368,7 @@ public class MapDBAptamerPool implements AptamerPool {
 			// Reverse View
 			Path inverse_file = Paths.get(file.getParent().toString(), "inverse_" + file.getFileName().toString());
 			
-			DB db_inverse = DBMaker
-				    .fileDB(inverse_file.toFile())
-				    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
-				    .fileMmapPreclearDisable() // Make mmap file faster
-				    .cleanerHackEnable() // Unmap (release resources) file when its closed.
-				    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
-				    .executorEnable()
-				    .make();
+			DB db_inverse = this.getMapDBInstance(inverse_file.toFile(),false);
 
 			BTreeMap<Integer, byte[]> dbmap_inverse = db_inverse.treeMap("map")
 					.valuesOutsideNodesEnable()
@@ -443,14 +384,7 @@ public class MapDBAptamerPool implements AptamerPool {
 			// Bounds
 			Path bounds_file = Paths.get(file.getParent().toString(), "bounds_" + file.getFileName().toString());
 			
-			DB db_bounds = DBMaker
-				    .fileDB(bounds_file.toFile())
-				    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
-				    .fileMmapPreclearDisable() // Make mmap file faster
-				    .cleanerHackEnable() // Unmap (release resources) file when its closed.
-				    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
-				    .executorEnable()
-				    .make();
+			DB db_bounds = this.getMapDBInstance(bounds_file.toFile(),false);
 
 			BTreeMap<Integer, int[]> dbmap_bounds = db_bounds.treeMap("map")
 					.valuesOutsideNodesEnable()
@@ -792,15 +726,7 @@ public class MapDBAptamerPool implements AptamerPool {
 			// Open and read the TreeMap
 			if (Files.isRegularFile(file)){
 				
-				DB db = DBMaker
-					    .fileDB(file.toFile())
-					    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
-					    .fileMmapPreclearDisable() // Make mmap file faster
-					    .cleanerHackEnable() // Unmap (release resources) file when its closed.
-					    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
-					    .executorEnable()
-					    .readOnly()
-					    .make();
+				DB db = this.getMapDBInstance(file.toFile(),true);
 
 				HTreeMap<byte[], Integer> dbmap = db.hashMap("map")
 						.keySerializer(new SerializerCompressionWrapper<byte[]>(Serializer.BYTE_ARRAY))
@@ -814,15 +740,7 @@ public class MapDBAptamerPool implements AptamerPool {
 			
 			// Do the same for the inverse files
 			Path inverse_file = Paths.get(file.getParent().toString(), "inverse_"+ file.getFileName().toString());
-			DB db_inverse = DBMaker
-				    .fileDB(inverse_file.toFile())
-				    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
-				    .fileMmapPreclearDisable() // Make mmap file faster
-				    .cleanerHackEnable() // Unmap (release resources) file when its closed.
-				    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
-				    .executorEnable()
-				    .readOnly()
-				    .make();
+			DB db_inverse = this.getMapDBInstance(inverse_file.toFile(),true);
 
 			BTreeMap<Integer, byte[]> dbmap_inverse = db_inverse.treeMap("map")
 					.valuesOutsideNodesEnable()
@@ -837,15 +755,7 @@ public class MapDBAptamerPool implements AptamerPool {
 			
 			// Do the same for the inverse files
 			Path bounds_file = Paths.get(file.getParent().toString(), "bounds_"+ file.getFileName().toString());
-			DB db_bounds = DBMaker
-				    .fileDB(bounds_file.toFile())
-				    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
-				    .fileMmapPreclearDisable() // Make mmap file faster
-				    .cleanerHackEnable() // Unmap (release resources) file when its closed.
-				    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
-				    .executorEnable()
-				    .readOnly()
-				    .make();
+			DB db_bounds = this.getMapDBInstance(bounds_file.toFile(),true);
 
 			BTreeMap<Integer, int[]> dbmap_bounds = db_bounds.treeMap("map")
 					.valuesOutsideNodesEnable()
@@ -878,14 +788,7 @@ public class MapDBAptamerPool implements AptamerPool {
 			// Open and read the TreeMap
 			if (Files.isRegularFile(file)){
 				
-				DB db = DBMaker
-					    .fileDB(file.toFile())
-					    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
-					    .fileMmapPreclearDisable() // Make mmap file faster
-					    .cleanerHackEnable() // Unmap (release resources) file when its closed.
-					    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
-					    .executorEnable()
-					    .make();
+				DB db = this.getMapDBInstance(file.toFile(),true);
 
 				HTreeMap<byte[], Integer> dbmap = db.hashMap("map")
 						.keySerializer(new SerializerCompressionWrapper<byte[]>(Serializer.BYTE_ARRAY))
@@ -899,14 +802,7 @@ public class MapDBAptamerPool implements AptamerPool {
 			
 			// Do the same for the inverse files
 			Path inverse_file = Paths.get(file.getParent().toString(), "inverse_"+ file.getFileName().toString());
-			DB db_inverse = DBMaker
-				    .fileDB(inverse_file.toFile())
-				    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
-				    .fileMmapPreclearDisable() // Make mmap file faster
-				    .cleanerHackEnable() // Unmap (release resources) file when its closed.
-				    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
-				    .executorEnable()
-				    .make();
+			DB db_inverse = this.getMapDBInstance(inverse_file.toFile(),true);
 
 			BTreeMap<Integer, byte[]> dbmap_inverse = db_inverse.treeMap("map")
 					.valuesOutsideNodesEnable()
@@ -921,14 +817,7 @@ public class MapDBAptamerPool implements AptamerPool {
 			
 			// Do the same for the bounds files
 			Path bounds_file = Paths.get(file.getParent().toString(), "bounds_"+ file.getFileName().toString());
-			DB db_bounds = DBMaker
-				    .fileDB(inverse_file.toFile())
-				    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
-				    .fileMmapPreclearDisable() // Make mmap file faster
-				    .cleanerHackEnable() // Unmap (release resources) file when its closed.
-				    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
-				    .executorEnable()
-				    .make();
+			DB db_bounds = this.getMapDBInstance(bounds_file.toFile(),true);
 
 			BTreeMap<Integer, int[]> dbmap_bounds = db_bounds.treeMap("map")
 					.valuesOutsideNodesEnable()
@@ -972,7 +861,7 @@ public class MapDBAptamerPool implements AptamerPool {
 	                	currentTreeMapIndex++;
 	                	currentTreeMapIterator= poolData.get(currentTreeMapIndex).getEntries().iterator();
 	                }
-	                	
+	                
 	                return currentTreeMapIterator.next();
 	            }
 
@@ -1144,6 +1033,41 @@ public class MapDBAptamerPool implements AptamerPool {
 		
 	}
 
-
+	/**
+	 * Central getter to open a channel to a mapdb on file
+	 * @param file
+	 */
+	private DB getMapDBInstance(File file, boolean readonly) {
+		
+		DB db;
+		
+		if (!readonly) {
+			db = DBMaker
+			    .fileDB(file)
+			    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
+			    .fileMmapPreclearDisable() // Make mmap file faster
+			    .cleanerHackEnable() // Unmap (release resources) file when its closed.
+			    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
+			    .executorEnable()
+			    .fileChannelEnable()
+			    .make();
+		}
+		
+		else {
+			db = DBMaker
+			    .fileDB(file)
+			    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
+			    .fileMmapPreclearDisable() // Make mmap file faster
+			    .cleanerHackEnable() // Unmap (release resources) file when its closed.
+			    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
+			    .executorEnable()
+			    .fileChannelEnable()
+			    .readOnly()
+			    .make();
+		}
+		
+		
+		return db;		
+	}
 
 }

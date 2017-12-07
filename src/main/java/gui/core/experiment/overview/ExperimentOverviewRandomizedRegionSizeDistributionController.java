@@ -52,7 +52,7 @@ public class ExperimentOverviewRandomizedRegionSizeDistributionController {
 	public void initialize() {
 		
         // Store the data to be used
-		Series<String, Number> chartData = computeStatistics();
+		chartData = computeStatistics();
 		
 		// Add initial data to barchart
         randomizedRegionSizeDistributionBarChart.getData().add(chartData);
@@ -133,15 +133,9 @@ public class ExperimentOverviewRandomizedRegionSizeDistributionController {
 	private void updateBarChart() { 
 		
 		XYChart.Series<String,Number> chart_data = new XYChart.Series(); 
+		chart_data.setName("Randomized Region Sizes in the Aptamer Pool");
 		
-		// prevent running if not ready yet
-		if (this.chartData == null) {
-			
-			return;
-			
-		}
-		
-		// Iterate over the orginial data and adjust
+		// Iterate over the original data and adjust
 		for ( Data<String, Number> item : this.chartData.getData() ) {
 			
 			Number value = item.getYValue();
@@ -160,7 +154,8 @@ public class ExperimentOverviewRandomizedRegionSizeDistributionController {
 				
 			}
 			
-					
+			chart_data.getData().add(new XYChart.Data<String,Number>(item.getXValue(), value));
+			
 		}
 		
 		// Adjust axis labels
@@ -178,7 +173,7 @@ public class ExperimentOverviewRandomizedRegionSizeDistributionController {
 		// Scale 
 		if (this.logarithmicRadioButton.selectedProperty().get()) {
 			
-			randomizedRegionSizeDistributionBarChart.getXAxis().setLabel( randomizedRegionSizeDistributionBarChart.getXAxis().getLabel() + " ( log(x + 1) )");
+			randomizedRegionSizeDistributionBarChart.getYAxis().setLabel( randomizedRegionSizeDistributionBarChart.getYAxis().getLabel() + " ( log(x + 1) )");
 			
 		}
 		

@@ -10,10 +10,17 @@ import java.util.logging.Level;
 
 import javax.annotation.PostConstruct;
 
+import gui.core.RootLayoutController;
 import io.datafx.controller.ViewController;
+import io.datafx.controller.context.ApplicationContext;
+import io.datafx.controller.context.FXMLApplicationContext;
+import io.datafx.controller.flow.Flow;
+import io.datafx.controller.flow.FlowHandler;
 import io.datafx.controller.flow.action.ActionMethod;
 import io.datafx.controller.flow.action.ActionTrigger;
 import io.datafx.controller.flow.action.LinkAction;
+import io.datafx.controller.flow.context.FXMLViewFlowContext;
+import io.datafx.controller.flow.context.ViewFlowContext;
 import javafx.application.Platform;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
@@ -101,6 +108,9 @@ public class Wizard2Controller extends AbstractWizardController {
     @FXML
     private Label loggerLabel3;
     
+    @FXMLApplicationContext
+    private ApplicationContext context;
+    
     /**
      * Hook to the experiment instance. 
      * We will pass it to the main application once parsing is complerted 
@@ -114,11 +124,17 @@ public class Wizard2Controller extends AbstractWizardController {
     
     private Thread updateThread = null;
     
-    AptaPlexProgress progress = null;
+    private AptaPlexProgress progress = null;
+    
+    private RootLayoutController rootLayoutController;
+    
     
     @PostConstruct
     public void init() {
     	
+    	// Get the main GUI controller form the DataFX context so that we initiate the tabs once parsing completes
+    	context = ApplicationContext.getInstance();
+    	rootLayoutController = (RootLayoutController) context.getRegisteredObject("RootLayoutController");
     	
     }
     
@@ -273,6 +289,9 @@ public class Wizard2Controller extends AbstractWizardController {
      */
     @ActionMethod("closeWizard")
     public void closeWizard() {
+    	
+    	// notify the gui to initialize loading the tabs
+    	rootLayoutController.showInitialTabs();
     	
     	// get a handle to the stage
         Stage stage = (Stage) getFinishButton().getScene().getWindow();

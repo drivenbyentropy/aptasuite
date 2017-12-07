@@ -214,7 +214,7 @@ public class SelectionCycleDetailsController {
     	FileChooser fileChooser = new FileChooser();
     	fileChooser.setTitle("Choose the sequencing data file");
     	if (getDataModel().getProjectPath().isNotEmpty().get()) {
-    		fileChooser.setInitialDirectory(new File(getDataModel().getProjectPath().get()));
+    		fileChooser.setInitialDirectory(new File(getDataModel().getLastSelectedDirectory().getAbsolutePath()));
     	}
     	FileChooser.ExtensionFilter fileExtensions = new FileChooser.ExtensionFilter("Sequencing Files", "*.fastq", "*.fastq.gz", "*.txt", "*.txt.gz");
     	fileChooser.getExtensionFilters().add(fileExtensions);
@@ -225,6 +225,9 @@ public class SelectionCycleDetailsController {
     		
     		target.setText(cfp.getAbsolutePath());
 
+    		// Set the last selected directory as the directory this file was contained in
+    		getDataModel().setLastSelectedDirectory(cfp.getParentFile());
+    		
     	}
     }
     

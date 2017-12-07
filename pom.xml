@@ -14,6 +14,8 @@
         	</build>
     	</profile>
 	</profiles>
+	
+	
 	<build>
 		<!-- Make sure we copy all required resouces into to jar. This
 		will mirror the source locations. I.e. files in foo/bar/ in the 
@@ -265,6 +267,11 @@
 			<artifactId>slf4j-simple</artifactId>
 			<version>1.7.12</version>
 		</dependency>
+		<dependency>
+			<groupId>fr.orsay.lri</groupId>
+			<artifactId>varna</artifactId>
+			<version>3.93</version>
+		</dependency>
 	</dependencies>
 	<repositories>
 		<repository>
@@ -275,6 +282,14 @@
 			<name>bintray</name>
 			<url>http://jcenter.bintray.com</url>
 		</repository>
+		
+		<!-- Add local repository for libraries not available in maven central -->
+   		<repository>
+       		<id>aptasuite.local</id>
+       		<name>aptasuite</name>
+       		<url>file://${project.basedir}/repo</url>
+   		</repository>
+		
 	</repositories>
 	<properties>
 		<nd4j.backend>nd4j-cuda-8.0-platform</nd4j.backend>
