@@ -104,8 +104,8 @@ public class BarController {
 	 */
 	public void setSvg(SVGPath svg) {
 		this.svg = svg;
-		this.svg = new SVGPath();
-		this.svg.setContent("M40,60 C42,48 44,30 25,32");
+//		this.svg = new SVGPath();
+//		this.svg.setContent("M40,60 C42,48 44,30 25,32");
 	}
 
 	/**
