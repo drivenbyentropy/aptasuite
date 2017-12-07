@@ -5,7 +5,7 @@
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.RowConstraints?>
 
-<GridPane fx:id="columnGridPane" gridLinesVisible="true" minHeight="5.0" minWidth="5.0" prefHeight="400.0" prefWidth="400.0" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.charts.logo.BarColumnController">
+<GridPane fx:id="columnGridPane" minHeight="5.0" minWidth="5.0" prefHeight="400.0" prefWidth="400.0" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.charts.logo.BarColumnController">
   <columnConstraints>
     <ColumnConstraints hgrow="ALWAYS" minWidth="5.0" />
   </columnConstraints>
