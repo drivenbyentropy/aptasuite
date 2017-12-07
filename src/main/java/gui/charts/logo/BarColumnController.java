@@ -17,6 +17,9 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.RowConstraints;
 import javafx.scene.shape.SVGPath;
+import utilities.QSComparator;
+import utilities.QSDoubleComparator;
+import utilities.Quicksort;
 
 /**
  * @author Jan Hoinka
@@ -37,6 +40,22 @@ public class BarColumnController {
 	 */
 	private int columnIndex;
 	
+	/**
+	 * @author Jan Hoinka
+	 * Comparator for argsort
+	 */
+	class AscQSDoubleComparator implements QSDoubleComparator{
+		
+		@Override
+		public int compare(double a, double b) {
+			
+			return Double.compare(b,a);
+		}
+					
+	}
+	
+	AscQSDoubleComparator comp = new AscQSDoubleComparator();
+	
 	private SVGPath[] contextAlphabet = {SvgAlphabet.Hairpin(), SvgAlphabet.BulgeLoop(), SvgAlphabet.InnerLoop(), SvgAlphabet.MultipleLoop(), SvgAlphabet.DanglingEnd(), SvgAlphabet.Paired()};
 	private SVGPath[] DNAAlphabet =     {SvgAlphabet.Adenine(), SvgAlphabet.Cytosine(), SvgAlphabet.Guanine(), SvgAlphabet.Thymine(), SvgAlphabet.N()};
 	private SVGPath[] RNAAlphabet =     {SvgAlphabet.Adenine(), SvgAlphabet.Cytosine(), SvgAlphabet.Guanine(), SvgAlphabet.Uracil(), SvgAlphabet.N()};
@@ -46,6 +65,8 @@ public class BarColumnController {
 	
 	
 	public void drawColumn() {
+		
+		int[] order = this.computeDrawingOrder();
 		
 		// Remove any previous constraints
 		columnGridPane.getRowConstraints().clear();
@@ -71,11 +92,9 @@ public class BarColumnController {
 				BarController controller = loader.getController();
 				
 				controller.setWidth(50);
-				controller.setSvg(alphabet[row_index]);
+				controller.setSvg(alphabet[order[row_index]]);
 				controller.drawBar();
 
-				System.out.println("Height: " + data[row_index][columnIndex]);
-				
 				// Add the bar to the column in an anchor pane
 				AnchorPane ap = new AnchorPane();
 				
@@ -96,10 +115,7 @@ public class BarColumnController {
 				
 				// Add the row constraint
 				RowConstraints row = new RowConstraints();
-				//row.setMinHeight(Control.USE_COMPUTED_SIZE);
-				//row.setPrefHeight(Control.USE_COMPUTED_SIZE);
-				//row.setMaxHeight(Control.USE_COMPUTED_SIZE);
-				row.setPercentHeight(data[row_index][columnIndex] * 100);
+				row.setPercentHeight(data[order[row_index]][columnIndex] * 100);
 				row.setFillHeight(true);
 				row.setVgrow(Priority.ALWAYS);
 				this.columnGridPane.getRowConstraints().add(row);
@@ -113,38 +129,33 @@ public class BarColumnController {
 
 		}
 		
-//		System.out.println("TEST");
-//		
-//		try {
-//			Node n1 = FXMLLoader.load(getClass().getResource("/gui/charts/logo/LogoRoot.fxml"));
-//			anchorPane1.getChildren().add(n1);
-//			AnchorPane.setBottomAnchor(n1, 0.0);
-//			AnchorPane.setTopAnchor(n1, 0.0);
-//			AnchorPane.setLeftAnchor(n1, 0.0);
-//			AnchorPane.setRightAnchor(n1, 0.0);
-//
-//			Node n2 = FXMLLoader.load(getClass().getResource("/gui/charts/logo/LogoRoot.fxml"));
-//			anchorPane2.getChildren().add(n2);
-//			AnchorPane.setBottomAnchor(n2, 0.0);
-//			AnchorPane.setTopAnchor(n2, 0.0);
-//			AnchorPane.setLeftAnchor(n2, 0.0);
-//			AnchorPane.setRightAnchor(n2, 0.0);
-//
-//			Node n3 = FXMLLoader.load(getClass().getResource("/gui/charts/logo/LogoRoot.fxml"));
-//			anchorPane3.getChildren().add(n3);
-//			AnchorPane.setBottomAnchor(n3, 0.0);
-//			AnchorPane.setTopAnchor(n3, 0.0);
-//			AnchorPane.setLeftAnchor(n3, 0.0);
-//			AnchorPane.setRightAnchor(n3, 0.0);
-//
-//
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-		
 	}
 
+	/**
+	 * Given data and an index, compute the order in which 
+	 * the letters should be drawn
+	 */
+	public int[] computeDrawingOrder() {
+		
+		// Temporarily copy the data
+		double[] column = new double[data.length];
+		// create original index array
+		int[] order = new int[data.length];
+		
+		for (int row=0; row<data.length; row++) {
+			
+			order[row] = row;
+			column[row] = data[row][columnIndex];
+			
+		}
+		
+		//Argsort
+		Quicksort.quicksort(order, column, 0, order.length-1, comp);
+		
+		return order;
+		
+	}
+	
 	/**
 	 * @return the data
 	 */
