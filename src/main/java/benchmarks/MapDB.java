@@ -479,16 +479,16 @@ public class MapDB {
 	
 	public static void main(String[] args) {
 
-		Test t = new MyStest();
-		
-		for (int x : t.bla) {
-			System.out.println(x);
-		}
-	
-		t = new MyTestTwo();
-		for (int x : t.bla) {
-			System.out.println(x);
-		}
+//		Test t = new MyStest();
+//		
+//		for (int x : t.bla) {
+//			System.out.println(x);
+//		}
+//	
+//		t = new MyTestTwo();
+//		for (int x : t.bla) {
+//			System.out.println(x);
+//		}
 	
 		
 	}

@@ -42,6 +42,8 @@ public class LogoChartPanelController {
 							  };
 
 	
+	private String[] labels = {"this", "is", "a", "small", "test"};
+	
 	@PostConstruct
 	public void initialize() {
 
@@ -68,18 +70,17 @@ public class LogoChartPanelController {
 		
 		for(int column_index=0; column_index<data[0].length; column_index++) {
 			
-			System.out.println("Column " + column_index);
-			
 			FXMLLoader loader = new FXMLLoader(getClass().getResource("BarColumn.fxml"));
 			
 			try {
 				
-				GridPane barColumn = (GridPane) loader.load();
+				VBox barColumn = (VBox) loader.load();
 				BarColumnController barColumnController = loader.getController();
 
 				barColumnController.setData(data);
 				barColumnController.setColumnIndex(column_index);
 				barColumnController.setAlphabet("dna");
+				barColumnController.setLabels(labels);
 				barColumnController.drawColumn();
 				
 				this.chartGridPane.add(barColumn, column_index, 0);
@@ -101,6 +102,8 @@ public class LogoChartPanelController {
 		}
 		
 	}
+
+	
 	
 	private void clearChart() {
 		

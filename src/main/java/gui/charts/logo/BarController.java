@@ -59,7 +59,7 @@ public class BarController {
         rootAnchorPane.widthProperty().addListener( stageSizeListener );
         rootAnchorPane.heightProperty().addListener( stageSizeListener );
         
-        rootStackPane.setBackground( new Background( new BackgroundFill( (Color.color(Math.random(), Math.random(), Math.random()) ), CornerRadii.EMPTY, Insets.EMPTY )));
+//        rootStackPane.setBackground( new Background( new BackgroundFill( (Color.color(Math.random(), Math.random(), Math.random()) ), CornerRadii.EMPTY, Insets.EMPTY )));
         
 	}
 	
@@ -74,19 +74,9 @@ public class BarController {
         double originalWidth = svg.prefWidth(-1);
         double originalHeight = svg.prefHeight(originalWidth);
 
-//        System.out.println("originalWidth:  " + originalWidth);
-//        System.out.println("originalHeight: "+ originalHeight);
-        
         double scaleX = width / originalWidth;
         double scaleY = height / originalHeight;
 
-//        System.out.println("width:  " + width);
-//        System.out.println("height: " + height);
-        
-//        System.out.println("scaleX: " + scaleX);
-//        System.out.println("scaleY: " + scaleY);
-//        System.out.println();
-        
         svg.setScaleX(scaleX);
         svg.setScaleY(scaleY);
         

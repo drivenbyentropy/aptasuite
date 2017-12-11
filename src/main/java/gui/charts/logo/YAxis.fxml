@@ -1,14 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
-<?import javafx.scene.text.Font?>
 
 <VBox alignment="CENTER" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.charts.logo.BarColumnController">
    <children>
@@ -17,8 +15,27 @@
           <ColumnConstraints hgrow="ALWAYS" minWidth="5.0" />
         </columnConstraints>
         <rowConstraints>
-          <RowConstraints minHeight="5.0" vgrow="ALWAYS" />
+          <RowConstraints fillHeight="false" minHeight="0.0" vgrow="NEVER" />
+            <RowConstraints vgrow="ALWAYS" />
+            <RowConstraints minHeight="0.0" vgrow="ALWAYS" />
         </rowConstraints>
+         <children>
+            <AnchorPane fx:id="yAxisTopAnchorPane">
+               <children>
+                  <StackPane fx:id="yAxisTopStackPane" maxWidth="20.0" minHeight="1.0" minWidth="20.0" prefWidth="20.0" />
+               </children>
+            </AnchorPane>
+            <AnchorPane fx:id="yAxisCenterAnchorPane" GridPane.rowIndex="1">
+               <children>
+                  <StackPane fx:id="yAxisCenterStackPane" maxWidth="20.0" minHeight="1.0" minWidth="20.0" prefWidth="20.0" />
+               </children>
+            </AnchorPane>
+            <AnchorPane fx:id="yAxisBottomAnchorPane" GridPane.rowIndex="2">
+               <children>
+                  <StackPane fx:id="yAxisBottomStackPane" maxWidth="20.0" minHeight="1.0" minWidth="20.0" prefWidth="20.0" />
+               </children>
+            </AnchorPane>
+         </children>
       </GridPane>
       <GridPane VBox.vgrow="NEVER">
          <columnConstraints>
@@ -50,10 +67,5 @@
             <Insets bottom="10.0" top="10.0" />
          </VBox.margin>
       </GridPane>
-      <Label text="Label" textAlignment="CENTER" VBox.vgrow="ALWAYS" fx:id="xTickLabel">
-         <font>
-            <Font name="Monospaced Bold" size="12.0" />
-         </font>
-      </Label>
    </children>
 </VBox>
