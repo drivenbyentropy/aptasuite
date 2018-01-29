@@ -107,7 +107,7 @@ public class ExperimentOverviewRootController {
 			
 			if (row == 6) {
 				
-				row = 1;
+				row = 2;
 				col += 2;
 				
 			}
@@ -116,7 +116,7 @@ public class ExperimentOverviewRootController {
 			name.setPadding(new Insets(0,10,0,0));
 			name.setFont(Font.font("System", 12));
 			
-			Label size = new Label(String.format("%.2f%%", ((double)cycle.getSize() / experiment.getMetadata().parserStatistics.get("accepted_reads").doubleValue())  ));
+			Label size = new Label(String.format("%.2f%%", ((double)cycle.getSize() / experiment.getMetadata().parserStatistics.get("accepted_reads").doubleValue())*100.0  ));
 			size.setPadding(new Insets(0,20,0,0));
 			size.setFont(Font.font("System", 12));
 			

@@ -1,0 +1,401 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Spinner?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.wizards.aptasim.AptaSimWizardController">
+   <center>
+      <VBox spacing="10.0" BorderPane.alignment="CENTER">
+         <children>
+            <Label text="AptaSIM">
+               <font>
+                  <Font size="24.0" />
+               </font>
+            </Label>
+            <Label text="If required, please modify the parameters below to match the desired configruation and press &quot;Run&quot; to create a simulated dataset.">
+               <font>
+                  <Font size="12.0" />
+               </font>
+            </Label>
+            <StackPane VBox.vgrow="NEVER">
+               <children>
+                  <StackPane fx:id="inputStackPane">
+                     <children>
+                        <VBox>
+                           <children>
+                              <GridPane vgap="3.0">
+                                <columnConstraints>
+                                  <ColumnConstraints fillWidth="false" hgrow="NEVER" />
+                                  <ColumnConstraints hgrow="ALWAYS" />
+                                </columnConstraints>
+                                <rowConstraints>
+                                    <RowConstraints fillHeight="false" maxHeight="25.0" minHeight="25.0" prefHeight="30.0" valignment="CENTER" vgrow="NEVER" />
+                                    <RowConstraints fillHeight="false" maxHeight="25.0" minHeight="25.0" prefHeight="30.0" valignment="CENTER" vgrow="NEVER" />
+                                    <RowConstraints fillHeight="false" maxHeight="25.0" minHeight="25.0" prefHeight="30.0" valignment="CENTER" vgrow="NEVER" />
+                                  <RowConstraints fillHeight="false" maxHeight="25.0" minHeight="25.0" prefHeight="25.0" valignment="CENTER" vgrow="NEVER" />
+                                  <RowConstraints fillHeight="false" maxHeight="25.0" minHeight="25.0" prefHeight="25.0" valignment="CENTER" vgrow="NEVER" />
+                                  <RowConstraints fillHeight="false" maxHeight="25.0" minHeight="25.0" prefHeight="25.0" valignment="CENTER" vgrow="NEVER" />
+                                    <RowConstraints fillHeight="false" maxHeight="25.0" minHeight="25.0" prefHeight="30.0" valignment="CENTER" vgrow="NEVER" />
+                                    <RowConstraints fillHeight="false" maxHeight="25.0" minHeight="25.0" prefHeight="30.0" valignment="CENTER" vgrow="NEVER" />
+                                    <RowConstraints fillHeight="false" maxHeight="25.0" minHeight="25.0" prefHeight="25.0" valignment="CENTER" vgrow="NEVER" />
+                                    <RowConstraints fillHeight="false" maxHeight="25.0" minHeight="25.0" prefHeight="25.0" valignment="CENTER" vgrow="NEVER" />
+                                    <RowConstraints fillHeight="false" maxHeight="25.0" minHeight="25.0" prefHeight="25.0" valignment="CENTER" vgrow="NEVER" />
+                                    <RowConstraints fillHeight="false" maxHeight="25.0" minHeight="25.0" prefHeight="25.0" valignment="CENTER" vgrow="NEVER" />
+                                    <RowConstraints fillHeight="false" maxHeight="25.0" minHeight="25.0" prefHeight="25.0" valignment="CENTER" vgrow="NEVER" />
+                                    <RowConstraints fillHeight="false" maxHeight="25.0" minHeight="25.0" prefHeight="25.0" valignment="CENTER" vgrow="NEVER" />
+                                    <RowConstraints fillHeight="false" maxHeight="25.0" minHeight="25.0" prefHeight="25.0" valignment="CENTER" vgrow="NEVER" />
+                                    <RowConstraints fillHeight="false" maxHeight="25.0" minHeight="25.0" prefHeight="25.0" valignment="CENTER" vgrow="NEVER" />
+                                    <RowConstraints fillHeight="false" maxHeight="25.0" minHeight="25.0" prefHeight="25.0" valignment="CENTER" vgrow="NEVER" />
+                                    <RowConstraints fillHeight="false" maxHeight="25.0" minHeight="25.0" prefHeight="25.0" valignment="CENTER" vgrow="NEVER" />
+                                </rowConstraints>
+                                 <children>
+                                    <Label text="HMM Training File (fastq)" GridPane.rowIndex="3">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                       <GridPane.margin>
+                                          <Insets right="20.0" />
+                                       </GridPane.margin>
+                                    </Label>
+                                    <Label text="HMM Degree" GridPane.rowIndex="4">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                       <GridPane.margin>
+                                          <Insets right="20.0" />
+                                       </GridPane.margin>
+                                    </Label>
+                                    <Label text="Randomized Region Size" GridPane.rowIndex="5">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                       <GridPane.margin>
+                                          <Insets right="20.0" />
+                                       </GridPane.margin>
+                                    </Label>
+                                    <Label text="Number of unique sequences in initial pool" GridPane.rowIndex="8">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                       <GridPane.margin>
+                                          <Insets right="20.0" />
+                                       </GridPane.margin>
+                                    </Label>
+                                    <Label text="Number of Seeds" GridPane.rowIndex="9">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                       <GridPane.margin>
+                                          <Insets right="20.0" />
+                                       </GridPane.margin>
+                                    </Label>
+                                    <Label text="Minimal Seed Affinity (%)" GridPane.rowIndex="10">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                       <GridPane.margin>
+                                          <Insets right="20.0" />
+                                       </GridPane.margin>
+                                    </Label>
+                                    <Label text="Maximal Sequence Count" GridPane.rowIndex="11">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                       <GridPane.margin>
+                                          <Insets right="20.0" />
+                                       </GridPane.margin>
+                                    </Label>
+                                    <Label text="Maximal Sequence Affinity (%)" GridPane.rowIndex="12">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                       <GridPane.margin>
+                                          <Insets right="20.0" />
+                                       </GridPane.margin>
+                                    </Label>
+                                    <Label text="Nucleotide Distribution (%)" GridPane.rowIndex="13">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                       <GridPane.margin>
+                                          <Insets right="20.0" />
+                                       </GridPane.margin>
+                                    </Label>
+                                    <Label text="Selection Percentage" GridPane.rowIndex="14">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                       <GridPane.margin>
+                                          <Insets right="20.0" />
+                                       </GridPane.margin>
+                                    </Label>
+                                    <Label text="Base Mutation Rates (%)" GridPane.rowIndex="15">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                       <GridPane.margin>
+                                          <Insets right="20.0" />
+                                       </GridPane.margin>
+                                    </Label>
+                                    <Label text="Mutation Probability (%)" GridPane.rowIndex="16">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                       <GridPane.margin>
+                                          <Insets right="20.0" />
+                                       </GridPane.margin>
+                                    </Label>
+                                    <Label text="Amplification Efficiency (%)" GridPane.rowIndex="17">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                       <GridPane.margin>
+                                          <Insets right="20.0" />
+                                       </GridPane.margin>
+                                    </Label>
+                                    <HBox alignment="CENTER_LEFT" GridPane.columnIndex="1" GridPane.rowIndex="3">
+                                       <children>
+                                          <TextField fx:id="hmmFileTextField" disable="true" editable="false" HBox.hgrow="ALWAYS">
+                                             <opaqueInsets>
+                                                <Insets />
+                                             </opaqueInsets>
+                                             <HBox.margin>
+                                                <Insets right="10.0" />
+                                             </HBox.margin>
+                                          </TextField>
+                                          <Button fx:id="hmmChooseButton" minWidth="-Infinity" mnemonicParsing="false" onAction="#hmmTrainingFileChooserActionButton" text="Choose" HBox.hgrow="NEVER">
+                                             <font>
+                                                <Font size="12.0" />
+                                             </font>
+                                          </Button>
+                                       </children>
+                                    </HBox>
+                                    <Spinner fx:id="radomizedRegionSizeSpinner" maxWidth="1.7976931348623157E308" GridPane.columnIndex="1" GridPane.rowIndex="5" GridPane.vgrow="ALWAYS" />
+                                    <TextField fx:id="numberOfInitialSequencesTextField" maxWidth="1.7976931348623157E308" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="8" />
+                                    <TextField fx:id="numberOfSeedsTextField" GridPane.columnIndex="1" GridPane.rowIndex="9" />
+                                    <Spinner fx:id="minimalSeedAffinitySpinner" maxWidth="1.7976931348623157E308" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="10" />
+                                    <TextField fx:id="maximalSequenceCountTextField" maxWidth="1.7976931348623157E308" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="11" />
+                                    <Spinner fx:id="maximalSequenceAffinitySpinner" maxWidth="1.7976931348623157E308" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="12" />
+                                    <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="13" GridPane.valignment="CENTER">
+                                       <children>
+                                          <Label minWidth="-Infinity" text="A:">
+                                             <font>
+                                                <Font size="12.0" />
+                                             </font>
+                                             <HBox.margin>
+                                                <Insets right="5.0" />
+                                             </HBox.margin>
+                                          </Label>
+                                          <Spinner fx:id="nucleotideDistributionASpinner" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS">
+                                             <HBox.margin>
+                                                <Insets right="20.0" />
+                                             </HBox.margin>
+                                          </Spinner>
+                                          <Label minWidth="-Infinity" text="C:">
+                                             <font>
+                                                <Font size="12.0" />
+                                             </font>
+                                             <HBox.margin>
+                                                <Insets right="5.0" />
+                                             </HBox.margin>
+                                          </Label>
+                                          <Spinner fx:id="nucleotideDistributionCSpinner" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS">
+                                             <HBox.margin>
+                                                <Insets right="20.0" />
+                                             </HBox.margin>
+                                          </Spinner>
+                                          <Label minWidth="-Infinity" text="G:">
+                                             <font>
+                                                <Font size="12.0" />
+                                             </font>
+                                             <HBox.margin>
+                                                <Insets right="5.0" />
+                                             </HBox.margin>
+                                          </Label>
+                                          <Spinner fx:id="nucleotideDistributionGSpinner" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS">
+                                             <HBox.margin>
+                                                <Insets right="20.0" />
+                                             </HBox.margin>
+                                          </Spinner>
+                                          <Label minWidth="-Infinity" text="T:">
+                                             <font>
+                                                <Font size="12.0" />
+                                             </font>
+                                             <HBox.margin>
+                                                <Insets right="5.0" />
+                                             </HBox.margin>
+                                          </Label>
+                                          <Spinner fx:id="nucleotideDistributionTSpinner" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" />
+                                       </children>
+                                    </HBox>
+                                    <ComboBox fx:id="hmmDegreeComboBox" maxWidth="1.7976931348623157E308" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="4" />
+                                    <ComboBox fx:id="selectionPercentageComboBox" maxWidth="1.7976931348623157E308" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="14" GridPane.vgrow="ALWAYS" />
+                                    <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="15">
+                                       <children>
+                                          <Label minWidth="-Infinity" text="A:">
+                                             <font>
+                                                <Font size="12.0" />
+                                             </font>
+                                             <HBox.margin>
+                                                <Insets right="5.0" />
+                                             </HBox.margin>
+                                          </Label>
+                                          <Spinner fx:id="baseMutationRateASpinner" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS">
+                                             <HBox.margin>
+                                                <Insets right="20.0" />
+                                             </HBox.margin>
+                                          </Spinner>
+                                          <Label minWidth="-Infinity" text="C:">
+                                             <font>
+                                                <Font size="12.0" />
+                                             </font>
+                                             <HBox.margin>
+                                                <Insets right="5.0" />
+                                             </HBox.margin>
+                                          </Label>
+                                          <Spinner fx:id="baseMutationRateCSpinner" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS">
+                                             <HBox.margin>
+                                                <Insets right="20.0" />
+                                             </HBox.margin>
+                                          </Spinner>
+                                          <Label minWidth="-Infinity" text="G:">
+                                             <font>
+                                                <Font size="12.0" />
+                                             </font>
+                                             <HBox.margin>
+                                                <Insets right="5.0" />
+                                             </HBox.margin>
+                                          </Label>
+                                          <Spinner fx:id="baseMutationRateGSpinner" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS">
+                                             <HBox.margin>
+                                                <Insets right="20.0" />
+                                             </HBox.margin>
+                                          </Spinner>
+                                          <Label minWidth="-Infinity" text="T:">
+                                             <font>
+                                                <Font size="12.0" />
+                                             </font>
+                                             <HBox.margin>
+                                                <Insets right="5.0" />
+                                             </HBox.margin>
+                                          </Label>
+                                          <Spinner fx:id="baseMutationRateTSpinner" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" />
+                                       </children>
+                                    </HBox>
+                                    <ComboBox fx:id="mutationProbabilityComboBox" maxWidth="1.7976931348623157E308" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="16" GridPane.vgrow="ALWAYS" />
+                                    <ComboBox fx:id="amplificationEfficiencyComboBox" maxWidth="1.7976931348623157E308" GridPane.columnIndex="1" GridPane.rowIndex="17" GridPane.vgrow="ALWAYS" />
+                                    <Label text="5' Primer" GridPane.rowIndex="6">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                    </Label>
+                                    <Label text="3' Primer" GridPane.rowIndex="7">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                    </Label>
+                                    <TextField fx:id="fivePrimePrimerTextField" maxWidth="1.7976931348623157E308" GridPane.columnIndex="1" GridPane.rowIndex="6" />
+                                    <TextField fx:id="threePrimePrimerTextField" maxWidth="1.7976931348623157E308" GridPane.columnIndex="1" GridPane.rowIndex="7" />
+                                    <Label text="Number of Selection Cycles" GridPane.rowIndex="2">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                    </Label>
+                                    <Spinner fx:id="numberOfSelectionCycleSpinner" maxWidth="1.7976931348623157E308" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                                    <Label text="Project Location">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                    </Label>
+                                    <HBox alignment="CENTER_LEFT" GridPane.columnIndex="1">
+                                       <children>
+                                          <TextField fx:id="projectPathTextField" disable="true" editable="false" HBox.hgrow="ALWAYS">
+                                             <opaqueInsets>
+                                                <Insets />
+                                             </opaqueInsets>
+                                             <HBox.margin>
+                                                <Insets right="10.0" />
+                                             </HBox.margin>
+                                          </TextField>
+                                          <Button minWidth="-Infinity" mnemonicParsing="false" onAction="#projectPathFileChooserActionButton" text="Choose Folder" HBox.hgrow="NEVER">
+                                             <font>
+                                                <Font size="12.0" />
+                                             </font>
+                                          </Button>
+                                       </children>
+                                    </HBox>
+                                    <Label text="Project Name (no spaces)" GridPane.rowIndex="1">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                    </Label>
+                                    <TextField fx:id="projectNameTextField" maxWidth="1.7976931348623157E308" text="AptaSim" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                                 </children>
+                              </GridPane>
+                              <HBox>
+                                 <children>
+                                    <Region maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" />
+                                    <Button fx:id="runAptaSimButton" mnemonicParsing="false" onAction="#runAptaSim" text="Run AptaSIM">
+                                       <HBox.margin>
+                                          <Insets top="10.0" />
+                                       </HBox.margin>
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                    </Button>
+                                 </children>
+                              </HBox>
+                           </children>
+                        </VBox>
+                     </children>
+                  </StackPane>
+               </children>
+            </StackPane>
+         </children>
+         <BorderPane.margin>
+            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+         </BorderPane.margin>
+         <padding>
+            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+         </padding>
+      </VBox>
+   </center>
+   <bottom>
+      <HBox alignment="CENTER_LEFT" BorderPane.alignment="CENTER">
+         <children>
+            <Region HBox.hgrow="ALWAYS" />
+            <Label fx:id="finishedLabel" textFill="#8a3131">
+               <HBox.margin>
+                  <Insets right="20.0" />
+               </HBox.margin>
+               <font>
+                  <Font size="12.0" />
+               </font>
+            </Label>
+            <Button fx:id="cancelButton" disable="true" mnemonicParsing="false" onAction="#cancelButtonAction" text="Cancel">
+               <HBox.margin>
+                  <Insets right="10.0" />
+               </HBox.margin>
+            </Button>
+            <Button fx:id="closeButton" mnemonicParsing="false" onAction="#closeWindow" text="Close" />
+         </children>
+         <BorderPane.margin>
+            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+         </BorderPane.margin>
+      </HBox>
+   </bottom>
+</BorderPane>

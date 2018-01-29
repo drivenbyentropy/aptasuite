@@ -5,13 +5,18 @@ import java.util.logging.Level;
 
 import javax.annotation.PostConstruct;
 
+import gui.misc.FXConcurrent;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Label;
+import javafx.scene.control.ProgressBar;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import utilities.AptaLogger;
 
 public class ProgressPaneController {
@@ -29,8 +34,20 @@ public class ProgressPaneController {
 	@FXML
 	private Label progressPaneLabel3;
 	
+	@FXML
+	private ProgressIndicator progressIndicator;
+	
+	@FXML
+	private ProgressBar progressBar;
+	
+	@FXML
+	private Label progressBarLabel;
+	
+	@FXML
+	private VBox progressVBox;
+	
 	/**
-	 * The pane onto which the progress pane should be overlayed.
+	 * The panes onto which the progress pane should be overlayed.
 	 * Note, this must be of a type which stacks new elements when
 	 * add() is called.
 	 */
@@ -52,17 +69,24 @@ public class ProgressPaneController {
 	 */
 	private boolean showLogs = true;
 	
+	private boolean showBar = false;
+	
 	/**
 	 * Logger if required
 	 */
 	private ProgressPaneLoggerHandler loghandler = null;
 	
 	/**
+	 * In case more than one loading screen is required for the same task, they are stored here
+	 */
+	private ProgressPaneController[] auxiliaryProgressPaneControllers;
+	
+	/**
 	 * Factory which instantiates a new progressPane and returns the corresponding 
 	 * controller which allows to interact with it
 	 * @return
 	 */
-	public static ProgressPaneController getProgressPane(Pane rootPane, Runnable logic) {
+	public static ProgressPaneController getProgressPane(Runnable logic, Pane rootPane, ProgressPaneController... ppc) {
 		
     	// load the content 
 		ProgressPaneController progressPaneController = null;
@@ -72,9 +96,9 @@ public class ProgressPaneController {
 			FXMLLoader loader = new FXMLLoader(ProgressPaneController.class.getClassLoader().getResource("gui/activity/ProgressPane.fxml"));
 			loader.load();
 			progressPaneController = loader.getController();
-			progressPaneController.setLogic(logic);
 			progressPaneController.setRootPane(rootPane);
-			progressPaneController.setTask(logic);
+			progressPaneController.setAuxiliaryProgressPaneControllers(ppc);
+			progressPaneController.setLogic(logic);
 			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -97,27 +121,57 @@ public class ProgressPaneController {
 	 */
 	public void run() {
 		
-		// Register log handler if requried
-		if (showLogs) {
+		FXConcurrent.runAndWait( () -> {
+			// Register log handler if requried
+			if (showLogs) {
+				
+				// Clear and Show Labels
+				progressPaneLabel1.setText("");
+				progressPaneLabel2.setText("");
+				progressPaneLabel3.setText("");
+				progressPaneLabel1.setVisible(true);
+				progressPaneLabel2.setVisible(true);
+				progressPaneLabel3.setVisible(true);
+					
+				
+				loghandler =  new ProgressPaneLoggerHandler(this);
+				loghandler.setLevel(Level.ALL);
+				
+				AptaLogger.getLogger().addHandler(loghandler);
+				
+			}
+			else { // Otherwise we permanently remove them from the VBox
+					this.progressVBox.getChildren().remove(this.progressPaneLabel1);
+					this.progressVBox.getChildren().remove(this.progressPaneLabel2);
+					this.progressVBox.getChildren().remove(this.progressPaneLabel3);
+			}
 			
-			// Clear and Show Labels
-			progressPaneLabel1.setText("");
-			progressPaneLabel2.setText("");
-			progressPaneLabel3.setText("");
-			progressPaneLabel1.setVisible(true);
-			progressPaneLabel2.setVisible(true);
-			progressPaneLabel3.setVisible(true);
+			// The same is true for the progress bar and label
+			if (! showBar ) {
+					this.progressVBox.getChildren().remove(this.progressBar);
+					this.progressVBox.getChildren().remove(this.progressBarLabel);
+			}
 			
-			loghandler =  new ProgressPaneLoggerHandler(this);
-			loghandler.setLevel(Level.ALL);
+			// Set progress icons
+			if (this.logic != null) {
+				rootPane.getChildren().add(progressAnchorPane);
+			}
 			
-			AptaLogger.getLogger().addHandler(loghandler);
+			if (this.auxiliaryProgressPaneControllers != null) {
+				
+				for (ProgressPaneController ppc : this.auxiliaryProgressPaneControllers) {
+					
+					ppc.getRootPane().getChildren().add(ppc.getProgressAnchorPane());
+					
+				}
+				
+			}
 			
-		}
+		});
 		
 		// Do the work
-		new Thread(task).start();
-		rootPane.getChildren().add(progressAnchorPane);
+		Thread work = new Thread(task);
+		work.start();
 		
 	}
 	
@@ -135,8 +189,18 @@ public class ProgressPaneController {
 
             	// Cleanup to perform after task is done
             	Platform.runLater(() -> {
-                	rootPane.getChildren().remove(progressAnchorPane);
+            		rootPane.getChildren().remove(progressAnchorPane);
                 	
+            		if (auxiliaryProgressPaneControllers != null) {
+        				
+        				for (ProgressPaneController ppc : auxiliaryProgressPaneControllers) {
+        					
+        					ppc.getRootPane().getChildren().remove(ppc.getProgressAnchorPane());
+        					
+        				}
+        				
+        			}
+            		
                 	// Remove the handler
             		if (showLogs) {
             			
@@ -161,23 +225,36 @@ public class ProgressPaneController {
 	 */
 	public void addLogMessage(String message) {
 		
-		task = new Task<Void>(){
-            protected Void call() throws Exception {
-                Platform.runLater(() -> {
-                	
-                	// Move the old messages down
-            		String cache = progressPaneLabel2.getText();
-            		progressPaneLabel2.setText(progressPaneLabel1.getText());
-            		progressPaneLabel3.setText(cache);
-            		progressPaneLabel1.setText(message);
-            		
-                });
-                return null;
-            }
-        };
-        
-        new Thread(task).start();
+		if (this.showLogs) {
 		
+	        Platform.runLater(() -> {
+	        	
+	        	// Move the old messages down
+	    		String cache = progressPaneLabel2.getText();
+	    		progressPaneLabel2.setText(progressPaneLabel1.getText());
+	    		progressPaneLabel3.setText(cache);
+	    		progressPaneLabel1.setText(message);
+	        	
+	        });
+	        
+		}
+	}
+	
+	/**
+	 * Adds a new message to the logging labels, without shifting down.
+	 * @param message
+	 */
+	public void refreshLogMessage(String message) {
+		
+		if (this.showLogs) {
+		
+	        Platform.runLater(() -> {
+	        	
+	    		progressPaneLabel1.setText(message);
+	        	
+	        });
+	        
+		}
 	}
 	
 	
@@ -197,7 +274,7 @@ public class ProgressPaneController {
 	}
 
 	/**
-	 * @param rootPane the rootPane to set
+	 * @param rootPane2 the rootPane to set
 	 */
 	public void setRootPane(Pane rootPane) {
 		this.rootPane = rootPane;
@@ -215,6 +292,7 @@ public class ProgressPaneController {
 	 */
 	public void setLogic(Runnable logic) {
 		this.logic = logic;
+		setTask(this.logic);
 	}
 
 	/**
@@ -229,6 +307,70 @@ public class ProgressPaneController {
 	 */
 	public void setShowLogs(boolean showLogs) {
 		this.showLogs = showLogs;
+	}
+
+	/**
+	 * @return the auxiliaryProgressPaneControllers
+	 */
+	public ProgressPaneController[] getAuxiliaryProgressPaneControllers() {
+		return auxiliaryProgressPaneControllers;
+	}
+
+	/**
+	 * @param auxiliaryProgressPaneControllers the auxiliaryProgressPaneControllers to set
+	 */
+	public void setAuxiliaryProgressPaneControllers(ProgressPaneController[] auxiliaryProgressPaneControllers) {
+		this.auxiliaryProgressPaneControllers = auxiliaryProgressPaneControllers;
+	}
+	
+	/**
+	 * Sets the corresponding loading icon 
+	 * @param set if true, a progress bar will be displayed which can be controlled 
+	 * by <code>setProgress</code>.
+	 * If false, the ProgressIndicator is shown
+	 */
+	public void setShowProgressBar(boolean set) {
+		
+		Platform.runLater(()-> {
+			
+			this.progressBar.setVisible(set);
+			this.progressBarLabel.setVisible(set);
+
+		});
+	
+		showBar = set;
+		
+	}
+	
+	/**
+	 * Sets the current progress for the progress bar
+	 * @param progress value between 0 and 1 
+	 */
+	public void setProgress(double progress) {
+		
+		if (this.showBar) {
+		
+			Platform.runLater(()-> {
+				this.progressBar.setProgress(Math.min(1.0, progress));
+			});
+		
+		}
+		
+	}
+	
+	/**
+	 * Sets the current progress for the progress bar
+	 * @param progress value between 0 and 1 
+	 */
+	public void setProgressLabel(String text) {
+		
+		if (this.showBar) {
+		
+			Platform.runLater(()-> {
+				this.progressBarLabel.setText(text);
+			});
+			
+		}
 	}
 	
 }

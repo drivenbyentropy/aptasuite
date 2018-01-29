@@ -73,6 +73,7 @@ public class AptaLogger {
     		// Only certain levels should make it to the user screen
 			if (level.equals(Level.INFO) || level.equals(Level.SEVERE)){
         		System.out.println(msg);
+        		System.out.flush();
         	}
     	}
     	else{
@@ -92,7 +93,7 @@ public class AptaLogger {
     		}
     		
     		// log the current message
-    		getLogger().log(level, caller.getName() + lineSep + msg);
+			getLogger().log(level, caller.getName() + lineSep + msg);
     		
     		// Only certain levels should make it to the user screen
     		if (level.equals(Level.INFO) || level.equals(Level.SEVERE)){
@@ -105,6 +106,19 @@ public class AptaLogger {
 
     public static synchronized void log(Level level, Class caller, Exception e) {
     	log(level, caller, org.apache.commons.lang.exception.ExceptionUtils.getStackTrace(e));
+    }
+    
+    /**
+     * Closes all file handlers and logger instances. This function must be called 
+     * e.g. when changing data sets.
+     */
+    public static void close() {
+    	
+        filepath = null;
+        fileHandler.close();
+        logger = null;
+        formatterTxt = null;
+        
     }
     
 }

@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Spinner?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.Tooltip?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
@@ -12,7 +14,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane prefHeight="620.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1">
+<BorderPane prefHeight="620.0" prefWidth="800.0" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml">
     <bottom>
         <fx:include source="actionBar.fxml" />
     </bottom>
@@ -40,6 +42,8 @@
                       <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                       <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                       <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
@@ -107,6 +111,24 @@
                         <TextField fx:id="mapDBAptamerPoolMaxTreeMapCapacityTextField" GridPane.columnIndex="1" GridPane.rowIndex="3" />
                         <TextField fx:id="mapDBSelectionCycleBloomFilterCollisionProbabilityTextField" GridPane.columnIndex="1" GridPane.rowIndex="4" />
                         <Spinner fx:id="performanceMaxNumberOfCoresSpinner" max="1000" min="1" GridPane.columnIndex="1" GridPane.rowIndex="6" />
+                        <Label text="Aptamer Properties" GridPane.rowIndex="7">
+                           <font>
+                              <Font name="System Bold" size="14.0" />
+                           </font>
+                        </Label>
+                        <Label text="Store Reverse Complement:" GridPane.rowIndex="8">
+                           <font>
+                              <Font size="12.0" />
+                           </font>
+                           <tooltip>
+                              <Tooltip text="DNA Aptamers are typically sequenced in their cDNA form &#10;and must hence be converted back to their original orientation as &#10;present during selection. This can be done by selecting Yes here.">
+                                 <font>
+                                    <Font size="12.0" />
+                                 </font>
+                              </Tooltip>
+                           </tooltip>
+                        </Label>
+                        <ComboBox fx:id="storeReverseComplementComboBox" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="8" />
                      </children>
                      <VBox.margin>
                         <Insets />

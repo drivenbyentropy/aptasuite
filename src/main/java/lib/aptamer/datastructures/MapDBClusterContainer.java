@@ -16,6 +16,7 @@ import org.mapdb.BTreeMap;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.mapdb.Serializer;
+import org.mapdb.DBException.WrongConfiguration;
 
 import orestes.bloomfilter.BloomFilter;
 import orestes.bloomfilter.FilterBuilder;
@@ -52,8 +53,9 @@ public class MapDBClusterContainer implements ClusterContainer {
 	 */
 	private int size = 0;
 	
+	private int max_cluster_id = 0;
 
-	public MapDBClusterContainer(boolean newdb) throws IOException{
+	public MapDBClusterContainer(boolean newdb) throws IOException {
 		
 
 		// Create the file backed map and perform sanity checks
@@ -87,20 +89,28 @@ public class MapDBClusterContainer implements ClusterContainer {
 		else { // we need to read from file and update class members
 			AptaLogger.log(Level.CONFIG, this.getClass(), "Reading from file '" + Paths.get(poolDataPath.toString(), containerFileName).toFile() + "' for cluster storage.");
 			
-			clusterContainer = db.treeMap("map")
-					//.valuesOutsideNodesEnable()
-					.keySerializer(Serializer.INTEGER)
-					.valueSerializer(Serializer.INTEGER)
-			        .open();
-			
-			// update class members
-			Iterator<Entry<Integer, Integer>> entryit = clusterContainer.entryIterator();
-			while ( entryit.hasNext() ){
-				Entry<Integer, Integer> entry = entryit.next();
-				
-				containerContent.add(entry.getKey());
-				size++;
+			try {
+				clusterContainer = db.treeMap("map")
+						//.valuesOutsideNodesEnable()
+						.keySerializer(Serializer.INTEGER)
+						.valueSerializer(Serializer.INTEGER)
+				        .open();
 			}
+			//If this fails, we need to make sure that all file handles have been closed
+			catch(WrongConfiguration e) {
+				
+				db.close();
+				throw(e);
+				
+			}
+			
+			
+			clusterContainer.forEach( (key,value) -> {
+				containerContent.add(key);
+				size++;
+				max_cluster_id = Math.max(max_cluster_id, value);
+			});
+			
 		}
 	}
 
@@ -129,6 +139,8 @@ public class MapDBClusterContainer implements ClusterContainer {
 		clusterContainer.put(id_a, cluster_id);
 		containerContent.add(id_a);
 
+		max_cluster_id = Math.max(max_cluster_id, cluster_id);
+		
 		return id_a;
 		
 	}
@@ -145,6 +157,8 @@ public class MapDBClusterContainer implements ClusterContainer {
 		clusterContainer.put(a, cluster_id);
 		containerContent.add(a);
 
+		max_cluster_id = Math.max(max_cluster_id, cluster_id);
+		
 		return a;
 		
 	}
@@ -349,6 +363,13 @@ public class MapDBClusterContainer implements ClusterContainer {
 	@Override
 	public Iterable<Entry<byte[], Integer>> sequence_iterator() {
 		return new clusterSequenceIterator();
+	}
+
+	@Override
+	public int getNumberOfClusters() {
+
+		return max_cluster_id+1;
+		
 	}
 
 }

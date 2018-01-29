@@ -2,6 +2,7 @@ package gui.core;
 
 import java.io.IOException;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
@@ -33,6 +34,7 @@ public class RootClass extends Application {
         // Show the scene containing the root layout.
         Scene scene = new Scene(rootLayout);
         primaryStage.setScene(scene);
+        primaryStage.setOnHidden(e -> Platform.exit());
         primaryStage.show();
 
         } catch (IOException e) {

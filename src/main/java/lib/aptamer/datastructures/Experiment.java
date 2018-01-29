@@ -5,12 +5,14 @@ package lib.aptamer.datastructures;
 
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.logging.Level;
 import exceptions.DuplicateSelectionCycleException;
+import exceptions.InformationNotFoundException;
 import exceptions.InvalidSelectionCycleException;
 import utilities.AptaLogger;
 import utilities.Configuration;
@@ -120,7 +122,7 @@ public class Experiment implements Serializable{
 		
 		// Register the Experiment with the configuration class
 		Configuration.setExperiment(this);
-
+		
 		// Now set name and description
 		this.name = Configuration.getParameters().getString("Experiment.name");
 		this.description = Configuration.getParameters().getString("Experiment.description");
@@ -165,7 +167,6 @@ public class Experiment implements Serializable{
 		}
 		
 		// Set the SelectionCycle instances
-		
 		// Get all information regarding the selection cycles
 		Integer[] rounds = null;
 		String[] names = null;
@@ -248,8 +249,10 @@ public class Experiment implements Serializable{
 	 * Instantiates an implementation of <code>StructurePool</code>
 	 * @param newdb if <code>true</code>, a new instance is created. if <code>false</code>, 
 	 *  an existing instance is loaded from disk
+	 *  @param exit_on_error if true the program will exit if instantiation fails, otherwhise it will
+	 * throw an <code>InformationNotFoundException<code>.
 	 */
-	public void instantiateStructurePool(boolean newdb){
+	public void instantiateStructurePool(boolean newdb, boolean exit_on_error){
 		
 		// Create a new StructurePool instance. Use reflection so we can define the backend
 		// in the configuration file
@@ -262,6 +265,7 @@ public class Experiment implements Serializable{
 			AptaLogger.log(Level.SEVERE, this.getClass(), org.apache.commons.lang.exception.ExceptionUtils.getStackTrace(e));
 			e.printStackTrace();
 			System.exit(0);
+		
 		}
 		
 		// Try to instantiate the class...
@@ -286,7 +290,14 @@ public class Experiment implements Serializable{
 		} finally{ // ... we cannot continue if this fails 
 			if (!instanceSuccess){
 				AptaLogger.log(Level.SEVERE, this.getClass(), "Error invoking StructurePool backend");
-				System.exit(0);
+				if (exit_on_error) {
+					System.exit(0);
+				}
+				
+				// reset structure hook
+				structures = null;
+				
+				throw (new InformationNotFoundException("No structure information on disk."));
 			}
 		}
 	}
@@ -345,8 +356,10 @@ public class Experiment implements Serializable{
 	 * Instantiates an implementation of <code>ClusterContainer</code>
 	 * @param newdb if <code>true</code>, a new instance is created. if <code>false</code>, 
 	 *  an existing instance is loaded from disk
+	 * @param exit_on_error if true the programm will exit if instantiation fails, otherwhise it will
+	 * throw an <code>InformationNotFoundException<code>.
 	 */
-	public void instantiateClusterContainer(boolean newdb){
+	public void instantiateClusterContainer(boolean newdb, boolean exit_on_error){
 		
 		// Create a new ClusterContainer instance. Use reflection so we can define the backend
 		// in the configuration file
@@ -383,7 +396,12 @@ public class Experiment implements Serializable{
 		} finally{ // ... we cannot continue if this fails 
 			if (!instanceSuccess){
 				AptaLogger.log(Level.SEVERE, this.getClass(), "Error invoking ClusterContainer backend");
-				System.exit(0);
+				if (exit_on_error) {
+					System.exit(0);
+				}
+				
+				throw (new InformationNotFoundException("No cluster information on disk."));
+				
 			}
 		}
 	}	
@@ -519,7 +537,11 @@ public class Experiment implements Serializable{
 		// Locate the selection cycle and remove from the corresponding data structure
 		if (cycle.isControlSelection()){
 			for (Iterator<ArrayList<SelectionCycle>> iterator = this.controlSelectionCycles.iterator(); iterator.hasNext();) {
-				for (Iterator<SelectionCycle> iterator2 = iterator.next().iterator(); iterator2.hasNext();) {
+				
+				ArrayList<SelectionCycle> current = iterator.next();
+				if(current == null) continue; // Skip non-existing cycles
+				
+				for (Iterator<SelectionCycle> iterator2 = current.iterator(); iterator2.hasNext();) {
 					if (iterator2.next() == cycle) {
 				        // Remove the current element from the iterator and the list.
 				        iterator2.remove();
@@ -529,7 +551,11 @@ public class Experiment implements Serializable{
 		}
 		else if (cycle.isCounterSelection()){
 			for (Iterator<ArrayList<SelectionCycle>> iterator = this.counterSelectionCycles.iterator(); iterator.hasNext();) {
-				for (Iterator<SelectionCycle> iterator2 = iterator.next().iterator(); iterator2.hasNext();) {
+				
+				ArrayList<SelectionCycle> current = iterator.next();
+				if(current == null) continue; // Skip non-existing cycles
+				
+				for (Iterator<SelectionCycle> iterator2 = current.iterator(); iterator2.hasNext();) {
 					if (iterator2.next() == cycle) {
 				        iterator2.remove();
 				    }
@@ -725,6 +751,15 @@ public class Experiment implements Serializable{
 	public StructurePool getStructurePool(){
 		return this.structures;
 	}
+	
+	
+	/**
+	 * Get the structural pool instance of this experiment
+	 * @return
+	 */
+	public void setStructurePool(StructurePool sp){
+		this.structures = sp;
+	}
 
 	/**
 	 * Get the base pair probability pool instance of this experiment
@@ -735,13 +770,20 @@ public class Experiment implements Serializable{
 	}	
 	
 	/**
-	 * Get the structural pool instance of this experiment
+	 * Get the cluster information instance of this experiment
 	 * @return
 	 */
 	public ClusterContainer getClusterContainer(){
 		return this.clusters;
 	}
-	
+
+	/**
+	 * Sets the cluster information instance of this experiment
+	 * @return
+	 */
+	public void setClusterContainer(ClusterContainer cc){
+		this.clusters = cc;
+	}
 	
 	/**
 	 * Get reference to the metadata associated with this experiment
@@ -749,6 +791,52 @@ public class Experiment implements Serializable{
 	 */
 	public Metadata getMetadata() {
 		return this.metadata;
+	}
+	
+	
+	/**
+	 * Closes any handles to the filesystem and take care of garbage 
+	 * collection if required. After calling this function, a new experiment
+	 * can be loaded by replacing this instance.
+	 */
+	public void close() {
+		
+		// Close all cycles
+		ArrayList<SelectionCycle> cycles = new ArrayList<SelectionCycle>(this.getAllSelectionCycles().size());
+		for ( SelectionCycle cycle : this.getAllSelectionCycles() ) { cycles.add(cycle); }
+		for ( SelectionCycle cycle : cycles ) { this.unregisterSelectionCycle(cycle); }
+		
+		// Sequence information
+		if ( this.getAptamerPool() != null ) {
+			
+			this.getAptamerPool().close();
+			
+		}
+		
+		// Cluster information
+		if ( this.getClusterContainer() != null ) {
+			
+			this.getClusterContainer().close();
+			
+		}
+		
+		// Structure information
+		if ( this.getStructurePool() != null ) {
+			
+			this.getStructurePool().close();
+			
+		}		
+				
+		// Structure information
+		if ( this.getBppmPool() != null ) {
+			
+			this.getBppmPool().close();
+			
+		}		
+
+		// And finally the logger
+		AptaLogger.close();
+		
 	}
 	
 }

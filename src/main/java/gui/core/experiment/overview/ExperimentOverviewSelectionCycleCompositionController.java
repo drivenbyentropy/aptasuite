@@ -62,7 +62,7 @@ public class ExperimentOverviewSelectionCycleCompositionController {
 	@FXML
 	private void updateCharts() {
 		
-		ProgressPaneController pp = ProgressPaneController.getProgressPane(selectionCycleCompositionStackPane, new Runnable() {
+		ProgressPaneController pp = ProgressPaneController.getProgressPane(new Runnable() {
 			
 			@Override
 			public void run() {
@@ -114,7 +114,7 @@ public class ExperimentOverviewSelectionCycleCompositionController {
 				
 			}
 		
-		});
+		}, selectionCycleCompositionStackPane);
 		
 		pp.run();
 		

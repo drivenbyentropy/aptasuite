@@ -7,7 +7,6 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.ParseException;
-
 import gui.core.RootClass;
 import utilities.AptaLogger;
 import utilities.CLIOptions;
@@ -29,7 +28,7 @@ public class Aptasuite {
 	
 	
 	public static void main(String[] args) {
-
+		
 		// case command line interface
 		if (args.length != 0) { 
 
@@ -62,9 +61,10 @@ public class Aptasuite {
 			
 			AptaLogger.log(Level.INFO, Aptasuite.class, "Exiting.");
 		}
+		
 		// case gui
 		else {
-//			// TODO: implement the gui handling
+			// TODO: implement the gui handling
 			RootClass mainWindow = new RootClass();
 			mainWindow.lauchMainWindow();
 			System.out.println("Exiting");

@@ -17,6 +17,8 @@ import java.util.Map.Entry;
  * ability to add an aptamer to a particular cluster, and to provide 
  * atomic membership queries. 
  * 
+ * Cluster ids must be assigned consecutively and starting at 0.
+ * 
  * In addition, iterators over the aptamers should be provided for ease of use. 
  */
 public interface ClusterContainer extends Serializable{
@@ -74,6 +76,12 @@ public interface ClusterContainer extends Serializable{
 	 * @return
 	 */
 	public int getSize();
+
+	/**
+	 * The total number of clusters in this database
+	 * @return
+	 */
+	public int getNumberOfClusters();
 	
 	/**
 	 * Optional. Performs any additional logic on the selection cycle such as
@@ -108,5 +116,4 @@ public interface ClusterContainer extends Serializable{
 	 */
 	public Iterable<Entry<byte[],Integer>> sequence_iterator();
 
-	
 }

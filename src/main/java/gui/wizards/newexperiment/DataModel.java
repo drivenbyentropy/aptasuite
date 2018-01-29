@@ -34,6 +34,8 @@ public class DataModel {
 
 	private BooleanProperty isPairedEnd = new SimpleBooleanProperty(false);
 	
+	private BooleanProperty storeReverseComplement = new SimpleBooleanProperty(false);
+	
 	private StringProperty primer5 = new SimpleStringProperty();
 	
 	private StringProperty primer3 = new SimpleStringProperty();
@@ -261,6 +263,20 @@ public class DataModel {
 	 */
 	public void setLastSelectedDirectory(File lastSelectedDirectory) {
 		this.lastSelectedDirectory = lastSelectedDirectory;
+	}
+
+	/**
+	 * @return the storeReverseComplement
+	 */
+	public BooleanProperty getStoreReverseComplement() {
+		return storeReverseComplement;
+	}
+
+	/**
+	 * @param storeReverseComplement the storeReverseComplement to set
+	 */
+	public void setStoreReverseComplement(BooleanProperty storeReverseComplement) {
+		this.storeReverseComplement = storeReverseComplement;
 	}
 	
 	

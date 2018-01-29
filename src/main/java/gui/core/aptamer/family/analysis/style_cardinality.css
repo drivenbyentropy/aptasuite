@@ -1,0 +1,12 @@
+/*Define line width and colors*/
+
+.chart-series-line {
+	-fx-stroke-width: 1px;
+}
+
+/*Do the same for the symbols*/
+
+.chart-line-symbol {
+    -fx-background-radius: 0px;
+    -fx-padding: 2px;
+}

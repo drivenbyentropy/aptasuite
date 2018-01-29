@@ -358,24 +358,29 @@ public class Wizard1Controller extends AbstractWizardController {
 	    	// Make sure that if the user specified a 3' primer barcode once, they specify it everywhere
 	    	Map<Boolean, Long> num_true = hasBarcode3.stream().collect(Collectors.groupingBy(e -> e, Collectors.counting()));
 	    	
-	    	if (num_true.get(true) != 0 || num_true.get(true) != this.selectionCycleDetailsControllers.size()) {
+	    	// If we have no data, we can skip the next step
+	    	if (num_true != null) { 
 	    	
-		    	for (int x=0; x<this.selectionCycleDetailsControllers.size(); x++) {
-		    		
-		    		if (!hasBarcode3.get(x)) {
-		    			
-		    			ControlFXValidatorFactory.setTemporaryValidation(
-		    					selectionCycleDetailsControllers.get(x).getBarcode3TextField(),
-		            			ControlFXValidatorFactory.AllwaysWrongValidator("Please specify the 3' barcode/index for this round"), 
-		            			this.validationSupport, 
-		            			Validator.createEmptyValidator("The 3' barcode/index for this round must be specified"),
-		            			false
-		            			);
-					    			
-		    			is_valid = false;
-		    			
-		    		}
-		    		
+		    	if (num_true.get(true) != 0 || num_true.get(true) != this.selectionCycleDetailsControllers.size()) {
+		    	
+			    	for (int x=0; x<this.selectionCycleDetailsControllers.size(); x++) {
+			    		
+			    		if (!hasBarcode3.get(x)) {
+			    			
+			    			ControlFXValidatorFactory.setTemporaryValidation(
+			    					selectionCycleDetailsControllers.get(x).getBarcode3TextField(),
+			            			ControlFXValidatorFactory.AllwaysWrongValidator("Please specify the 3' barcode/index for this round"), 
+			            			this.validationSupport, 
+			            			Validator.createEmptyValidator("The 3' barcode/index for this round must be specified"),
+			            			false
+			            			);
+						    			
+			    			is_valid = false;
+			    			
+			    		}
+			    		
+			    	}
+		    	
 		    	}
 	    	
 	    	}
@@ -573,6 +578,14 @@ public class Wizard1Controller extends AbstractWizardController {
     			if (barcodes3.size() == barcodes5.size()) {
     				utilities.Configuration.getParameters().setProperty("AptaplexParser.barcodes3Prime", barcodes3);
     			}
+    			
+    		}
+    		
+    		// DNA or RNA aptamers?
+    		if (getDataModel().getStoreReverseComplement().get())
+    		{
+    			
+    			utilities.Configuration.getParameters().setProperty("AptaplexParser.StoreReverseComplement", true);
     			
     		}
     		

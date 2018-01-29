@@ -84,6 +84,8 @@ public class BarColumnController {
 	 */
 	private int columnIndex;
 	
+	private Scale scale;
+	
 	/**
 	 * @author Jan Hoinka
 	 * Comparator for argsort
@@ -104,12 +106,13 @@ public class BarColumnController {
 	private SVGPath[] DNAAlphabet =     {SvgAlphabet.Adenine(), SvgAlphabet.Cytosine(), SvgAlphabet.Guanine(), SvgAlphabet.Thymine(), SvgAlphabet.N()};
 	private SVGPath[] RNAAlphabet =     {SvgAlphabet.Adenine(), SvgAlphabet.Cytosine(), SvgAlphabet.Guanine(), SvgAlphabet.Uracil(), SvgAlphabet.N()};
 	
-	private String alphabet_string;
+	private Alphabet alphabet_type;
 	private SVGPath[] alphabet;
 	
 	
 	public void drawColumn() {
 		
+		// Compute the order in which the letters are to be drawn
 		int[] order = this.computeDrawingOrder();
 		
 		// Remove any previous constraints
@@ -125,6 +128,69 @@ public class BarColumnController {
 		col0.setHgrow(Priority.ALWAYS);
 		this.columnGridPane.getColumnConstraints().add(col0);
 
+		
+		// Add fake row for bit scores
+		if ( scale == Scale.BITSCORE) {
+
+			// Compute height
+			double height = 0.0;
+			for (int row_index=0; row_index<data.length; row_index++) {
+				height += (data[order[row_index]][columnIndex]/2.0) * 100.0;
+			}
+			height = 100 - height;
+			
+			// create and add an empty column
+			try {
+				
+				// Get node and controller
+				FXMLLoader loader = new FXMLLoader(getClass().getResource("Bar.fxml"));
+				Node node = loader.load();
+				BarController controller = loader.getController();
+				
+				controller.setWidth(50);
+				controller.setSvg(new SVGPath());
+				controller.drawBar();
+
+				// Add the bar to the column in an anchor pane
+				AnchorPane ap = new AnchorPane();
+				
+				// Size properties
+				ap.minWidth(5);
+				ap.minHeight(5);
+				ap.prefWidth(Control.USE_COMPUTED_SIZE);
+				ap.prefHeight(Control.USE_COMPUTED_SIZE);
+				ap.maxWidth(Control.USE_COMPUTED_SIZE);
+				ap.maxHeight(Control.USE_COMPUTED_SIZE);
+				ap.getChildren().add(node);
+				
+				// Make sure the node resizes with its parent
+				AnchorPane.setBottomAnchor(node, 0.0);
+				AnchorPane.setTopAnchor(node, 0.0);
+				AnchorPane.setLeftAnchor(node, 0.0);
+				AnchorPane.setRightAnchor(node, 0.0);
+				
+				// Add the row constraint
+				RowConstraints row = new RowConstraints();
+				row.setPercentHeight(height);
+				row.setFillHeight(true);
+				row.setVgrow(Priority.ALWAYS);
+				this.columnGridPane.getRowConstraints().add(row);
+				
+				// Skip elements with 0 percent height
+				if (row.getPercentHeight() != 0.0) {
+					
+					columnGridPane.addColumn(0, ap);
+					
+				}
+				
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			
+		}	
+		
 		// Loop over column data and add the content 
 		for (int row_index=0; row_index<data.length; row_index++) {
 		
@@ -159,12 +225,25 @@ public class BarColumnController {
 				
 				// Add the row constraint
 				RowConstraints row = new RowConstraints();
-				row.setPercentHeight(data[order[row_index]][columnIndex] * 100);
+				if ( scale == Scale.BITSCORE) {
+					row.setPercentHeight((data[order[row_index]][columnIndex]/2.0) * 100.0);
+				}
+				else {
+					row.setPercentHeight(data[order[row_index]][columnIndex] * 100.0);
+				}
 				row.setFillHeight(true);
 				row.setVgrow(Priority.ALWAYS);
 				this.columnGridPane.getRowConstraints().add(row);
 				
-				columnGridPane.add(ap, 0, row_index);
+				// Skip elements with 0 percent height
+				if (row.getPercentHeight() == 0.0) {
+					
+					continue;
+					
+				}
+				
+				columnGridPane.addColumn(0, ap);
+//				columnGridPane.add(ap, 0, row_counter);
 				
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
@@ -172,6 +251,7 @@ public class BarColumnController {
 			}
 
 		}
+		
 		
 		// Now add the X-Axis
 		axisLeftStackPane.getChildren().add(axisLeft);
@@ -195,9 +275,9 @@ public class BarColumnController {
 	// Defines the desired dimensions of the svgs
 	ChangeListener<Number> stageSizeListener = (observable, oldValue, newValue) -> {
 	    
-		resize(this.axisLeft, axisLeftAnchorPane.getWidth(), axisLeftAnchorPane.getHeight());
-		resize(this.axisCenter, axisCenterAnchorPane.getWidth(), axisCenterAnchorPane.getHeight());
-		resize(this.axisRight, axisRightAnchorPane.getWidth(), axisRightAnchorPane.getHeight());
+		resize(this.axisLeft, axisLeftAnchorPane.getWidth(), axisLeftAnchorPane.getHeight()/2.);
+		resize(this.axisCenter, axisCenterAnchorPane.getWidth(), axisCenterAnchorPane.getHeight()/2.);
+		resize(this.axisRight, axisRightAnchorPane.getWidth(), axisRightAnchorPane.getHeight()/2.);
 		
 	};
 
@@ -238,9 +318,8 @@ public class BarColumnController {
 	 */
 	public void setData(double[][] data) {
 		
-		System.out.println("Setting data " + (data ==null));
-		
 		this.data = data;
+		
 	}
 
 	/**
@@ -260,26 +339,27 @@ public class BarColumnController {
 	/**
 	 * @return the alphablet
 	 */
-	public String getAlphabet() {
-		return alphabet_string;
+	public Alphabet getAlphabet() {
+		return alphabet_type;
 	}
 
 	/**
 	 * @param alphablet the alphablet to set
 	 */
-	public void setAlphabet(String alphabet) {
-		this.alphabet_string = alphabet;
+	public void setAlphabet(Alphabet alphabet) {
+		
+		this.alphabet_type = alphabet;
 		
 		switch(alphabet) {
 		
-			case "dna":	this.alphabet = this.DNAAlphabet;
-						break;
+			case DNA :				this.alphabet = this.DNAAlphabet;
+									break;
 		
-			case "rna":	this.alphabet = this.RNAAlphabet;
-			break;
+			case RNA:				this.alphabet = this.RNAAlphabet;
+									break;
 			
-			case "context":	this.alphabet = this.contextAlphabet;
-			break;
+			case STRUCTURE_CONTEXT:	this.alphabet = this.contextAlphabet;
+									break;
 		
 		}
 		
@@ -299,9 +379,6 @@ public class BarColumnController {
         double scaleX = width / originalWidth;
         double scaleY = height / originalHeight;
 
-        System.out.println("Scale X  " + scaleX);
-        System.out.println("Scale Y  " + scaleY);
-        
         svg.setScaleX(scaleX);
         svg.setScaleY(scaleY);
         
@@ -312,10 +389,7 @@ public class BarColumnController {
 	private SVGPath getAxisCenter() {
 		
 		SVGPath svg = new SVGPath();
-		//svg.setContent("M 290.50781 391.08984 L 290.50781 431.08984 L 298.50781 431.08984 L 298.50781 391.08984 L 290.50781 391.08984 z ");
 		svg.setContent("M 290.50781 391.08984 L 290.50781 431.08984 L 294.50781 431.08984 L 294.50781 391.08984 L 290.50781 391.08984 z ");
-		
-		//svg.setContent("M 290.50781 391.08984 L 290.50781 407.3125 L 274.28516 407.3125 L 274.28516 414.87109 L 290.50781 414.87109 L 290.50781 431.08984 L 298.06445 431.08984 L 298.06445 414.87109 L 314.28516 414.87109 L 314.28516 407.3125 L 298.06445 407.3125 L 298.06445 391.08984 L 290.50781 391.08984 z ");
 		svg.setFill(Color.BLACK);
 		svg.setStrokeWidth(0);
 		return svg;
@@ -335,6 +409,12 @@ public class BarColumnController {
 		SVGPath svg = new SVGPath();
 		svg.setContent("M 32.285156 391.08984 L 32.285156 431.08984 L 32.328125 431.08984 L 32.328125 414.87109 L 290.55078 414.87109 L 290.55078 407.3125 L 32.328125 407.3125 L 32.328125 391.08984 L 32.285156 391.08984 z ");
 		return svg;
+		
+	}
+	
+	public void setScale(Scale s) {
+		
+		this.scale = s;
 		
 	}
 	

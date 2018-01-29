@@ -1,71 +1,169 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
 
-<VBox alignment="CENTER" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.charts.logo.BarColumnController">
+
+<HBox xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" fx:controller="gui.charts.logo.YAxisController">
    <children>
-      <GridPane fx:id="columnGridPane" minHeight="5.0" minWidth="5.0" VBox.vgrow="ALWAYS">
-        <columnConstraints>
-          <ColumnConstraints hgrow="ALWAYS" minWidth="5.0" />
-        </columnConstraints>
-        <rowConstraints>
-          <RowConstraints fillHeight="false" minHeight="0.0" vgrow="NEVER" />
-            <RowConstraints vgrow="ALWAYS" />
-            <RowConstraints minHeight="0.0" vgrow="ALWAYS" />
-        </rowConstraints>
+      <VBox alignment="CENTER">
          <children>
-            <AnchorPane fx:id="yAxisTopAnchorPane">
+            <GridPane fx:id="columnGridPane1" minHeight="5.0" minWidth="20.0" VBox.vgrow="ALWAYS">
+               <columnConstraints>
+                  <ColumnConstraints hgrow="ALWAYS" minWidth="5.0" />
+               </columnConstraints>
+               <rowConstraints>
+                  <RowConstraints minHeight="0.0" vgrow="NEVER" />
+                  <RowConstraints minHeight="1.0" vgrow="ALWAYS" />
+                  <RowConstraints minHeight="1.0" vgrow="NEVER" />
+               </rowConstraints>
                <children>
-                  <StackPane fx:id="yAxisTopStackPane" maxWidth="20.0" minHeight="1.0" minWidth="20.0" prefWidth="20.0" />
+                  <AnchorPane fx:id="yAxisTopAnchorPane1" minHeight="5.0" minWidth="5.0">
+                     <children>
+                        <StackPane fx:id="yAxisTopStackPane1" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                           <children>
+                              <Label fx:id="yAxisMaxLabel" alignment="TOP_RIGHT" maxWidth="-Infinity" minWidth="-Infinity" text="1">
+                                 <font>
+                                    <Font name="Monospaced Regular" size="12.0" />
+                                 </font>
+                              </Label>
+                           </children>
+                        </StackPane>
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane fx:id="yAxisCenterAnchorPane1" minHeight="5.0" minWidth="5.0" GridPane.rowIndex="1" GridPane.vgrow="ALWAYS">
+                     <children>
+                        <StackPane fx:id="yAxisCenterStackPane1" maxWidth="5.0" minHeight="5.0" minWidth="5.0" prefWidth="5.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane fx:id="yAxisBottomAnchorPane1" minHeight="5.0" minWidth="5.0" GridPane.rowIndex="2">
+                     <children>
+                        <StackPane fx:id="yAxisBottomStackPane1" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                           <children>
+                              <Label fx:id="yAxisMinLabel" alignment="BOTTOM_RIGHT" maxWidth="-Infinity" minWidth="-Infinity" text="0">
+                                 <font>
+                                    <Font name="Monospaced Bold" size="12.0" />
+                                 </font>
+                              </Label>
+                           </children>
+                        </StackPane>
+                     </children>
+                  </AnchorPane>
                </children>
-            </AnchorPane>
-            <AnchorPane fx:id="yAxisCenterAnchorPane" GridPane.rowIndex="1">
+            </GridPane>
+            <GridPane VBox.vgrow="NEVER">
+               <columnConstraints>
+                  <ColumnConstraints hgrow="ALWAYS" />
+                  <ColumnConstraints fillWidth="false" hgrow="NEVER" />
+                  <ColumnConstraints hgrow="ALWAYS" />
+               </columnConstraints>
+               <rowConstraints>
+                  <RowConstraints minHeight="20.0" vgrow="SOMETIMES" />
+               </rowConstraints>
                <children>
-                  <StackPane fx:id="yAxisCenterStackPane" maxWidth="20.0" minHeight="1.0" minWidth="20.0" prefWidth="20.0" />
+                  <AnchorPane fx:id="axisLeftAnchorPane1">
+                     <children>
+                        <StackPane fx:id="axisLeftStackPane1" maxHeight="20.0" minHeight="20.0" minWidth="5.0" prefHeight="20.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane fx:id="axisCenterAnchorPane1" GridPane.columnIndex="1">
+                     <children>
+                        <StackPane fx:id="axisCenterStackPane1" maxHeight="20.0" minHeight="20.0" prefHeight="20.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane fx:id="axisRightAnchorPane1" GridPane.columnIndex="2">
+                     <children>
+                        <StackPane fx:id="axisRightStackPane1" maxHeight="20.0" minHeight="20.0" minWidth="5.0" prefHeight="20.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                     </children>
+                  </AnchorPane>
                </children>
-            </AnchorPane>
-            <AnchorPane fx:id="yAxisBottomAnchorPane" GridPane.rowIndex="2">
-               <children>
-                  <StackPane fx:id="yAxisBottomStackPane" maxWidth="20.0" minHeight="1.0" minWidth="20.0" prefWidth="20.0" />
-               </children>
-            </AnchorPane>
+               <VBox.margin>
+                  <Insets bottom="10.0" />
+               </VBox.margin>
+            </GridPane>
+            <Label text=" ">
+               <font>
+                  <Font name="Monospaced Bold" size="12.0" />
+               </font>
+            </Label>
          </children>
-      </GridPane>
-      <GridPane VBox.vgrow="NEVER">
-         <columnConstraints>
-            <ColumnConstraints hgrow="ALWAYS" />
-            <ColumnConstraints fillWidth="false" hgrow="NEVER" />
-            <ColumnConstraints hgrow="ALWAYS" />
-         </columnConstraints>
-         <rowConstraints>
-            <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
-         </rowConstraints>
+      </VBox>
+      <VBox alignment="CENTER">
          <children>
-            <AnchorPane fx:id="axisLeftAnchorPane">
+            <GridPane fx:id="columnGridPane" minHeight="5.0" minWidth="20.0" VBox.vgrow="ALWAYS">
+              <columnConstraints>
+                <ColumnConstraints hgrow="ALWAYS" minWidth="5.0" />
+              </columnConstraints>
+              <rowConstraints>
+                <RowConstraints minHeight="0.0" vgrow="NEVER" />
+                  <RowConstraints minHeight="1.0" vgrow="ALWAYS" />
+                  <RowConstraints minHeight="1.0" vgrow="NEVER" />
+              </rowConstraints>
                <children>
-                  <StackPane fx:id="axisLeftStackPane" maxHeight="20.0" minHeight="20.0" minWidth="5.0" prefHeight="20.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                  <AnchorPane fx:id="yAxisTopAnchorPane" minHeight="5.0" minWidth="5.0">
+                     <children>
+                        <StackPane fx:id="yAxisTopStackPane" maxHeight="5.0" maxWidth="5.0" minHeight="5.0" minWidth="5.0" prefHeight="5.0" prefWidth="5.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane fx:id="yAxisCenterAnchorPane" minHeight="5.0" minWidth="5.0" GridPane.rowIndex="1" GridPane.vgrow="ALWAYS">
+                     <children>
+                        <StackPane fx:id="yAxisCenterStackPane" maxWidth="5.0" minHeight="5.0" minWidth="5.0" prefWidth="5.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane fx:id="yAxisBottomAnchorPane" minHeight="5.0" minWidth="5.0" GridPane.rowIndex="2">
+                     <children>
+                        <StackPane fx:id="yAxisBottomStackPane" maxHeight="5.0" maxWidth="5.0" minHeight="5.0" minWidth="5.0" prefHeight="5.0" prefWidth="5.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                     </children>
+                  </AnchorPane>
                </children>
-            </AnchorPane>
-            <AnchorPane fx:id="axisCenterAnchorPane" GridPane.columnIndex="1">
+            </GridPane>
+            <GridPane VBox.vgrow="NEVER">
+               <columnConstraints>
+                  <ColumnConstraints hgrow="ALWAYS" />
+                  <ColumnConstraints fillWidth="false" hgrow="NEVER" />
+                  <ColumnConstraints hgrow="ALWAYS" />
+               </columnConstraints>
+               <rowConstraints>
+                  <RowConstraints minHeight="20.0" vgrow="SOMETIMES" />
+               </rowConstraints>
                <children>
-                  <StackPane fx:id="axisCenterStackPane" maxHeight="20.0" minHeight="20.0" prefHeight="20.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                  <AnchorPane fx:id="axisLeftAnchorPane">
+                     <children>
+                        <StackPane fx:id="axisLeftStackPane" maxHeight="20.0" minHeight="20.0" minWidth="5.0" prefHeight="20.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane fx:id="axisCenterAnchorPane" GridPane.columnIndex="1">
+                     <children>
+                        <StackPane fx:id="axisCenterStackPane" maxHeight="20.0" minHeight="20.0" prefHeight="20.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane fx:id="axisRightAnchorPane" GridPane.columnIndex="2">
+                     <children>
+                        <StackPane fx:id="axisRightStackPane" maxHeight="20.0" minHeight="20.0" minWidth="5.0" prefHeight="20.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                     </children>
+                  </AnchorPane>
                </children>
-            </AnchorPane>
-            <AnchorPane fx:id="axisRightAnchorPane" GridPane.columnIndex="2">
-               <children>
-                  <StackPane fx:id="axisRightStackPane" maxHeight="20.0" minHeight="20.0" minWidth="5.0" prefHeight="20.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
-               </children>
-            </AnchorPane>
+               <VBox.margin>
+                  <Insets bottom="10.0" />
+               </VBox.margin>
+            </GridPane>
+            <Label text=" ">
+               <font>
+                  <Font name="Monospaced Bold" size="12.0" />
+               </font>
+            </Label>
          </children>
-         <VBox.margin>
-            <Insets bottom="10.0" top="10.0" />
-         </VBox.margin>
-      </GridPane>
+      </VBox>
    </children>
-</VBox>
+   <padding>
+      <Insets right="10.0" />
+   </padding>
+</HBox>

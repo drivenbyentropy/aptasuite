@@ -1,0 +1,554 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.chart.CategoryAxis?>
+<?import javafx.scene.chart.LineChart?>
+<?import javafx.scene.chart.NumberAxis?>
+<?import javafx.scene.chart.ScatterChart?>
+<?import javafx.scene.chart.StackedBarChart?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.RadioButton?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.control.Tooltip?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.core.aptamer.family.analysis.AptamerFamilyAnalysisRootController">
+   <children>
+      <StackPane fx:id="rootStackPane" layoutX="210.0" layoutY="125.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <children>
+            <BorderPane>
+               <top>
+                  <HBox BorderPane.alignment="CENTER">
+                     <children>
+                        <GridPane>
+                          <columnConstraints>
+                            <ColumnConstraints hgrow="SOMETIMES" />
+                            <ColumnConstraints hgrow="NEVER" />
+                              <ColumnConstraints hgrow="SOMETIMES" />
+                              <ColumnConstraints hgrow="NEVER" />
+                          </columnConstraints>
+                          <rowConstraints>
+                            <RowConstraints vgrow="NEVER" />
+                            <RowConstraints minHeight="25.0" vgrow="NEVER" />
+                            <RowConstraints minHeight="25.0" vgrow="NEVER" />
+                              <RowConstraints minHeight="25.0" vgrow="NEVER" />
+                          </rowConstraints>
+                           <children>
+                              <Label minHeight="-Infinity" minWidth="-Infinity" text="Clustering Options (AptaCluster)" GridPane.columnSpan="4">
+                                 <font>
+                                    <Font name="System Bold" size="12.0" />
+                                 </font>
+                              </Label>
+                              <Label minHeight="-Infinity" minWidth="-Infinity" text="Randomized Region Size:" GridPane.rowIndex="1">
+                                 <font>
+                                    <Font size="12.0" />
+                                 </font>
+                                 <tooltip>
+                                    <Tooltip text="Defines the aptamers to be clustered. &#10;All species in the database which differ &#10;in randomized region size from the &#10;specified value will be ignored from &#10;the clustering process.">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                    </Tooltip>
+                                 </tooltip>
+                              </Label>
+                              <Label minHeight="-Infinity" minWidth="-Infinity" text="Locality Sensitive Hashing Dimension:" GridPane.rowIndex="2">
+                                 <font>
+                                    <Font size="12.0" />
+                                 </font>
+                                 <tooltip>
+                                    <Tooltip text="The size of the locality sensitive hash dimension. &#10;It defines how many indices from the  randomized &#10;region will be sampled during the process. Must &#10;be smaller or equal to  Randomized Region Size.">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                    </Tooltip>
+                                 </tooltip>
+                                 <GridPane.margin>
+                                    <Insets right="10.0" />
+                                 </GridPane.margin>
+                              </Label>
+                              <Label minHeight="-Infinity" minWidth="-Infinity" text="Edit Distance:" GridPane.columnIndex="2" GridPane.rowIndex="1">
+                                 <font>
+                                    <Font size="12.0" />
+                                 </font>
+                                 <tooltip>
+                                    <Tooltip text="The maximal number of nucleodite differences between &#10;the seed sequence and another aptamer to be considered &#10;members of the same cluster.">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                    </Tooltip>
+                                 </tooltip>
+                              </Label>
+                              <Label minHeight="-Infinity" minWidth="-Infinity" text="Kmer Size:" GridPane.columnIndex="2" GridPane.rowIndex="2">
+                                 <font>
+                                    <Font size="12.0" />
+                                 </font>
+                                 <tooltip>
+                                    <Tooltip text="The kmer size used for the distance calculations during cluster refinement.">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                    </Tooltip>
+                                 </tooltip>
+                              </Label>
+                              <Label minHeight="-Infinity" minWidth="-Infinity" text="Locality Sensitive Hashing Iterations:" GridPane.rowIndex="3">
+                                 <font>
+                                    <Font size="12.0" />
+                                 </font>
+                                 <tooltip>
+                                    <Tooltip text="The number of Locality Sensitive Hashing iterations to be performed.">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                    </Tooltip>
+                                 </tooltip>
+                              </Label>
+                              <Label minHeight="-Infinity" minWidth="-Infinity" text="Kmer Cutoff Iterations:" GridPane.columnIndex="2" GridPane.rowIndex="3">
+                                 <font>
+                                    <Font size="12.0" />
+                                 </font>
+                                 <tooltip>
+                                    <Tooltip text="The Aptacluster.EditDistance value will be empirically converted &#10;from the edit distance space into the kmer distance space. This &#10;value controls the number of iterations to be performed for &#10;computing the kmer cutoff for cluster formation.">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                    </Tooltip>
+                                 </tooltip>
+                                 <GridPane.margin>
+                                    <Insets right="10.0" />
+                                 </GridPane.margin>
+                              </Label>
+                              <TextField fx:id="editDistanceTextField" GridPane.columnIndex="3" GridPane.rowIndex="1" />
+                              <TextField fx:id="kmerSizeTextField" GridPane.columnIndex="3" GridPane.rowIndex="2" />
+                              <TextField fx:id="kmerCutoffIterationsTextField" GridPane.columnIndex="3" GridPane.rowIndex="3" />
+                              <ComboBox fx:id="randomizedRegionSizeComboBox" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                                 <GridPane.margin>
+                                    <Insets right="20.0" />
+                                 </GridPane.margin>
+                              </ComboBox>
+                              <ComboBox fx:id="localitySensitiveHashingDimensionComboBox" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="2">
+                                 <GridPane.margin>
+                                    <Insets right="20.0" />
+                                 </GridPane.margin>
+                              </ComboBox>
+                              <ComboBox fx:id="localitySensitiveHashingIterationsComboBox" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="3">
+                                 <GridPane.margin>
+                                    <Insets right="20.0" />
+                                 </GridPane.margin>
+                              </ComboBox>
+                           </children>
+                        </GridPane>
+                        <VBox>
+                           <HBox.margin>
+                              <Insets left="20.0" />
+                           </HBox.margin>
+                           <children>
+                              <Label minWidth="-Infinity" text="&#10;To cluster or re-cluster the pool,&#10;adjust the cluster option parameters&#10;and press &quot;Run AptaCluster&quot; below.">
+                                 <font>
+                                    <Font size="12.0" />
+                                 </font>
+                                 <VBox.margin>
+                                    <Insets bottom="6.0" />
+                                 </VBox.margin>
+                              </Label>
+                              <Button mnemonicParsing="false" onAction="#runAptaCluster" text="Run AptaCluster" VBox.vgrow="ALWAYS">
+                                 <font>
+                                    <Font size="12.0" />
+                                 </font>
+                              </Button>
+                           </children>
+                        </VBox>
+                        <Separator orientation="VERTICAL">
+                           <HBox.margin>
+                              <Insets left="20.0" right="20.0" />
+                           </HBox.margin>
+                        </Separator>
+                        <GridPane>
+                          <columnConstraints>
+                            <ColumnConstraints hgrow="SOMETIMES" />
+                            <ColumnConstraints hgrow="SOMETIMES" />
+                              <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                          </columnConstraints>
+                          <rowConstraints>
+                            <RowConstraints vgrow="NEVER" />
+                            <RowConstraints minHeight="25.0" vgrow="NEVER" />
+                            <RowConstraints minHeight="25.0" vgrow="NEVER" />
+                          </rowConstraints>
+                           <children>
+                              <Label text="Sequence Table Options" GridPane.columnSpan="2">
+                                 <font>
+                                    <Font name="System Bold" size="12.0" />
+                                 </font>
+                              </Label>
+                              <Label minWidth="-Infinity" text="Primers: " GridPane.rowIndex="1">
+                                 <font>
+                                    <Font size="12.0" />
+                                 </font>
+                              </Label>
+                              <RadioButton fx:id="showPrimersRadioButton" minWidth="-Infinity" mnemonicParsing="false" onAction="#redrawTableContent" selected="true" text="Show" GridPane.columnIndex="2" GridPane.rowIndex="1">
+                                 <font>
+                                    <Font size="12.0" />
+                                 </font>
+                                 <toggleGroup>
+                                    <ToggleGroup fx:id="showPrimersToggleGroup" />
+                                 </toggleGroup>
+                              </RadioButton>
+                              <Label text="Cardinality:" GridPane.rowIndex="2">
+                                 <font>
+                                    <Font size="12.0" />
+                                 </font>
+                                 <GridPane.margin>
+                                    <Insets right="5.0" />
+                                 </GridPane.margin>
+                              </Label>
+                              <RadioButton fx:id="rawCountsRadionButton" mnemonicParsing="false" onAction="#redrawTableContent" text="Raw Counts" GridPane.columnIndex="2" GridPane.rowIndex="2">
+                                 <font>
+                                    <Font size="12.0" />
+                                 </font>
+                                 <padding>
+                                    <Insets right="5.0" />
+                                 </padding>
+                                 <toggleGroup>
+                                    <ToggleGroup fx:id="cardinalityToggleGroup" />
+                                 </toggleGroup>
+                              </RadioButton>
+                              <RadioButton fx:id="cmpRadioButton" mnemonicParsing="false" onAction="#redrawTableContent" selected="true" text="CMP" toggleGroup="$cardinalityToggleGroup" GridPane.columnIndex="1" GridPane.rowIndex="2">
+                                 <font>
+                                    <Font size="12.0" />
+                                 </font>
+                              </RadioButton>
+                              <RadioButton minWidth="-Infinity" mnemonicParsing="false" onAction="#redrawTableContent" selected="true" text="Hide" toggleGroup="$showPrimersToggleGroup" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                                 <font>
+                                    <Font size="12.0" />
+                                 </font>
+                              </RadioButton>
+                           </children>
+                        </GridPane>
+                     </children>
+                     <BorderPane.margin>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                     </BorderPane.margin>
+                  </HBox>
+               </top>
+               <center>
+                  <AnchorPane BorderPane.alignment="CENTER">
+                     <children>
+                        <StackPane AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                           <children>
+                              <BorderPane fx:id="clusterBorderPane">
+                                 <center>
+                                    <SplitPane dividerPositions="0.7246049661399548">
+                                      <items>
+                                          <StackPane fx:id="sequenceTableStackPane" />
+                                          <StackPane prefWidth="200.0">
+                                             <children>
+                                                <SplitPane dividerPositions="0.3111888111888112, 0.5, 0.5" orientation="VERTICAL">
+                                                  <items>
+                                                      <TitledPane maxHeight="1.7976931348623157E308" text="Cluster Sequence Logo">
+                                                         <content>
+                                                          <AnchorPane>
+                                                               <children>
+                                                                  <StackPane fx:id="clusterSequenceLogoStackPane" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                                                     <children>
+                                                                        <ScrollPane fitToHeight="true" style="-fx-background-color: transparent;" vbarPolicy="NEVER">
+                                                                          <content>
+                                                                            <AnchorPane>
+                                                                                 <children>
+                                                                                    <StackPane fx:id="sequenceLogoStackPane" alignment="CENTER_LEFT" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                                                                                 </children>
+                                                                              </AnchorPane>
+                                                                          </content>
+                                                                        </ScrollPane>
+                                                                     </children>
+                                                                  </StackPane>
+                                                               </children>
+                                                            </AnchorPane>
+                                                         </content>
+                                                         <font>
+                                                            <Font size="12.0" />
+                                                         </font>
+                                                      </TitledPane>
+                                                      <TitledPane maxHeight="1.7976931348623157E308" text="Mutation Rates from Seed Sequence">
+                                                         <content>
+                                                          <AnchorPane>
+                                                               <children>
+                                                                  <StackPane fx:id="mutationRatesStackPane" prefHeight="150.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                                                     <children>
+                                                                        <VBox prefHeight="200.0" prefWidth="100.0">
+                                                                           <children>
+                                                                              <StackedBarChart fx:id="mutationStackedBarchart" animated="false" categoryGap="0.0" legendSide="RIGHT" stylesheets="@style.css">
+                                                                                <xAxis>
+                                                                                  <CategoryAxis side="BOTTOM" />
+                                                                                </xAxis>
+                                                                                <yAxis>
+                                                                                  <NumberAxis side="LEFT" />
+                                                                                </yAxis>
+                                                                              </StackedBarChart>
+                                                                           </children>
+                                                                        </VBox>
+                                                                     </children>
+                                                                  </StackPane>
+                                                               </children>
+                                                            </AnchorPane>
+                                                         </content>
+                                                         <font>
+                                                            <Font size="12.0" />
+                                                         </font>
+                                                      </TitledPane>
+                                                      <TitledPane text="Cluster Enrichment">
+                                                        <content>
+                                                          <AnchorPane>
+                                                               <children>
+                                                                  <StackPane fx:id="clusterEnrichmentStackPane" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                                                     <children>
+                                                                        <VBox>
+                                                                           <children>
+                                                                              <HBox alignment="CENTER_LEFT">
+                                                                                 <children>
+                                                                                    <Label minWidth="-Infinity" text="Compare to:">
+                                                                                       <font>
+                                                                                          <Font size="12.0" />
+                                                                                       </font>
+                                                                                       <HBox.margin>
+                                                                                          <Insets right="10.0" />
+                                                                                       </HBox.margin>
+                                                                                    </Label>
+                                                                                    <ComboBox fx:id="clusterEnrichmentCompareToCycleComboBox" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS">
+                                                                                       <HBox.margin>
+                                                                                          <Insets right="10.0" />
+                                                                                       </HBox.margin>
+                                                                                    </ComboBox>
+                                                                                    <Button fx:id="clusterComparisonGoButton" minWidth="-Infinity" mnemonicParsing="false" onAction="#updateClusterComparisonScatterPlot" text="GO">
+                                                                                       <font>
+                                                                                          <Font size="12.0" />
+                                                                                       </font>
+                                                                                    </Button>
+                                                                                 </children>
+                                                                              </HBox>
+                                                                              <HBox alignment="CENTER_LEFT" VBox.vgrow="ALWAYS">
+                                                                                 <children>
+                                                                                    <Label minWidth="-Infinity" text="Scale:">
+                                                                                       <HBox.margin>
+                                                                                          <Insets right="20.0" />
+                                                                                       </HBox.margin>
+                                                                                       <font>
+                                                                                          <Font size="12.0" />
+                                                                                       </font>
+                                                                                    </Label>
+                                                                                    <RadioButton minWidth="-Infinity" mnemonicParsing="false" onAction="#updateClusterComparisonScatterPlot" text="Linear">
+                                                                                       <HBox.margin>
+                                                                                          <Insets right="10.0" />
+                                                                                       </HBox.margin>
+                                                                                       <font>
+                                                                                          <Font size="12.0" />
+                                                                                       </font>
+                                                                                       <toggleGroup>
+                                                                                          <ToggleGroup fx:id="clusterEnrichmentScaleToggleGroup" />
+                                                                                       </toggleGroup>
+                                                                                    </RadioButton>
+                                                                                    <RadioButton fx:id="clusterEnrichmentScaleLogarithmicRadioButton" minWidth="-Infinity" mnemonicParsing="false" onAction="#updateClusterComparisonScatterPlot" selected="true" text="Logarithmic" toggleGroup="$clusterEnrichmentScaleToggleGroup">
+                                                                                       <font>
+                                                                                          <Font size="12.0" />
+                                                                                       </font>
+                                                                                    </RadioButton>
+                                                                                 </children>
+                                                                                 <VBox.margin>
+                                                                                    <Insets top="5.0" />
+                                                                                 </VBox.margin>
+                                                                              </HBox>
+                                                                              <ScatterChart fx:id="clusterComparisonScatterChart" legendVisible="false" stylesheets="@style_cluster_enrichment.css">
+                                                                                <xAxis>
+                                                                                  <NumberAxis side="BOTTOM" />
+                                                                                </xAxis>
+                                                                                <yAxis>
+                                                                                  <NumberAxis side="LEFT" />
+                                                                                </yAxis>
+                                                                              </ScatterChart>
+                                                                           </children>
+                                                                        </VBox>
+                                                                     </children>
+                                                                  </StackPane>
+                                                               </children>
+                                                            </AnchorPane>
+                                                        </content>
+                                                         <font>
+                                                            <Font size="12.0" />
+                                                         </font>
+                                                      </TitledPane>
+                                                      <TitledPane text="Cardinality Chart (Selected Sequences)">
+                                                        <content>
+                                                          <AnchorPane>
+                                                               <children>
+                                                                  <StackPane fx:id="cardinalityChartStackPane" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                                                     <children>
+                                                                        <VBox>
+                                                                           <children>
+                                                                              <HBox alignment="CENTER_LEFT" minHeight="-Infinity" minWidth="-Infinity">
+                                                                                 <children>
+                                                                                    <RadioButton mnemonicParsing="false" onAction="#showCardinalityPlots" selected="true" text="Show Enrichments">
+                                                                                       <font>
+                                                                                          <Font size="12.0" />
+                                                                                       </font>
+                                                                                       <HBox.margin>
+                                                                                          <Insets right="10.0" />
+                                                                                       </HBox.margin>
+                                                                                       <toggleGroup>
+                                                                                          <ToggleGroup fx:id="chartToggleGroup" />
+                                                                                       </toggleGroup>
+                                                                                    </RadioButton>
+                                                                                    <RadioButton fx:id="plotCountsRadioButton" mnemonicParsing="false" onAction="#showCardinalityPlots" selected="true" text="Show Counts" toggleGroup="$chartToggleGroup">
+                                                                                       <font>
+                                                                                          <Font size="12.0" />
+                                                                                       </font>
+                                                                                    </RadioButton>
+                                                                                 </children>
+                                                                              </HBox>
+                                                                              <LineChart fx:id="cardinalityLineChart" legendSide="RIGHT" stylesheets="@style_cardinality.css">
+                                                                                <xAxis>
+                                                                                  <CategoryAxis side="BOTTOM" />
+                                                                                </xAxis>
+                                                                                <yAxis>
+                                                                                  <NumberAxis side="LEFT" />
+                                                                                </yAxis>
+                                                                              </LineChart>
+                                                                           </children>
+                                                                        </VBox>
+                                                                     </children>
+                                                                  </StackPane>
+                                                               </children>
+                                                            </AnchorPane>
+                                                        </content>
+                                                         <font>
+                                                            <Font size="12.0" />
+                                                         </font>
+                                                      </TitledPane>
+                                                  </items>
+                                                </SplitPane>
+                                             </children>
+                                          </StackPane>
+                                      </items>
+                                    </SplitPane>
+                                 </center>
+                                 <left>
+                                    <VBox minWidth="-Infinity">
+                                       <children>
+                                          <HBox>
+                                             <children>
+                                                <VBox>
+                                                   <children>
+                                                      <HBox>
+                                                         <children>
+                                                            <Label minHeight="-Infinity" minWidth="-Infinity" text="Sort clusters by">
+                                                               <font>
+                                                                  <Font size="12.0" />
+                                                               </font>
+                                                               <HBox.margin>
+                                                                  <Insets right="10.0" />
+                                                               </HBox.margin>
+                                                            </Label>
+                                                            <RadioButton fx:id="clusterOrderSizeRadioButton" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" selected="true" text="Size">
+                                                               <font>
+                                                                  <Font size="12.0" />
+                                                               </font>
+                                                               <HBox.margin>
+                                                                  <Insets right="10.0" />
+                                                               </HBox.margin>
+                                                               <toggleGroup>
+                                                                  <ToggleGroup fx:id="clusterOrderToggleGroup" />
+                                                               </toggleGroup>
+                                                               <tooltip>
+                                                                  <Tooltip text="The cluster size is defined as the sum over the aptamer counts of its members">
+                                                                     <font>
+                                                                        <Font size="12.0" />
+                                                                     </font>
+                                                                  </Tooltip>
+                                                               </tooltip>
+                                                            </RadioButton>
+                                                            <RadioButton fx:id="clusterOrderDiversityRadioButton" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" text="Diversity" toggleGroup="$clusterOrderToggleGroup">
+                                                               <font>
+                                                                  <Font size="12.0" />
+                                                               </font>
+                                                               <tooltip>
+                                                                  <Tooltip text="The cluster diversity is defined as the total number of unique aptamers making up a cluster.">
+                                                                     <font>
+                                                                        <Font size="12.0" />
+                                                                     </font>
+                                                                  </Tooltip>
+                                                               </tooltip>
+                                                            </RadioButton>
+                                                         </children>
+                                                         <VBox.margin>
+                                                            <Insets bottom="5.0" />
+                                                         </VBox.margin>
+                                                      </HBox>
+                                                      <HBox alignment="CENTER_LEFT">
+                                                         <children>
+                                                            <Label minHeight="-Infinity" minWidth="-Infinity" text="on cycle">
+                                                               <font>
+                                                                  <Font size="12.0" />
+                                                               </font>
+                                                               <HBox.margin>
+                                                                  <Insets right="10.0" />
+                                                               </HBox.margin>
+                                                            </Label>
+                                                            <ComboBox fx:id="referenceSelectionCycleComboBox" minWidth="160.0" />
+                                                         </children>
+                                                      </HBox>
+                                                   </children>
+                                                   <HBox.margin>
+                                                      <Insets right="5.0" />
+                                                   </HBox.margin>
+                                                </VBox>
+                                                <Button minHeight="44.0" minWidth="44.0" mnemonicParsing="false" onAction="#clusterTableGOButtonAction" text="GO" HBox.hgrow="NEVER" />
+                                             </children>
+                                             <VBox.margin>
+                                                <Insets bottom="10.0" left="10.0" right="10.0" />
+                                             </VBox.margin>
+                                          </HBox>
+                                          <StackPane fx:id="clusterTableStackPane" VBox.vgrow="ALWAYS" />
+                                       </children>
+                                    </VBox>
+                                 </left>
+                              </BorderPane>
+                              <StackPane fx:id="noClusterInformationFoundStackPane" style="-fx-background-color: gray; -fx-opacity: 0.5;">
+                                 <children>
+                                    <VBox alignment="CENTER">
+                                       <children>
+                                          <Label fx:id="noClustersFoundLabel" text="No Cluster Information Found" textFill="#cdcdcd">
+                                             <font>
+                                                <Font size="24.0" />
+                                             </font>
+                                          </Label>
+                                          <Label fx:id="noClustersFoundLabel1" text="Please select the appropriate parameters and compute the clusters by clicking &quot;Run AptaCluster&quot;" textFill="#cdcdcd">
+                                             <font>
+                                                <Font size="12.0" />
+                                             </font>
+                                          </Label>
+                                       </children>
+                                    </VBox>
+                                 </children>
+                              </StackPane>
+                           </children>
+                        </StackPane>
+                     </children>
+                  </AnchorPane>
+               </center>
+            </BorderPane>
+         </children>
+      </StackPane>
+   </children>
+</AnchorPane>

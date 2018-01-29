@@ -53,7 +53,7 @@
                   </Separator>
                   <StackPane HBox.hgrow="ALWAYS">
                      <children>
-                        <BarChart fx:id="positiveSelectionCyclesBarChart" barGap="5.0" categoryGap="25.0" minHeight="-Infinity" title="Positive Selection Cycles">
+                        <BarChart fx:id="positiveSelectionCyclesBarChart" barGap="5.0" categoryGap="20.0" minHeight="-Infinity" title="Positive Selection Cycles">
                           <xAxis>
                             <CategoryAxis label="Cycle Number/Name" side="BOTTOM" />
                           </xAxis>

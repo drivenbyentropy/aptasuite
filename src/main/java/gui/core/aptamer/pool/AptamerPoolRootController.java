@@ -8,11 +8,16 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -23,6 +28,7 @@ import javax.swing.SwingUtilities;
 
 import org.jfree.chart.ChartPanel;
 
+import com.itextpdf.text.log.SysoCounter;
 import com.sun.javafx.tk.FontMetrics;
 import com.sun.javafx.tk.Toolkit;
 
@@ -30,6 +36,10 @@ import fr.orsay.lri.varna.VARNAPanel;
 import fr.orsay.lri.varna.exceptions.ExceptionNonEqualLength;
 import gui.activity.ProgressPaneController;
 import gui.aptatrace.logo.Logo;
+import gui.charts.logo.Alphabet;
+import gui.charts.logo.LogoChartPanelController;
+import gui.charts.logo.Scale;
+import gui.core.Initializable;
 import javafx.application.Platform;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
@@ -41,14 +51,18 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.embed.swing.SwingNode;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.VPos;
 import javafx.scene.CacheHint;
 import javafx.scene.Node;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ContentDisplay;
@@ -62,6 +76,7 @@ import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.BorderPane;
@@ -98,7 +113,7 @@ import utilities.Quicksort;
  * @author Jan Hoinka
  *
  */
-public class AptamerPoolRootController {
+public class AptamerPoolRootController implements Initializable{
 
 	@FXML
 	private StackPane poolTableViewStackPane;
@@ -161,7 +176,19 @@ public class AptamerPoolRootController {
 	private GridPane bppmGridPane;
 	
 	@FXML
-	private SwingNode contextProbabilitySwingNode;
+	private StackPane contextProbabilityStackPane;
+	
+	@FXML
+	private LineChart<String, Double> cardinalityLineChart;
+	
+	@FXML
+	private RadioButton plotCountsRadioButton;
+	
+	@FXML
+	private Button goSearchButton;
+	
+	@FXML
+	private CheckBox searchIDsCheckBox;
 	
 	/**
 	 * Instance of the pagination for the table
@@ -270,13 +297,26 @@ public class AptamerPoolRootController {
 	 */
 	private CapR capr = new CapR();
 	
-	@PostConstruct
-	public void initialize() {
+	private boolean isInitialized = false;
+	
+	/**
+	 * Used to improve search functuality
+	 */
+	private boolean firstSearch = true;
+	
+	public Boolean isInitialized() {
+		
+		return isInitialized;
+		
+	}
+	
+	//@PostConstruct
+	public void initializeContent() {
 		
 		initializeControlElements();
 		
 		// We want the gui not to block on initialization, hence we wrap this into a progress pane
-		ProgressPaneController pp = ProgressPaneController.getProgressPane(this.aptamerPoolRootStackPane, new Runnable() {
+		ProgressPaneController pp = ProgressPaneController.getProgressPane(new Runnable() {
 			
 			@Override
 			public void run() {
@@ -301,9 +341,11 @@ public class AptamerPoolRootController {
 				
 				repaintSwingComponents();
 				
+				isInitialized = true;
+				
 			}
 		
-		});
+		}, this.aptamerPoolRootStackPane);
 		
 		pp.setShowLogs(true);
 		pp.run();
@@ -352,12 +394,6 @@ public class AptamerPoolRootController {
             public void run() {
             	
             	varnaSwingNode.getContent().repaint();
-            	//Platform.runLater(() -> varnaSwingNode.requestFocus());
-            	
-            	if(contextProbabilitySwingNode.getContent() != null) {
-            		contextProbabilitySwingNode.getContent().repaint();
-            		//Platform.runLater(() -> contextProbabilitySwingNode.requestFocus());
-            	}
             	
             }
         });
@@ -369,13 +405,93 @@ public class AptamerPoolRootController {
 	 * When the user clicks on an element in the table, we need to call certain
 	 * routines to update the details on the right hand side
 	 */
-	private void setChoiceDependentContent(Integer row_index) {
+	private void setChoiceDependentContent(ObservableList<Integer> selected_indices) {
 		
-		predictAndShowStructure(row_index);
-		predictAndShowBPPM(row_index);
-		predictAndShowContextProbabilities(row_index);
+		if (selected_indices.size() == 1) {
+			predictAndShowStructure(selected_indices.get(0));
+			predictAndShowBPPM(selected_indices.get(0));
+			predictAndShowContextProbabilities(selected_indices.get(0));
+    	}
+    	else {
+    		predictAndShowStructure(null);
+			predictAndShowBPPM(null);
+			predictAndShowContextProbabilities(null);
+    	}
+		
+		showCardinalityPlots(selected_indices);
+		
 	}
 	
+	/**
+	 * Helper function to redraw the plot when user changes from enrichment to counts
+	 */
+	@FXML
+	private void showCardinalityPlots() {
+		
+		showCardinalityPlots(poolTableView.getSelectionModel().getSelectedIndices());
+		
+	}
+	
+	/**
+	 * Plots either the enrichment or the counts of the selected aptamers
+	 * @param selected_indices
+	 */
+	private void showCardinalityPlots(ObservableList<Integer> selected_indices) {
+		
+		Thread t = new Thread(new Runnable() {
+
+			@Override
+			public void run() {
+				
+				ArrayList<SelectionCycle> selectionCycles = experiment.getSelectionCycles();
+				
+				// Iterate over the selected indices, get the aptamer information and plot
+				ArrayList<XYChart.Series<String,Double>> series = new ArrayList<XYChart.Series<String,Double>>();
+				
+				for (Integer index : selected_indices) {
+					
+					// we need the aptamer ids
+					TableRowData row = poolTableView.getItems().get(index);
+					
+					XYChart.Series<String,Double> dataSeries = new XYChart.Series<String,Double>();
+			        dataSeries.setName("Id " + row.getId().getValue());
+					
+			        for (SelectionCycle cycle : selectionCycles) {
+			        	
+			        	// Skip non-existing cycle 
+			        	if (cycle == null) continue;
+			        	
+			        	if(plotCountsRadioButton.isSelected()) {
+			        		
+			        		dataSeries.getData().add(new XYChart.Data(cycle.getName(), row.getCount(cycle).getValue().doubleValue()));
+			        		
+			        	}
+			        	else {
+			        		
+			        		// Skip first cycle
+			        		if (cycle.getPreviousSelectionCycle() == null) continue;
+			        		
+			        		dataSeries.getData().add(new XYChart.Data(String.format("%s -> %s", cycle.getPreviousSelectionCycle().getName(), cycle.getName()), row.getEnrichment(cycle).getValue().doubleValue()));
+			        		
+			        	}
+			        	
+			        }
+			        
+		        	series.add(dataSeries);
+					
+				}
+				
+				Platform.runLater(() -> cardinalityLineChart.getData().setAll(series) );
+				
+			}
+			
+		});
+		
+		t.setName("chartThread");
+		//t.setDaemon(true);
+		t.start();
+		
+	}
 	
 	/**
 	 * Uses CapR4J to predict and visualize the base pair probabilities
@@ -383,72 +499,79 @@ public class AptamerPoolRootController {
 	 */
 	private void predictAndShowContextProbabilities(Integer row_index) {
 		
-		// Remove the structure when multiple items are selected
-		Platform.runLater(() -> {
-			
-			if(this.contextProbabilitySwingNode.getContent() != null) {
+		Thread t = new Thread(new Runnable() {
+
+			@Override
+			public void run() {
 				
-				this.contextProbabilitySwingNode.getContent().removeAll();
-				//contextProbabilitySwingNode.requestFocus();
+				// Remove the structure when multiple items are selected
+				Platform.runLater(() -> {
+						
+					contextProbabilityStackPane.getChildren().clear();
+					
+				});
+				
+				if (row_index != null) {
+					
+					// Get the sequence
+					TableRowData row = poolTableView.getItems().get(row_index);
+					int size = row.getSequence().get().length();
+					
+					// Predict
+					capr.ComputeStructuralProfile(row.getSequence().get().getBytes(), size);
+					
+					// Convert format
+					double[] raw = capr.getStructuralProfile();
+					double[][] data = new double[6][size];
+					
+					for (int index=0; index<size; index++) {
+							
+							data[0][index] = raw[0*size + index];
+							data[1][index] = raw[1*size + index];
+							data[2][index] = raw[2*size + index];
+							data[3][index] = raw[3*size + index];
+							data[4][index] = raw[4*size + index];
+							data[5][index] = 1 - data[0][index] - data[1][index] - data[2][index] - data[3][index] - data[4][index];
+					}
+					
+					
+					// Create metadata
+					String[] labels = new String[size];
+					for (int x=0; x<size; labels[x++] = ""+x);
+					
+					// Visualize
+					Platform.runLater(() -> {
+						
+						try {
+							FXMLLoader loader = new FXMLLoader(getClass().getResource("/gui/charts/logo/LogoChartPanel.fxml"));
+							AnchorPane logo = loader.load();
+							
+							LogoChartPanelController lcpc = (LogoChartPanelController) loader.getController(); 
+							
+							lcpc.setData(data);
+							lcpc.setLabels(labels);
+							lcpc.setScale(Scale.FREQUENCY);
+							lcpc.setAlphabet(Alphabet.STRUCTURE_CONTEXT);
+							lcpc.createChart();
+
+							contextProbabilityStackPane.getChildren().add(logo);
+							
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						
+					});
+					
+				}
 				
 			}
-			
+		
 		});
 		
-		if (row_index != null) {
-			
-			// Get the sequence
-			TableRowData row = this.poolTableView.getItems().get(row_index);
-			int size = row.getSequence().get().length();
-			
-			// Predict
-			capr.ComputeStructuralProfile(row.getSequence().get().getBytes(), size);
-			
-			// Convert format
-			double[] raw = capr.getStructuralProfile();
-			double[][] data = new double[size][6];
-			
-			for (int index=0; index<size; index++) {
-					
-					data[index][0] = raw[0*size + index];
-					data[index][1] = raw[1*size + index];
-					data[index][2] = raw[2*size + index];
-					data[index][3] = raw[3*size + index];
-					data[index][4] = raw[4*size + index];
-					data[index][5] = 1 - data[index][0] - data[index][1] - data[index][2] - data[index][3] - data[index][4];
-			}
-			
-			
-			// Create metadata
-			ArrayList<String> labels = new ArrayList<String>();
-			for (int x=0; x<size; x++){ labels.add(""+x); }
-			
-			// Visualize
-			SwingUtilities.invokeLater(new Runnable() {
-	            @Override
-	            public void run() {
-	            	
-	            		Logo logo = new Logo( data , labels.toArray(new String[0]));
-	            		logo.setAlphabetContexts();
-	            		logo.setBit(false);
-	            		
-	            		ChartPanel logo_panel = logo.getLogoPanel();
-	            		
-	            		Dimension d = new Dimension(40*size, 125);
-	            		
-	            		logo_panel.setSize(d);
-	            		logo_panel.setMinimumSize(d);
-	            		logo_panel.setPreferredSize(d);
-	            		
-	            		//repaintSwingComponents();
-	            		Platform.runLater(() -> {
-	            			contextProbabilitySwingNode.setContent(logo_panel);
-	            			//contextProbabilitySwingNode.requestFocus();
-	            		});
-	            }
-	        });
-			
-		}
+		t.setName("contextThread");
+		t.setDaemon(true);
+		t.start();
 		
 	}
 	
@@ -459,95 +582,116 @@ public class AptamerPoolRootController {
 	 */
 	private void predictAndShowBPPM(Integer row_index) {
 		
-		// Remove the structure when multiple items are selected
-		Platform.runLater(() -> {
-			this.bppmGridPane.getChildren().clear();
-			bppmGridPane.getColumnConstraints().clear();
-			bppmGridPane.getRowConstraints().clear();
-		
-			if (row_index != null) {
-				
-				// Get the sequence
-				TableRowData rowdata = this.poolTableView.getItems().get(row_index);
-				
-				// Predict the structure
-				double[] result = rnafoldapi.getBppm(rowdata.getSequence().get().getBytes());
-			
-				int size = rowdata.getSequence().get().length();
-				String sequence = rowdata.getSequence().get();
-				AptamerBounds bounds = pool.getAptamerBounds(rowdata.getId().getValue());
-				
-				ArrayList<Node> labels = new ArrayList<Node>(sequence.length()*2);
-				
-				// Labels
-				for (int index = 0; index < size; index++) {
-					
-					Label n1 = new Label(""+sequence.charAt(index));
-					n1.setFont(Font.font("monospace", FontWeight.BOLD, 10));
-					
-					
-					Label n2 = new Label(""+sequence.charAt(index));
-					n2.setFont(Font.font("monospace", FontWeight.BOLD, 10));
-					
-					// Primers
-					if ( index<bounds.startIndex || index>=bounds.endIndex ) {
+		Thread t = new Thread(new Runnable() {
 
-						n1.setTextFill(AptaColors.Nucleotides.PRIMERS);
-						n2.setTextFill(AptaColors.Nucleotides.PRIMERS);
+			@Override
+			public void run() {
+				
+				// Remove the structure when multiple items are selected
+				Platform.runLater(() -> {
+					bppmGridPane.getChildren().clear();
+					bppmGridPane.getColumnConstraints().clear();
+					bppmGridPane.getRowConstraints().clear();
+					bppmGridPane.setPrefHeight(200);
+				});
+				
+				if (row_index != null) {
+					
+					// Get the sequence
+					TableRowData rowdata = poolTableView.getItems().get(row_index);
+					
+					// Predict the structure
+					double[] result = rnafoldapi.getBppm(rowdata.getSequence().get().getBytes());
+				
+					int size = rowdata.getSequence().get().length();
+					String sequence = rowdata.getSequence().get();
+					AptamerBounds bounds = pool.getAptamerBounds(rowdata.getId().getValue());
+					
+					ArrayList<Node> labels = new ArrayList<Node>(sequence.length()*2);
+					
+					// Labels
+					for (int index = 0; index < size; index++) {
+						
+						Label n1 = new Label(""+sequence.charAt(index));
+						n1.setFont(Font.font("monospace", FontWeight.BOLD, 10));
+						
+						
+						Label n2 = new Label(""+sequence.charAt(index));
+						n2.setFont(Font.font("monospace", FontWeight.BOLD, 10));
+						
+						// Primers
+						if ( index<bounds.startIndex || index>=bounds.endIndex ) {
+
+							n1.setTextFill(AptaColors.Nucleotides.PRIMERS);
+							n2.setTextFill(AptaColors.Nucleotides.PRIMERS);
+							
+						}
+
+						
+						// Randomized Region
+						else if ( index>=bounds.startIndex && index<bounds.endIndex) {
+							n1.setTextFill(AptaColors.NucleotidesMap.get( (byte) sequence.charAt(index)));
+							n2.setTextFill(AptaColors.NucleotidesMap.get( (byte) sequence.charAt(index)));
+						}
+						
+						int platform_index = index;
+						Platform.runLater(() -> {
+							bppmGridPane.add(n1, 0, platform_index);
+							bppmGridPane.add(n2, platform_index, 0);
+						});
+						
+						labels.add(n1);
+						labels.add(n2);
 						
 					}
-
 					
-					// Randomized Region
-					else if ( index>=bounds.startIndex && index<bounds.endIndex) {
-						n1.setTextFill(AptaColors.NucleotidesMap.get( (byte) sequence.charAt(index)));
-						n2.setTextFill(AptaColors.NucleotidesMap.get( (byte) sequence.charAt(index)));
+					// We need a hook to the one square
+					StackPane sentinel = null;
+					
+					// Binding Probabilities
+					for ( int index=0; index<result.length; index++ ) {
+						
+						int col = Index.triu_col(index, size);
+						int row = Index.triu_row(index, size);
+						
+						StackPane square = new StackPane();
+		                if (sentinel == null) sentinel = square;
+						
+		                
+		                int cval = new Double(result[index]*255).intValue();
+		                Color c = Color.rgb(cval,cval,cval).invert();	                
+		                square.setBackground(new Background(new BackgroundFill(c, CornerRadii.EMPTY, Insets.EMPTY)));
+		                
+		                Platform.runLater(() -> {
+		                	bppmGridPane.add(square, col+1, row+1);
+		                });
+		                
 					}
 					
-					this.bppmGridPane.add(n1, 0, index);
-					this.bppmGridPane.add(n2, index, 0);
+					Platform.runLater(() -> {
+						
+						for (int i = 1; i < size+1; i++) {
+			        		bppmGridPane.getColumnConstraints().add(new ColumnConstraints(0, Control.USE_COMPUTED_SIZE, Double.POSITIVE_INFINITY, Priority.ALWAYS, HPos.CENTER, true));
+			        		bppmGridPane.getRowConstraints().add(new RowConstraints(0, Control.USE_COMPUTED_SIZE, Double.POSITIVE_INFINITY, Priority.ALWAYS, VPos.CENTER, true));
+			        	}
+						
+					});
 					
-					labels.add(n1);
-					labels.add(n2);
-					
+			        StackPane squarel = sentinel;
+			        
+			        // Resize the nucleotide texts to match the square dimensions
+			        sentinel.widthProperty().addListener( event -> changeFontSize(labels, squarel));
+			        sentinel.heightProperty().addListener( event -> changeFontSize(labels, squarel));
+			        
 				}
-				
-				// We need a hook to the one square
-				StackPane sentinel = null;
-				
-				// Binding Probabilities
-				for ( int index=0; index<result.length; index++ ) {
 					
-					int col = Index.triu_col(index, size);
-					int row = Index.triu_row(index, size);
-					
-					StackPane square = new StackPane();
-	                if (sentinel == null) sentinel = square;
-					
-	                
-	                int cval = new Double(result[index]*255).intValue();
-	                Color c = Color.rgb(cval,cval,cval).invert();	                
-	                square.setBackground(new Background(new BackgroundFill(c, CornerRadii.EMPTY, Insets.EMPTY)));
-	                
-	                this.bppmGridPane.add(square, col+1, row+1);	                
-				}
-				
-		        for (int i = 1; i < size+1; i++) {
-		        	bppmGridPane.getColumnConstraints().add(new ColumnConstraints(0, Control.USE_COMPUTED_SIZE, Double.POSITIVE_INFINITY, Priority.ALWAYS, HPos.CENTER, true));
-		        	bppmGridPane.getRowConstraints().add(new RowConstraints(0, Control.USE_COMPUTED_SIZE, Double.POSITIVE_INFINITY, Priority.ALWAYS, VPos.CENTER, true));
-		        }
-				
-		        StackPane squarel = sentinel;
-		        
-		        // Resize the nucleotide texts to match the square dimensions
-		        sentinel.widthProperty().addListener( event -> changeFontSize(labels, squarel));
-		        sentinel.heightProperty().addListener( event -> changeFontSize(labels, squarel));
-		        
 			}
 		
-			bppmGridPane.setPrefHeight(200);
-			
 		});
+		
+		t.setName("bppmThread");
+		t.setDaemon(true);
+		t.start();
 		
 	}
 	
@@ -579,22 +723,20 @@ public class AptamerPoolRootController {
 	 * the secondary structure panel will be cleared
 	 */
 	private void predictAndShowStructure(Integer row_index) {
-		
+			
 		// Remove the structure when multiple items are selected
 		if (row_index == null) {
 			
 			Platform.runLater(() -> {
-				this.varnaSequenceLabel.setText("");
-				this.varnaStructureLabel.setText("");
-				this.varnaMFELabel.setText("");
+				varnaSequenceLabel.setText("");
+				varnaStructureLabel.setText("");
+				varnaMFELabel.setText("");
 			});
-			
 			
 			SwingUtilities.invokeLater( () -> {
 	            	
 	            	try {
 						vp.drawRNA("", "");
-						//Platform.runLater(() -> varnaSwingNode.requestFocus());
 						
 					} catch (ExceptionNonEqualLength e) {
 						e.printStackTrace();
@@ -606,7 +748,7 @@ public class AptamerPoolRootController {
 		else {
 			
 			// Get the sequence
-			TableRowData row = this.poolTableView.getItems().get(row_index);
+			TableRowData row = poolTableView.getItems().get(row_index);
 			
 			// Predict the structure
 			MFEData result = rnafoldapi.getMFE(row.getSequence().get().getBytes());
@@ -617,7 +759,6 @@ public class AptamerPoolRootController {
 	            	
 	            	try {
 	            		vp.drawRNA(row.getSequence().get(), new String(result.structure), 3);
-	            		//Platform.runLater(() -> varnaSwingNode.requestFocus());
 					} catch (ExceptionNonEqualLength e) {
 						e.printStackTrace();
 					}
@@ -626,13 +767,13 @@ public class AptamerPoolRootController {
 	        });
 			
 			Platform.runLater(() -> {
-				this.varnaSequenceLabel.setText(row.getSequence().get());
-				this.varnaStructureLabel.setText(new String(result.structure));
-				this.varnaMFELabel.setText("Binding Free Energy: " + result.mfe + " kcal/mol");
+				varnaSequenceLabel.setText(row.getSequence().get());
+				varnaStructureLabel.setText(new String(result.structure));
+				varnaMFELabel.setText("Binding Free Energy: " + result.mfe + " kcal/mol");
 			});
 			
 		}
-		
+			
 	}
 	
 	private void initializePagination() {
@@ -748,7 +889,19 @@ public class AptamerPoolRootController {
 		        	// and the integerpropoerty 
 		        	Platform.runLater( () -> maxItemTextField.setText(newValue.replaceAll("[^\\d]", "")));
 		        }
-		        max_items_int = Integer.parseInt(newValue);
+		        else {
+		        	max_items_int = Integer.parseInt(newValue);
+		        }
+		        
+		        //make sure the value is not larger than the pool size
+		        if ( max_items_int >= experiment.getAptamerPool().size() ) {
+		        	
+		        	Platform.runLater( () -> maxItemTextField.setText(experiment.getAptamerPool().size()+""));
+		        	max_items_int = experiment.getAptamerPool().size();
+		        	 
+		        }
+		        
+		        
 		    }
 		});
 		
@@ -759,7 +912,8 @@ public class AptamerPoolRootController {
 
 		// Query 
 		this.searchTextField.textProperty().addListener((e) -> this.query_string = this.searchTextField.getText());
-	
+		this.goSearchButton.disableProperty().bind(this.searchTextField.textProperty().isEmpty());
+		
 		// With primers
 		showPrimersRadioButton.selectedProperty().addListener( (e) -> this.with_primers = this.showPrimersRadioButton.selectedProperty().get());
 		
@@ -1144,19 +1298,14 @@ public class AptamerPoolRootController {
 		    	// We want to predict and display the secondary structure only when one row is selected
 		    	ObservableList<Integer> selected_indices = poolTableView.getSelectionModel().getSelectedIndices();
 		    	
-		    	if (selected_indices.size() == 1) {
-		    		setChoiceDependentContent(selected_indices.get(0));
-		    	}
-		    	else {
-		    		setChoiceDependentContent(null);
-		    	}
+		    	setChoiceDependentContent(selected_indices);
 		    	
 		    }
 		});
 		
-		
-		
 	}
+	
+	
 	
 
 	/**
@@ -1298,7 +1447,7 @@ public class AptamerPoolRootController {
 				
 				if (this.is_search && matches.get(x)) {
 					
-					n.setBackground(new Background(new BackgroundFill(Color.web("#967c7c"), CornerRadii.EMPTY, Insets.EMPTY)));
+					n.setBackground(new Background(new BackgroundFill(Color.web("#c5e0d9"), CornerRadii.EMPTY, Insets.EMPTY)));
 					
 				}
 				
@@ -1372,7 +1521,7 @@ public class AptamerPoolRootController {
 		}
 		
 		// We want the gui not to block on initialization, hence we wrap this into a progress pane
-		ProgressPaneController pp = ProgressPaneController.getProgressPane(this.aptamerPoolRootStackPane, new Runnable() {
+		ProgressPaneController pp = ProgressPaneController.getProgressPane(new Runnable() {
 			
 			@Override
 			public void run() {
@@ -1385,72 +1534,217 @@ public class AptamerPoolRootController {
 				
 			}
 		
-		});
+		}, this.aptamerPoolRootStackPane);
 		
 		pp.setShowLogs(true);
 		pp.run();
 
 	}
 	
-	
+
 	/**
 	 * Performs the search when GO is pressed
 	 */
-	private void performSearch() {
+	private void performSearch(ProgressPaneController pp) {
 		
-		// Reset
-		this.search_mask.clear();
-		
-		// Create regex expression
-		Pattern p = Pattern.compile(query_string, Pattern.CASE_INSENSITIVE);
+		// First search flag
+		AtomicInteger formax = new AtomicInteger(this.searchIDsCheckBox.isSelected() ? aptamer_ids.length : firstSearch ? aptamer_ids.length : max_items_int);
 
-		// Iterate over the user specified limit of the table and set the mask when a match is found
-		int number_of_matches = 0;
-		for ( int x=0; x<this.max_items_int; x++ ) {
+		// Reset
+		this.search_mask = new BitSet(formax.get());
+		
+		AtomicInteger number_of_matches = new AtomicInteger(0);
+		// Differentiate between ID search and regex
+		if (searchIDsCheckBox.isSelected()) {
 			
-			AptamerBounds bounds = pool.getAptamerBounds(aptamer_ids[x]);
-			String sequence = new String(pool.getAptamer(aptamer_ids[x])).substring(bounds.startIndex, bounds.endIndex);
 			
-			if (p.matcher(sequence).find() ) {
+			//try to convert the query into a list of ints
+			String[] tokens = query_string.split(",");
+			HashSet<Integer> int_tokens = new HashSet<Integer>();
+			
+			for (int x=0; x<tokens.length; x++) {
 				
-				search_mask.set(x);
-				number_of_matches++;
+				String token = tokens[x];
+				
+				try {
+					
+					int int_token = Integer.parseInt(token);
+					int_tokens.add(int_token);
+					
+					
+				} catch (NumberFormatException e) {
+					
+					return;
+					
+				}
 				
 			}
 			
-		}
+			// now set the bits of the search mask for those ids which are in the correct range
+			AtomicInteger x = new AtomicInteger(0);
+			Runnable search_ids = new Runnable() {
+
+				@Override
+				public void run() {
+					
+					for (; x.get()<formax.get(); x.incrementAndGet()) {
+						
+						if (int_tokens.contains(aptamer_ids[x.get()])) {
+							
+							search_mask.set(x.get());
+							number_of_matches.incrementAndGet();
+							
+						}
+						
+					}
+					
+				}
+				
+			};
+			
+			Thread search_ids_thread = new Thread(search_ids);
+			search_ids_thread.start();
+			
+			while (search_ids_thread.isAlive() && !search_ids_thread.isInterrupted()) {
+				try {
+					pp.setProgress(x.doubleValue()/formax.doubleValue());
+					pp.setProgressLabel(String.format("%.2f%% Completed. Found %s matches", (x.doubleValue()/formax.doubleValue())*100.0, number_of_matches.get()));
+					
+					// Once every second should suffice
+					Thread.sleep(1000);
+					
+				} catch (InterruptedException ie) {
+				}
+			}
+
+			// Last Update
+			pp.setProgress(1.0);
+			pp.setProgressLabel(String.format("%.2f%% Completed. Found %s matches", 100, number_of_matches.get()));
+			
+		} else {
 		
+			// Create ordered list 
+			int[] order_list = new int[formax.get()];
+			for (int x=0; x<order_list.length; order_list[x] = x++);
+			
+			AptaLogger.log(Level.FINEST, this.getClass(), "Sorting data for efficient searching");
+			// Sort the aptamer_ids and keep track of the original sorting in the required range
+			Quicksort.quicksort(order_list, aptamer_ids, 0, formax.get()-1, Quicksort.AscendingQSComparator());
+			
+			// Create regex expression
+			Pattern p = Pattern.compile(query_string, Pattern.CASE_INSENSITIVE);
+	
+			AtomicInteger x = new AtomicInteger(0);
+			
+			Runnable search_patterns = new Runnable() {
+
+				@Override
+				public void run() {
+
+					// Create iterators for the pool and the bounds
+					Iterator<Entry<Integer, byte[]>> pool_it = experiment.getAptamerPool().inverse_view_iterator().iterator();
+					Iterator<Entry<Integer, int[]>> bounds_it = experiment.getAptamerPool().bounds_iterator().iterator();
+					
+					Entry<Integer, byte[]> pool_entry = pool_it.next();
+					Entry<Integer, int[]> bounds_entry = bounds_it.next();
+					
+					// Iterate over the user specified limit of the table and set the mask when a match is found
+					for ( ; x.get()<formax.get(); x.incrementAndGet() ) {
+						
+						int aptamer_id = aptamer_ids[x.get()];
+						
+						
+						// Place the iterators to the corresponding aptamer.
+						// This will work because both, the iterators and the aptamer_id range are sorted
+						while (aptamer_id != pool_entry.getKey()) {
+							
+							pool_entry = pool_it.next();
+							bounds_entry = bounds_it.next();
+							
+						}
+
+						// Perform search 
+						String sequence = new String(pool_entry.getValue()).substring(bounds_entry.getValue()[0], bounds_entry.getValue()[1]);
+						
+						if (p.matcher(sequence).find() ) {
+							
+							search_mask.set(x.get());
+							number_of_matches.incrementAndGet();
+							
+						}
+						
+					}
+					
+					pool_it = null;
+					bounds_it = null;
+					
+					pool_entry = null;
+					bounds_entry = null;
+					
+					return;
+					
+				}
+				
+			};
+			
+			Thread search_patterns_thread = new Thread(search_patterns);
+			search_patterns_thread.start();
+			
+			AptaLogger.log(Level.FINEST, this.getClass(), "Iterating dataset and matching pattern");
+			while (search_patterns_thread.isAlive() && !search_patterns_thread.isInterrupted()) {
+				try {
+					pp.setProgress(x.doubleValue()/formax.doubleValue());
+					pp.setProgressLabel(String.format("%.2f%% Completed. Found %s matches.", (x.doubleValue()/formax.doubleValue())*100.0, number_of_matches.get()));
+					
+					// Once every second should suffice
+					Thread.sleep(1000);
+					
+				} catch (InterruptedException ie) {
+					break;
+				}
+			}
+
+			// Last Update
+			pp.setProgress(1.0);
+			pp.setProgressLabel(String.format("%.2f%% Completed. Found %s matches.", 100.0, number_of_matches.get()));
+			
+			AptaLogger.log(Level.FINEST, this.getClass(), "Sorting data according to SortBy criteria");
+			// Reverse the sorting to restore aptamers ordered by count
+			Quicksort.quicksort(aptamer_ids, order_list, search_mask, 0, formax.get()-1, Quicksort.AscendingQSComparator());
+		}
+
 		// Now update the order of the aptamer_ids to move all matches to the beginning
 		// while preserving the order of the list
-		int zeros = 0;
-		int ones = 1;
-		while(ones < this.max_items_int) {
-
-			// Find the next 0
-			while(search_mask.get(zeros) && zeros < this.max_items_int) {
-				zeros++;
-			}
-			
-			// Find the next one
-			while(!search_mask.get(ones) && ones < this.max_items_int) {
-				ones++;
-			}
-
-			if (ones == this.max_items_int) break;
-			
-			// And swap
-			search_mask.flip(ones);
-			search_mask.flip(zeros);
+		int zeros = search_mask.nextClearBit(0);
+		int temp;
 		
-			int temp = aptamer_ids[zeros];
-			aptamer_ids[zeros] = aptamer_ids[ones];
-			aptamer_ids[ones] = temp;
+		if (zeros != -1) {
+
+			AptaLogger.log(Level.FINEST, this.getClass(), "Filtering non-matching entries");
 			
+			for (int ones = search_mask.nextSetBit(zeros); ones >= 0 && zeros != -1; ones = search_mask.nextSetBit(ones+1)) {
+	
+				// operate on index i here
+				if (ones == Integer.MAX_VALUE) {
+				    break; // or (i+1) would overflow
+				}
+			     
+		     	// Swap
+				search_mask.clear(ones);
+				search_mask.set(zeros);
+			
+				temp = aptamer_ids[zeros];
+				aptamer_ids[zeros] = aptamer_ids[ones];
+				aptamer_ids[ones] = temp;
+	
+				// Find next zero
+				zeros = search_mask.nextClearBit(zeros+1);
+				
+			}
 		}
 
-		
 		// Finally we set the max items to match the number of identified
-		int nom = number_of_matches;
+		int nom = number_of_matches.get();
 		Platform.runLater( () -> {
 			
 			this.total_items.set(nom);
@@ -1458,7 +1752,8 @@ public class AptamerPoolRootController {
 			
 		});
 		
-	}
+		firstSearch = false;
+	}	
 	
 	/**
 	 * Perform the logic for the search in the table
@@ -1469,14 +1764,15 @@ public class AptamerPoolRootController {
 		is_search = true;
 		
 		// We want the gui not to block on initialization, hence we wrap this into a progress pane
-		ProgressPaneController pp = ProgressPaneController.getProgressPane(this.aptamerPoolRootStackPane, new Runnable() {
+		ProgressPaneController pp = ProgressPaneController.getProgressPane(null, this.aptamerPoolRootStackPane);
+		pp.setLogic(new Runnable() {
 			
 			@Override
 			public void run() {
 				
 				AptaLogger.log(Level.INFO, this.getClass(), "Searching for matches");
 				
-				performSearch();
+				performSearch(pp);
 				
 				AptaLogger.log(Level.INFO, this.getClass(), "Creating Table and Pagination");
 				
@@ -1486,6 +1782,7 @@ public class AptamerPoolRootController {
 		
 		});
 		
+		pp.setShowProgressBar(true);
 		pp.setShowLogs(true);
 		pp.run();
 		
@@ -1499,8 +1796,9 @@ public class AptamerPoolRootController {
 	private void resetSearchAction() {
 		
 		is_search = false;
+		firstSearch = true;
 		
-		initialize();
+		initializeContent();
 		
 	}
 	

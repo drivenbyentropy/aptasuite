@@ -21,6 +21,7 @@ import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.RadioButton;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
 import lib.aptamer.datastructures.Experiment;
 import lib.aptamer.datastructures.SelectionCycle;
@@ -34,59 +35,64 @@ import utilities.Configuration;
 public class SequencingDataCycleController {
 
 	@FXML
-	Label roundNumberLabel;
+	private Label roundNumberLabel;
 	
 	@FXML
-	Label cycleIDLabel;
+	private Label cycleIDLabel;
 	
 	@FXML
-	Label typeOfSelectionLabel;
+	private Label typeOfSelectionLabel;
 	
 	@FXML
-	Label barcode5Label;
+	private Label barcode5Label;
 	
 	@FXML
-	Label barcode3Label;
+	private Label barcode3Label;
 	
 	@FXML
-	Label poolSizeLabel;
+	private Label poolSizeLabel;
 	
 	@FXML
-	Label uniqueFractionLabel;
+	private Label uniqueFractionLabel;
 	
 	@FXML
-	Label baseDistributionLabel;
+	private Label baseDistributionLabel;
 	
 	@FXML
-	LineChart<String, Number> forwardReadsLineChart;
+	private LineChart<String, Number> forwardReadsLineChart;
 	
 	@FXML
-	LineChart<String,Number> reverseReadsLineChart;
+	private LineChart<String,Number> reverseReadsLineChart;
 	
 	@FXML
-	LineChart<String,Number> randomizedRegionLineChart;
+	private LineChart<String,Number> randomizedRegionLineChart;
 	
 	@FXML
-	BarChart<String,Number> randomizedRegionSizeDistributionBarChart;
+	private BarChart<String,Number> randomizedRegionSizeDistributionBarChart;
 	
 	@FXML
-	RadioButton countRadioButton;
+	private RadioButton countRadioButton;
 	
 	@FXML
-	RadioButton percentageRadioButton;
+	private RadioButton percentageRadioButton;
 
 	@FXML
-	RadioButton linearRadioButton;
+	private RadioButton linearRadioButton;
 	
 	@FXML
-	RadioButton logarithmicRadioButton;
-	
-	
-	@FXML
-	StackPane cycleInformationStackPane;
+	private RadioButton logarithmicRadioButton;
 	
 	@FXML
-	ComboBox<Integer> randomizedRegionSizeComboBox;
+	private StackPane cycleInformationStackPane;
+	
+	@FXML
+	private ComboBox<Integer> randomizedRegionSizeComboBox;
+	
+	@FXML
+	private StackPane reverseReadsStackPane;
+	
+	@FXML
+	private GridPane chartGridPane;
 	
 	/**
 	 * The selection cycle the data corresponds to
@@ -202,7 +208,7 @@ public class SequencingDataCycleController {
 		};
 		
 		// Start the computation using a progress bar
-		ProgressPaneController pp = ProgressPaneController.getProgressPane(cycleInformationStackPane, cycleInfoRunnable);
+		ProgressPaneController pp = ProgressPaneController.getProgressPane(cycleInfoRunnable, cycleInformationStackPane);
 		pp.setShowLogs(false);
 		pp.run();
 
@@ -261,7 +267,8 @@ public class SequencingDataCycleController {
 		// Determine if we have paired end data
 		if (Configuration.getParameters().getStringArray("AptaplexParser.reverseFiles").length == 0) {
 			
-			this.reverseReadsLineChart.setDisable(true);
+			//this.reverseReadsLineChart.setDisable(true);
+			chartGridPane.getChildren().remove(this.reverseReadsStackPane);
 			
 		}
 		else {

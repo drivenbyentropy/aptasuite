@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Menu?>
 <?import javafx.scene.control.MenuBar?>
 <?import javafx.scene.control.MenuItem?>
@@ -7,6 +8,8 @@
 <?import javafx.scene.input.KeyCodeCombination?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
 
 <StackPane fx:id="rootStackPane" minHeight="600.0" minWidth="800.0" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.core.RootLayoutController">
    <children>
@@ -20,37 +23,70 @@
                            <accelerator>
                               <KeyCodeCombination alt="UP" code="N" control="ANY" meta="UP" shift="UP" shortcut="UP" />
                            </accelerator></MenuItem>
+                        <MenuItem mnemonicParsing="false" onAction="#fileNewSimulatedExperimentButtonAction" text="New Simulated Experiment">
+                           <accelerator>
+                              <KeyCodeCombination alt="UP" code="S" control="ANY" meta="UP" shift="UP" shortcut="UP" />
+                           </accelerator>
+                        </MenuItem>
                         <MenuItem mnemonicParsing="false" onAction="#fileOpenExperimentButtonAction" text="Open Experiment">
                            <accelerator>
                               <KeyCodeCombination alt="UP" code="O" control="ANY" meta="UP" shift="UP" shortcut="UP" />
                            </accelerator>
                         </MenuItem>
-                    <MenuItem mnemonicParsing="false" onAction="#menuFileCloseButtonAction" text="Close" />
-                        <MenuItem mnemonicParsing="false" onAction="#addExperimentOverviewTab" text="Debug" />
+                    <MenuItem mnemonicParsing="false" onAction="#menuFileCloseButtonAction" text="Quit">
+                           <accelerator>
+                              <KeyCodeCombination alt="UP" code="Q" control="ANY" meta="UP" shift="UP" shortcut="UP" />
+                           </accelerator></MenuItem>
                   </items>
                 </Menu>
+                  <Menu mnemonicParsing="false" text="Experiment">
+                    <items>
+                      <MenuItem fx:id="exportDataMenuItem" mnemonicParsing="false" onAction="#experimentExportDataButtonAction" text="Export Data" />
+                    </items>
+                  </Menu>
                   <Menu mnemonicParsing="false" text="View">
                     <items>
                       <MenuItem fx:id="showOverviewTabMenuItem" mnemonicParsing="false" onAction="#addExperimentOverviewTab" text="Show Overview Tab" />
                         <MenuItem fx:id="showSequencingDataTabMenuItem" mnemonicParsing="false" onAction="#addSequencingDataTab" text="Show Sequencing Data Tab" />
                         <MenuItem fx:id="showAptamerPoolTabMenuItem" mnemonicParsing="false" onAction="#addAptamerPoolTab" text="Show Aptamer Pool Tab" />
+                        <MenuItem fx:id="showAptamerFamilyAnalysisTabMenuItem" mnemonicParsing="false" onAction="#addAptamerFamilyAnalysisTab" text="Show Aptamer Family Analysis Tab" />
+                        <MenuItem fx:id="showMotifAnalysisTabMenuItem" mnemonicParsing="false" onAction="#addMotifAnalysisTab" text="Show Motif Analysis Tab" />
                     </items>
                   </Menu>
                 <Menu fx:id="preferencesMenu" disable="true" mnemonicParsing="false" text="Preferences">
                   <items>
-                    <MenuItem mnemonicParsing="false" text="Delete" />
+                        <Menu fx:id="numberOfCoresMenu" mnemonicParsing="false" text="Number of Cores" />
                   </items>
                 </Menu>
                 <Menu fx:id="helpMenu" mnemonicParsing="false" text="Help">
                   <items>
-                    <MenuItem mnemonicParsing="false" onAction="#testAction" text="About" />
+                    <MenuItem mnemonicParsing="false" onAction="#howToCiteAction" text="How to Cite" />
+                        <MenuItem mnemonicParsing="false" onAction="#openUserManualAction" text="User Manual" />
                   </items>
                 </Menu>
               </menus>
             </MenuBar>
          </top>
          <center>
-            <TabPane fx:id="rootTabPane" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="ALL_TABS" BorderPane.alignment="CENTER" />
+            <StackPane BorderPane.alignment="CENTER">
+               <children>
+                  <TabPane fx:id="rootTabPane" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="ALL_TABS" />
+                  <VBox fx:id="noExperimentVBox" alignment="CENTER" prefHeight="200.0" prefWidth="100.0" style="-fx-background-color: gray; -fx-opacity: 0.5;">
+                     <children>
+                        <Label text="No Experiment Detected" textFill="#cdcdcd">
+                           <font>
+                              <Font size="24.0" />
+                           </font>
+                        </Label>
+                        <Label text="Use the File menu to either create a new experiment or load an existing configuration from disk." textFill="#cdcdcd">
+                           <font>
+                              <Font name="System Bold" size="12.0" />
+                           </font>
+                        </Label>
+                     </children>
+                  </VBox>
+               </children>
+            </StackPane>
          </center>
       </BorderPane>
    </children>

@@ -100,7 +100,13 @@ public class AptaPlexConsumer implements Runnable {
 	 * True if the sequences have previously been demultiplexed
 	 */
 	private boolean isPerFile = Configuration.getParameters().getBoolean("AptaplexParser.isPerFile");
-
+	
+	
+	/**
+	 * If true, the reverse complement of the sequences will be stored. This is usefull for DNA aptamers 
+	 */
+	private boolean storeReverseComplement = Configuration.getParameters().getBoolean("AptaplexParser.StoreReverseComplement"); 
+			
 	/**
 	 * If no 3' primer is present, the parser needs to know the size of the
 	 * randomized region to extract
@@ -286,19 +292,70 @@ public class AptaPlexConsumer implements Runnable {
 						 && (randomized_region_end_index+primer3.length <= contig.length) // 3' primer does not overshoot the contig to the right
 					){
 					 
-					 read.selection_cycle.addToSelectionCycle(
-							 Arrays.copyOfRange(contig, randomized_region_start_index-primer5.length, randomized_region_end_index+primer3.length)
-							 ,primer5.length
-							 ,primer5.length + (randomized_region_end_index-randomized_region_start_index)
-							 //,randomized_region_start_index
-							 //,randomized_region_end_index
-							 );
+					 if (!storeReverseComplement) { // Do we have to compute the reverse complement?
 					 
-					 // Add metadata information
-					 addAcceptedNucleotideDistributions(read.selection_cycle, contig, randomized_region_start_index, randomized_region_end_index);
+						 read.selection_cycle.addToSelectionCycle(
+								 Arrays.copyOfRange(contig, randomized_region_start_index-primer5.length, randomized_region_end_index+primer3.length)
+								 ,primer5.length
+								 ,primer5.length + (randomized_region_end_index-randomized_region_start_index)
+								 );
+						 
+						 // Add metadata information
+						 addAcceptedNucleotideDistributions(read.selection_cycle, contig, randomized_region_start_index, randomized_region_end_index);
+
+					 } else { // We do!
+						 
+						// First, extract the relevant region from the read
+						contig = Arrays.copyOfRange(contig, randomized_region_start_index-primer5.length, randomized_region_end_index+primer3.length);
+						 
+						// Now compute the reverse complement
+						for (int x = 0; x < contig.length; x++) {
+
+							switch (contig[x]) {
+							case 65:
+								contig[x] = 84;
+								break;
+
+							case 67:
+								contig[x] = 71;
+								break;
+
+							case 71:
+								contig[x] = 67;
+								break;
+
+							case 84:
+								contig[x] = 65;
+								break;
+							}
+						}
+						
+						// And reverse it
+						for(int i = 0; i < contig.length / 2; i++)
+						{
+						    byte temp = contig[i];
+						    contig[i] = contig[contig.length - i - 1];
+						    contig[contig.length - i - 1] = temp;
+						}
+						
+
+						// We also need tyo recompute the boundaries
+						int start = contig.length - (primer5.length + (randomized_region_end_index-randomized_region_start_index));
+						int end = contig.length - primer5.length;
+						
+						read.selection_cycle.addToSelectionCycle(
+								 contig
+								 ,start
+								 ,end
+								 );
+						 
+						 // Add metadata information
+						 addAcceptedNucleotideDistributions(read.selection_cycle, contig, start, end);
+						 
+					 }
+					 
 					 addNuceotideDistributions();
 					 addQualityScores();
-					 
 					 progress.totalAcceptedReads.incrementAndGet();
 					 
 				 }else { // Handle errors

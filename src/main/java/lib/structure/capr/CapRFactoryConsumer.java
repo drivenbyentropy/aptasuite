@@ -87,9 +87,15 @@ public class CapRFactoryConsumer implements Runnable {
 				// add item to storage
 				pool.registerStructure(item.getValue(), capr.getStructuralProfile());
 				
-			} catch (Exception e) {
-				e.printStackTrace();
+			} catch (InterruptedException e) { // stop computation on interrupt signal
+				
+				AptaLogger.log(Level.CONFIG, this.getClass(), "CapR consumer thread " + Thread.currentThread().getName() +  " encountered an InterruptedException. Breaking;");
+				
+				queue.clear();
+				
+				return;
 			}
+			
 		}
 
 	}

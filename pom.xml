@@ -7,12 +7,27 @@
 	<name>AptaSUITE</name>
 	<description>A full-featured software collection for the comprehensive analysis of HT-SELEX experiments with both graphical and command line based user interfaces.</description>
 	<profiles>
-    <profile>
+		<!-- Temporary profile to compile on NCBI windows machine -->
+    	<profile>
         	<id>windows</id>
         	<build>
             	<directory>c:/Users/hoinkaj/temp/aptasuite</directory>
         	</build>
     	</profile>
+    	<!-- Temporary profile to compile on NCBI lmem machine -->
+    	<profile>
+        	<id>lmem</id>
+        	<dependencies>
+            	<dependency>
+				  <groupId>javafx</groupId>
+				  <artifactId>jfxrt</artifactId>
+				  <version>${java.version}</version>
+				  <scope>system</scope>
+				  <systemPath>/usr/local/openjfx/8u182/jre/lib/ext/jfxrt.jar</systemPath>
+				</dependency>
+        	</dependencies>
+    	</profile>
+    	
 	</profiles>
 	
 	
@@ -188,7 +203,7 @@
 		<dependency>
 			<groupId>it.unimi.dsi</groupId>
 			<artifactId>fastutil</artifactId>
-			<version>6.5.4</version>
+			<version>8.1.1</version>
 		</dependency>
 		<dependency>
 			<groupId>com.koloboke</groupId>

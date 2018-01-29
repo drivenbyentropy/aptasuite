@@ -51,14 +51,19 @@ public class CapRFactoryProducer implements Runnable{
 
 		// iterate over the data and put it in the queue
 		for(Entry<byte[], Integer> item : items){
-			//TODO: check if item has already been prediced and skip if required
 			
 			try {
+				
 				queue.put(item);
+				
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				
+				AptaLogger.log(Level.CONFIG, this.getClass(), "CapR producer encountered an InterruptedException. Breaking;");
+				
+				break;
+				
 			}
+			
 		}
 		
 		

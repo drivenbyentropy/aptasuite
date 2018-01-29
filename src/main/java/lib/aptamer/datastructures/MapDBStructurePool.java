@@ -21,6 +21,7 @@ import org.mapdb.BTreeMap;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.mapdb.Serializer;
+import org.mapdb.DBException.WrongConfiguration;
 import org.mapdb.serializer.SerializerCompressionWrapper;
 
 import orestes.bloomfilter.BloomFilter;
@@ -153,20 +154,38 @@ public class MapDBStructurePool implements StructurePool {
 	    				
 	    				AptaLogger.log(Level.INFO, this.getClass(), "Processing file " + file.toString());
 	    				
-	    				DB db_structure = DBMaker
-					    .fileDB(file.toFile())
-					    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
-					    .fileMmapPreclearDisable() // Make mmap file faster
-					    .cleanerHackEnable() // Unmap (release resources) file when its closed.
-					    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
-					    .executorEnable()
-					    .make();
-	
-	    				BTreeMap<Integer, double[]> dbmap = db_structure.treeMap("map")
-						.valuesOutsideNodesEnable()
-						.keySerializer(Serializer.INTEGER)
-						.valueSerializer(new SerializerCompressionWrapper(Serializer.DOUBLE_ARRAY))
-				        .open();
+	    				BTreeMap<Integer, double[]> dbmap = null;
+	    				DB db_structure = null;
+	    				
+	    				try {
+	    					db_structure = DBMaker
+	    						    .fileDB(file.toFile())
+	    						    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
+	    						    .fileMmapPreclearDisable() // Make mmap file faster
+	    						    .cleanerHackEnable() // Unmap (release resources) file when its closed.
+	    						    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
+	    						    .executorEnable()
+	    						    .make();
+	    					
+	    					dbmap = db_structure.treeMap("map")
+	    								.valuesOutsideNodesEnable()
+	    								.keySerializer(Serializer.INTEGER)
+	    								.valueSerializer(new SerializerCompressionWrapper(Serializer.DOUBLE_ARRAY))
+	    						        .open();
+	    				}
+	    				
+	    				//If this fails, we need to make sure that all file handles have been closed
+	    				catch(Exception e) {
+	    					
+	    						    					
+	    					close();
+	    					if (db_structure != null) {  
+	    						db_structure.close(); 
+	    					}
+	    					
+	    					throw(e);
+	    					
+	    				}
 	    				
 	    				structureData.add(dbmap);
 	    				structureDataPaths.add(file);

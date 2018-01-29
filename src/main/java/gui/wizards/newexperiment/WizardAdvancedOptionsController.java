@@ -12,10 +12,14 @@ import io.datafx.controller.flow.action.ActionMethod;
 import io.datafx.controller.flow.action.ActionTrigger;
 import io.datafx.controller.flow.context.ActionHandler;
 import io.datafx.controller.flow.context.FlowActionHandler;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Spinner;
 import javafx.scene.control.TextField;
+import javafx.util.StringConverter;
 import javafx.util.converter.NumberStringConverter;
 import utilities.AptaLogger;
 
@@ -57,6 +61,9 @@ public class WizardAdvancedOptionsController extends AbstractWizardController {
     private Button backButton;
     
     @FXML
+    private ComboBox<Boolean> storeReverseComplementComboBox;
+    
+    @FXML
     @ActionTrigger("goBack")
     private Button finishButton;
    
@@ -79,13 +86,18 @@ public class WizardAdvancedOptionsController extends AbstractWizardController {
     	this.nextButton.setVisible(false);
     	this.finishButton.setText("Back");
     	
+    	ObservableList<Boolean> list = FXCollections.observableArrayList(true,false);
+    	storeReverseComplementComboBox.setItems(list);
+    	storeReverseComplementComboBox.setConverter(new YesNoStringConverter());
+    	
     	// Bind to datamodel
     	mapDBAptamerPoolBloomFilterCapacityTextField.textProperty().bindBidirectional(getDataModel().getMapDBAptamerPoolBloomFilterCapacity(), new NumberStringConverter());
     	mapDBAptamerPoolBloomFilterCollisionProbabilityTextField.textProperty().bindBidirectional(getDataModel().getMapDBAptamerPoolBloomFilterCollisionProbability(), new NumberStringConverter());
     	mapDBAptamerPoolMaxTreeMapCapacityTextField.textProperty().bindBidirectional(getDataModel().getMapDBAptamerPoolMaxTreeMapCapacity(), new NumberStringConverter());
     	mapDBSelectionCycleBloomFilterCollisionProbabilityTextField.textProperty().bindBidirectional(getDataModel().getMapDBSelectionCycleBloomFilterCollisionProbability(), new NumberStringConverter());
     	performanceMaxNumberOfCoresSpinner.getValueFactory().valueProperty().bindBidirectional(getDataModel().getPerformanceMaxNumberOfCores());
-
+    	storeReverseComplementComboBox.valueProperty().bindBidirectional(getDataModel().getStoreReverseComplement());
+    	
     }
     
     
@@ -101,6 +113,18 @@ public class WizardAdvancedOptionsController extends AbstractWizardController {
 			AptaLogger.log(Level.SEVERE, this.getClass(), e);
 		}
     	
+    }
+    
+    public class YesNoStringConverter extends StringConverter<Boolean> {
+        @Override
+        public String toString(Boolean bool) {
+            return (bool?"Yes":"No");
+        }
+
+        @Override
+        public Boolean fromString(String s) {
+            return s.equalsIgnoreCase("yes");
+        }
     }
     
 }

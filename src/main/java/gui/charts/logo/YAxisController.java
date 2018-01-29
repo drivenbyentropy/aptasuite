@@ -3,15 +3,8 @@
  */
 package gui.charts.logo;
 
-import java.io.IOException;
-
-import javax.annotation.PostConstruct;
-
 import javafx.beans.value.ChangeListener;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Node;
-import javafx.scene.control.Button;
 import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.layout.AnchorPane;
@@ -19,14 +12,8 @@ import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
-import javafx.scene.layout.RowConstraints;
 import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
 import javafx.scene.shape.SVGPath;
-import utilities.QSComparator;
-import utilities.QSDoubleComparator;
-import utilities.Quicksort;
 
 /**
  * @author Jan Hoinka
@@ -35,52 +22,59 @@ import utilities.Quicksort;
 public class YAxisController {
 
 	@FXML
-	GridPane columnGridPane;
+	private GridPane columnGridPane;
 	
 	@FXML
-	HBox xAxisHBox;
+	private HBox xAxisHBox;
 	
 	@FXML
-	AnchorPane axisCenterAnchorPane;
+	private AnchorPane axisCenterAnchorPane;
 	
 	@FXML
-	StackPane axisCenterStackPane;
+	private StackPane axisCenterStackPane;
 
 	@FXML
-	AnchorPane axisLeftAnchorPane;
+	private AnchorPane axisLeftAnchorPane;
 	
 	@FXML
-	StackPane axisLeftStackPane;
+	private StackPane axisLeftStackPane;
 	
 	@FXML
-	AnchorPane axisRightAnchorPane;
+	private AnchorPane axisRightAnchorPane;
 	
 	@FXML
-	StackPane axisRightStackPane;
+	private StackPane axisRightStackPane;
 	
 	@FXML
-	StackPane yAxisBottomStackPane;
+	private StackPane yAxisBottomStackPane;
 	
 	@FXML
-	AnchorPane yAxisBottomAnchorPane;
+	private AnchorPane yAxisBottomAnchorPane;
 	
 	@FXML
-	StackPane yAxisCenterStackPane;
+	private StackPane yAxisCenterStackPane;
 	
 	@FXML
-	AnchorPane AxisCenterAnchorPane;
+	private AnchorPane yAxisCenterAnchorPane;
 	
 	@FXML
-	StackPane yAxisTopStackPane;
-	
+	private StackPane yAxisTopStackPane;
 	
 	@FXML
-	Label xTickLabel;
+	private AnchorPane yAxisTopAnchorPane;
 	
-	private SVGPath axisLeft   = this.getAxisLeft();
-	private SVGPath axisCenter = this.getAxisCenter();
-	private SVGPath axisRight  = this.getAxisRight();
+	@FXML
+	private Label xTickLabel;
 	
+	@FXML
+	private Label yAxisMaxLabel;
+	
+	@FXML
+	private Label yAxisMinLabel;
+	
+	private SVGPath axisTop   = this.getYAxis();
+	private SVGPath axisMiddle = this.getYAxis();
+	private SVGPath axisBottom  = this.getYAxis();
 	
 	public void drawColumn() {
 		
@@ -99,34 +93,28 @@ public class YAxisController {
 
 		
 		// Add the Y-Axis
-//		this.yAxisCenterStackPane.getChildren().add(axisCenter);
-//		this.axisCenterAnchorPane.widthProperty().addListener( stageSizeListener );
-//		this.axisCenterAnchorPane.heightProperty().addListener( stageSizeListener );
+		this.yAxisTopStackPane.getChildren().add(axisTop);
+		this.yAxisTopAnchorPane.widthProperty().addListener( stageSizeListener );
+		this.yAxisTopAnchorPane.heightProperty().addListener( stageSizeListener );
 				
-		// Now add the X-Axis
-		axisLeftStackPane.getChildren().add(axisLeft);
-		this.axisLeftAnchorPane.widthProperty().addListener( stageSizeListener );
-		this.axisLeftAnchorPane.heightProperty().addListener( stageSizeListener );
-
+		this.yAxisCenterStackPane.getChildren().add(axisMiddle);
+		this.yAxisCenterAnchorPane.widthProperty().addListener( stageSizeListener );
+		this.yAxisCenterAnchorPane.heightProperty().addListener( stageSizeListener );
 		
-		axisCenterStackPane.getChildren().add(axisCenter);
-		this.axisCenterAnchorPane.widthProperty().addListener( stageSizeListener );
-		this.axisCenterAnchorPane.heightProperty().addListener( stageSizeListener );
-		
-		axisRightStackPane.getChildren().add(axisRight);
-		this.axisRightAnchorPane.widthProperty().addListener( stageSizeListener );
-		this.axisRightAnchorPane.heightProperty().addListener( stageSizeListener );
-		
+		this.yAxisBottomStackPane.getChildren().add(axisBottom);
+		this.yAxisBottomAnchorPane.widthProperty().addListener( stageSizeListener );
+		this.yAxisBottomAnchorPane.heightProperty().addListener( stageSizeListener );
 		
 	}
 	
 	// Defines the desired dimensions of the svgs
 	ChangeListener<Number> stageSizeListener = (observable, oldValue, newValue) -> {
 	    
-		resize(this.axisLeft, axisLeftAnchorPane.getWidth(), axisLeftAnchorPane.getHeight());
-		resize(this.axisCenter, axisCenterAnchorPane.getWidth(), axisCenterAnchorPane.getHeight());
-		resize(this.axisRight, axisRightAnchorPane.getWidth(), axisRightAnchorPane.getHeight());
-		
+		// Y
+		resize(this.axisTop, yAxisTopAnchorPane.getWidth(), yAxisTopAnchorPane.getHeight()/2.);
+		resize(this.axisMiddle, yAxisCenterAnchorPane.getWidth()/8., yAxisCenterAnchorPane.getHeight());
+		resize(this.axisBottom, yAxisBottomAnchorPane.getWidth(), yAxisBottomAnchorPane.getHeight()/2.);
+
 	};
 
 
@@ -138,43 +126,24 @@ public class YAxisController {
         double scaleX = width / originalWidth;
         double scaleY = height / originalHeight;
 
-        System.out.println("Scale X  " + scaleX);
-        System.out.println("Scale Y  " + scaleY);
-        
         svg.setScaleX(scaleX);
         svg.setScaleY(scaleY);
         
     }
-	
     
-    
-	private SVGPath getAxisCenter() {
+	private SVGPath getYAxis() {
 		
 		SVGPath svg = new SVGPath();
-		//svg.setContent("M 290.50781 391.08984 L 290.50781 431.08984 L 298.50781 431.08984 L 298.50781 391.08984 L 290.50781 391.08984 z ");
-		svg.setContent("M 290.50781 391.08984 L 290.50781 431.08984 L 294.50781 431.08984 L 294.50781 391.08984 L 290.50781 391.08984 z ");
-		
-		//svg.setContent("M 290.50781 391.08984 L 290.50781 407.3125 L 274.28516 407.3125 L 274.28516 414.87109 L 290.50781 414.87109 L 290.50781 431.08984 L 298.06445 431.08984 L 298.06445 414.87109 L 314.28516 414.87109 L 314.28516 407.3125 L 298.06445 407.3125 L 298.06445 391.08984 L 290.50781 391.08984 z ");
-		svg.setFill(Color.BLACK);
-		svg.setStrokeWidth(0);
-		return svg;
-		
-	}
-
-	private SVGPath getAxisLeft() {
-		
-		SVGPath svg = new SVGPath();
-		svg.setContent("M 290.50781 391.08984 L 290.50781 407.3125 L 32.285156 407.3125 L 32.285156 414.87109 L 290.50781 414.87109 L 290.50781 431.08984 L 290.55078 431.08984 L 290.55078 391.08984 L 290.50781 391.08984 z ");
+		svg.setContent("M 6992.5137 4895.6348 L 6992.5137 5095.6348 L 7192.5137 5095.6348 L 7192.5137 4895.6348 L 6992.5137 4895.6348 z");
 		return svg;
 		
 	}
 	
-	private SVGPath getAxisRight() {
+	public void setYLabels(String min, String max) {
 		
-		SVGPath svg = new SVGPath();
-		svg.setContent("M 32.285156 391.08984 L 32.285156 431.08984 L 32.328125 431.08984 L 32.328125 414.87109 L 290.55078 414.87109 L 290.55078 407.3125 L 32.328125 407.3125 L 32.328125 391.08984 L 32.285156 391.08984 z ");
-		return svg;
+		this.yAxisMinLabel.setText(min);
+		this.yAxisMaxLabel.setText(max);
 		
 	}
-	
+	 
 }

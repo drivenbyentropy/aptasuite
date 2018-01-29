@@ -156,21 +156,28 @@ public class MapDBSelectionCycle implements SelectionCycle{
 			        .open();
 			
 			// update class members
-			Iterator<Entry<Integer, Integer>> entryit = poolContentCounts.entryIterator();
-			while ( entryit.hasNext() ){
-				Entry<Integer, Integer> entry = entryit.next();
-				
-				poolContent.add(entry.getKey());
-				size += entry.getValue();
+//			Iterator<Entry<Integer, Integer>> entryit = poolContentCounts.entryIterator();
+//			while ( entryit.hasNext() ){
+//				Entry<Integer, Integer> entry = entryit.next();
+//				
+//				poolContent.add(entry.getKey());
+//				size += entry.getValue();
+//				unique_size++;
+//			}
+			
+			poolContentCounts.forEach( (key,value) ->{
+				poolContent.add(key);
+				size += value;
 				unique_size++;
-			}
+			});
+			
 		}
 	}
 	
 	@Override
 	public String toString(){
 		
-		return this.name + " (" + this.size + ")";
+		return this.name; // + " (" + this.size + ")";
 		
 	}
 

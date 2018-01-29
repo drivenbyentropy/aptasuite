@@ -1,0 +1,14 @@
+/*A*/
+.default-color0.chart-bar { -fx-bar-fill: green, white; }
+
+/*C*/
+.default-color1.chart-bar { -fx-bar-fill: #FFCC00, white; }
+
+/*G*/
+.default-color2.chart-bar { -fx-bar-fill: blue, white; }
+
+/*T*/
+.default-color3.chart-bar { -fx-bar-fill: red, white; }
+
+/*N*/
+.default-color4.chart-bar { -fx-bar-fill: gray, white; }

@@ -3,6 +3,7 @@
  */
 package utilities;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -53,7 +54,7 @@ public class Configuration {
 		defaults.put("AptamerPool.backend", "MapDBAptamerPool");
 
 		// PoolMapDB Options
-		defaults.put("MapDBAptamerPool.bloomFilterCapacity", 500000000);
+		defaults.put("MapDBAptamerPool.bloomFilterCapacity", 250000000); // This should be set to a value >= than the total number of unique aptamers in the experiment
 		defaults.put("MapDBAptamerPool.bloomFilterCollisionProbability", 0.001);
 		defaults.put("MapDBAptamerPool.maxTreeMapCapacity", 1000000);
 
@@ -78,7 +79,7 @@ public class Configuration {
 														// sequences to be considered mememebers of the same cluster
 		defaults.put("Aptacluster.LSHIterations", 5); // The number of LSH iterations to be performed
 		defaults.put("Aptacluster.KmerSize", 3); // The kmer size used for the distance calculations
-		defaults.put("Aptacluster.KmerCutoffIterations", 10000); // The number of iterations to be performed for
+		defaults.put("Aptacluster.KmerCutoffIterations", 10000);    // The number of iterations to be performed for
 																	// computing the kmer cutoff for cluster formation
 
 		// Parser Options
@@ -86,7 +87,7 @@ public class Configuration {
 
 		// AptaplexParser Options
 		defaults.put("AptaplexParser.reader", "FastqReader"); //Current options are FastqReader and RawReader
-		defaults.put("AptaplexParser.isPerFile", false); 
+		defaults.put("AptaplexParser.isPerFile", true); 
 		defaults.put("AptaplexParser.BlockingQueueSize", 500); // 10
 		defaults.put("AptaplexParser.PairedEndMinOverlap", 15); // Milab option: smallest overlap required when creating
 																// contig
@@ -97,6 +98,9 @@ public class Configuration {
 		defaults.put("AptaplexParser.BarcodeTolerance", 1); // Maximal number of mutations allowed in the barcodes
 		defaults.put("AptaplexParser.PrimerTolerance", 3); // Maximal number of mutations allowed in the primers
 
+		defaults.put("AptaplexParser.StoreReverseComplement", false); // Useful for DNA aptamers. If set to true, the reverse complement of the
+																	  // of the identified primers and randomized region of the contig is stored in the database 
+		
 		// AptaSIM Options
 		defaults.put("Aptasim.HmmDegree", 2); // Degree of the Markov model
 		defaults.put("Aptasim.RandomizedRegionSize", 40); // Length of the randomized region in the aptamers
@@ -106,22 +110,26 @@ public class Configuration {
 		defaults.put("Aptasim.MaxSequenceCount", 10); // Maximal count of remaining sequences
 		defaults.put("Aptasim.MaxSequenceAffinity", 25); // The maximal sequence affinity for non-seeds (INT range:
 															// 0-100)
-		defaults.put("Aptasim.NucleotideDistribution", "0.25, 0.25, 0.25, 0.25"); // If no training data is specified,
+		
+		String[] nucleotideDistribution = {"0.25","0.25","0.25","0.25"};		
+		defaults.put("Aptasim.NucleotideDistribution", nucleotideDistribution); // If no training data is specified,
 																					// create pool based on this
 																					// distribution (order A,C,G,T)
 		defaults.put("Aptasim.SelectionPercentage", 0.20); // The percentage of sequences that remain after selection
 															// (DOUBLE range: 0-1)
-		defaults.put("Aptasim.BaseMutationRates", "0.25, 0.25, 0.25, 0.25"); // Mutation rates for individual
+		
+		String[] baseMutationRates = {"0.25","0.25","0.25","0.25"};	
+		defaults.put("Aptasim.BaseMutationRates", baseMutationRates); // Mutation rates for individual
 																				// nucleotides (order A,C,G,T)
 		defaults.put("Aptasim.MutationProbability", 0.05); // Mutation probability during PCR (DOUBLE range: 0-1)
 		defaults.put("Aptasim.AmplificationEfficiency", 0.995); // PCR amplification efficiency (DOUBLE range: 0-1)
 
 		// AptaTRACE Options
-		defaults.put("Aptatrace.KmerLength", 6); // Size of the kmers used as the initial motif length
+		defaults.put("Aptatrace.KmerLength", 6);        // Size of the kmers used as the initial motif length
 		defaults.put("Aptatrace.FilterClusters", true); // Whether to apply additional filtering methods to remove
 														// overlapping motifs
 		defaults.put("Aptatrace.OutputClusters", true); // Whether to write clusters to file or not
-		defaults.put("Aptatrace.Alpha", 10); // The parameter alpha specifies which sequences should be included in the
+		defaults.put("Aptatrace.Alpha", 10);    // The parameter alpha specifies which sequences should be included in the
 												// background model, i.e. all sequences whose number of occurrences is
 												// smaller than, or equal to this value are taken into account.
 
@@ -172,6 +180,8 @@ public class Configuration {
 	 */
 	private static BasicConfigurationBuilder<PropertiesConfiguration> defaultBuilder = null;
 	
+	private static Path configurationPath;
+	
 	/**
 	 * Adds the configuration stored on disk to the current set of parameters. The
 	 * file <code>fileName</code> must be a valid configuration file as per Javas
@@ -197,6 +207,33 @@ public class Configuration {
 			cc.addConfiguration(getDefaultParametersBuilder().getConfiguration(), false);
 						
 			parameters = cc;
+			
+			// Store the configuration path
+			configurationPath = Paths.get(fileName);
+			
+
+			// Make sure the project path exists on disk. If not, attempt to guess the pass by using the 
+			// path of the configuration file
+			Path projectPath;
+			if (Configuration.getParameters().containsKey("Experiment.projectPath")) {
+				projectPath = Paths.get(Configuration.getParameters().getString("Experiment.projectPath"));
+				// If the directory does not exist, we assume parent of the config file location to be the path
+				if (!Files.exists(projectPath)) {
+					projectPath = configurationPath.getParent();
+					AptaLogger.log(Level.WARNING, Configuration.class, "Could not find Experiment.projectPath on disk. Assuming parent of config file " + projectPath.toString());
+					
+				}
+			}
+			else {
+				projectPath = configurationPath.getParent();
+				AptaLogger.log(Level.WARNING, Configuration.class, "Could not find Experiment.projectPath on disk. Assuming parent of config file " + projectPath.toString());
+			}
+			
+			// Write the configuration to volatile memory
+			Configuration.getParameters().setProperty("Experiment.projectPath", projectPath.toString());
+		
+			
+			
 			
 		} catch (Exception e) {
 
@@ -375,4 +412,11 @@ public class Configuration {
 
 		return sb.toString();
 	}
+	
+	public Path getConfigurationPath() {
+		
+		return configurationPath;
+		
+	}
+	
 }

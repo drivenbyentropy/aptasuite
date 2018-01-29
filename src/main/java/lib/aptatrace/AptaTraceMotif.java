@@ -1,6 +1,7 @@
 package lib.aptatrace;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.io.File;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -15,6 +16,8 @@ import utilities.AptaLogger;
 
 //import org.apache.commons.math3.stat.descriptive.rank.Percentile;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
+
+import com.itextpdf.text.pdf.parser.clipper.Paths;
 
 import gui.aptatrace.logo.Logo;
 import gui.aptatrace.logo.LogoSummary;
@@ -39,7 +42,7 @@ public class AptaTraceMotif {
 
 	private double theta = 10.0;
 
-	private String outputPrefix = "aptatrace";
+	private String outputPrefix = "motif";
 
 	private String outputPath;
 
@@ -51,6 +54,8 @@ public class AptaTraceMotif {
 
 	private int singletonThres;
 
+	private File resultDirectory = null;
+	
 	public AptaTraceMotif(Experiment exp, String outputPath, int klength, boolean filterClusters,
 			boolean outputClusters, int singletonThres) {
 
@@ -462,7 +467,7 @@ public class AptaTraceMotif {
 			rc[i] = 0;
 		}
 
-		new LogoSummary();
+//		new LogoSummary();
 		LogoSummary2 summary2 = new LogoSummary2();
 
 		String resultFolder = "k" + klength + "alpha" + singletonThres;
@@ -521,13 +526,19 @@ public class AptaTraceMotif {
 
 			int poolSize = experiment.getAptamerPool().size();
 			int numDone = 0;
+			int[] bounds_array;
+			
+			Iterator<Entry<Integer, int[]>> bounds_it = experiment.getAptamerPool().bounds_iterator().iterator();
+			
 			startTime = System.nanoTime();
-			for (Entry<byte[], Integer> aptamerArr : experiment.getAptamerPool().iterator()) {
+			for (Entry<Integer,byte[]> aptamerArr : experiment.getAptamerPool().inverse_view_iterator()) {
 				seen.clear();
-				aptamer = new String(aptamerArr.getKey());
+				aptamer = new String(aptamerArr.getValue());
 				aptamerLen = aptamer.length();
-				aptamerId = aptamerArr.getValue();
-				AptamerBounds aptamerBounds = experiment.getAptamerPool().getAptamerBounds(aptamerId);
+				aptamerId = aptamerArr.getKey();
+				//AptamerBounds aptamerBounds = experiment.getAptamerPool().getAptamerBounds(aptamerId);
+				bounds_array = bounds_it.next().getValue();
+				
 				numOR = 0;
 				rid = 0;
 				for (SelectionCycle sc : cycles) {
@@ -581,8 +592,8 @@ public class AptaTraceMotif {
 				}
 
 				// startPos = (klength + fivePrime.length() - 1);
-				startPos = aptamerBounds.startIndex + klength - 1;
-				endPos = aptamerBounds.endIndex;
+				startPos = bounds_array[0] + klength - 1;
+				endPos = bounds_array[1];
 
 				// iterate through every kmer of the aptamer under consideration
 				// and sum up its number of occurrences and the sums of the
@@ -621,8 +632,14 @@ public class AptaTraceMotif {
 					rms = (long) (((endTime - startTime) / (numDone * 1000000000.0)) * (poolSize - numDone));
 					rmh = (int) (rms / 3600.0);
 					rmm = (int) ((rms % 3600) / 60);
-					System.out.print("Finished reading " + numDone + "/" + poolSize + " structures, ETA "
-							+ String.format("%02d:%02d:%02d", rmh, rmm, rms % 60) + "\r");
+					
+					String info = "Finished reading " + numDone + "/" + poolSize + " structures, ETA "
+							+ String.format("%02d:%02d:%02d", rmh, rmm, rms % 60); 
+					
+					System.out.print(info + "\r");
+					
+					
+					AptaLogger.log(Level.FINEST, this.getClass(), info + "\r");
 				}
 			}
 		} catch (Exception e) {
@@ -633,16 +650,19 @@ public class AptaTraceMotif {
 			System.exit(1);
 		}
 
-		File resultDirectory = null;
+		
 		try {
 			// create the result folder if it does not exist
-			File resultPath = new File(outputPath + "/results");
-			if (!resultPath.exists()) {
-				resultPath.mkdir();
+			 java.nio.file.Path resultPath = java.nio.file.Paths.get(outputPath, "export", "aptatrace"); 
+					
+					//new File(outputPath + "/export/");
+			if (! resultPath.toFile().exists() ) {
+				//resultPath.mkdir();
+				 java.nio.file.Files.createDirectories(resultPath);
 			}
 
 			// create the specific folder for this run
-			resultDirectory = new File(outputPath + "/results/" + resultFolder);
+			resultDirectory = java.nio.file.Paths.get(resultPath.toString(), resultFolder).toFile();
 			if (!resultDirectory.exists()) {
 				resultDirectory.mkdir();
 			}
@@ -719,6 +739,14 @@ public class AptaTraceMotif {
 				proportionAL.add(mkc[i].getProportion());
 			}
 
+		// If, after this, no scores are present in the list, we finish with no results.
+		if (kmerKLScores.size() == 0) {
+			
+			AptaLogger.log(Level.INFO, this.getClass(), "Could not find enough aptamers above alpha to continue with motif elucidation.");
+			return;
+			
+		}
+		
 		// the array storing background context shifting scores for aptamers with
 		// singleton occurrences
 		double singletonKLScoreArr[] = new double[singletonKLScores.size()];
@@ -749,31 +777,39 @@ public class AptaTraceMotif {
 		DescriptiveStatistics ds = new DescriptiveStatistics(singletonKLScoreArr);
 		double sMean = ds.getMean();
 		double sStd = ds.getStandardDeviation();
-
+		
 		// in the case we have many significant context shifting scores just
 		// take at most top 10 percent of the scores
 		// and topThetaValue is the 90 quantile of all the context shifting
 		// scores
+		System.out.println(sortedKLScoreArr.length);
+		System.out.println((int) Math.floor(((100.0 - theta) / 100.0) * sortedKLScoreArr.length));
+		
 		double topThetaValue = sortedKLScoreArr[(int) Math.floor(((100.0 - theta) / 100.0) * sortedKLScoreArr.length)];
+
 		double topThetaProportion = sortedProportionArr[(int) Math
 				.floor(((100.0 - theta) / 100.0) * sortedKLScoreArr.length)];
 
 		ds = new DescriptiveStatistics(kmerKLScoreArr);
+		
 		sMean = ds.getMean();
+		
 		sStd = ds.getStandardDeviation();
 
 		try {
-			File out = new File(resultDirectory, outputPrefix + "_" + klength + "_singletonKLScore.txt");
+			File out = new File(resultDirectory, "singletonKLScore.txt");
 			PrintWriter writer = new PrintWriter(out, "UTF-8");
-			for (int i = 0; i < mkc.length; i++)
+			for (int i = 0; i < mkc.length; i++) {
 				if ((mkc[i].hasEnoughOccurrences()) && (mkc[i].getSingletonKLScore() > 0)) {
 					writer.println(mkc[i].getKmer() + "\t" + Math.log(mkc[i].getSingletonKLScore()));
 				}
+			}
 			writer.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 
+		
 		double pvalue = 0.01;
 		boolean hasSigKmer = false;
 
@@ -798,13 +834,14 @@ public class AptaTraceMotif {
 
 		Collections.sort(sorted);
 
+		
 		boolean[] got = new boolean[sorted.size()];
 		for (int i = sorted.size() - 1; i >= 0; i--)
 			got[i] = false;
 
 		int totalSeeds = 0;
 		try {
-			File out = new File(resultDirectory, outputPrefix + "_" + klength + "_KLScore.txt");
+			File out = new File(resultDirectory, "KLScore.txt");
 			PrintWriter writer = new PrintWriter(out, "UTF-8");
 			for (int i = numk - 1; i >= 0; i--)
 				if ((mkc[i].hasEnoughOccurrences()) && (mkc[i].getSingletonKLScore() > 0))
@@ -876,13 +913,21 @@ public class AptaTraceMotif {
 
 				try {
 					File out = new File(resultDirectory,
-							outputPrefix + "_" + klength + "_clus_tmp_" + numClus + ".txt");
+							"motif_tmp_" + numClus + ".txt");
 					PrintWriter writer = new PrintWriter(out, "UTF8");
 					writer.format("%g\t%.2f%%\n", seedPValue, seedProportion * 100.0);
+					
+					//StringBuilder sb = new StringBuilder();
 					for (int j = 0; j < clus.size(); j++) {
 						outputMotifs.get(numClus - 1).addKmerAlignment(clus.get(j), clusAlignment[j]);
 						writer.println(clus.get(j) + "\t" + clusAlignment[j]);
+//						sb.append(clus.get(j) + "\t" + clusAlignment[j] + "\n");
 					}
+					
+//					outputMotifs.get(numClus - 1).calculateProportion(rc);
+//					writer.format("%g\t%.2f%%\t%.2f%%\n", seedPValue, seedProportion * 100.0, outputMotifs.get(numClus - 1).getProportion() * 100.00);
+//					writer.print(sb.toString());
+					
 					writer.close();
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -917,6 +962,9 @@ public class AptaTraceMotif {
 
 		int poolSize = experiment.getAptamerPool().size();
 		int numDone = 0;
+		int[] bounds_array;
+		Iterator<Entry<Integer, int[]>> bounds_it = experiment.getAptamerPool().bounds_iterator().iterator();
+		
 		startTime = System.nanoTime();
 		try {
 			for (Entry<byte[], Integer> aptamerArr : experiment.getAptamerPool().iterator()) {
@@ -924,7 +972,9 @@ public class AptaTraceMotif {
 				aptamer = new String(aptamerArr.getKey());
 				aptamerLen = aptamer.length();
 				aptamerId = aptamerArr.getValue();
-				AptamerBounds aptamerBounds = experiment.getAptamerPool().getAptamerBounds(aptamerId);
+				//AptamerBounds aptamerBounds = experiment.getAptamerPool().getAptamerBounds(aptamerId);
+				bounds_array = bounds_it.next().getValue();
+				
 				numOR = 0;
 				rid = 0;
 				for (SelectionCycle sc : cycles) {
@@ -964,8 +1014,8 @@ public class AptaTraceMotif {
 						contextProbArr[j][k] = contextLongArr[j * aptamerLen + k] + contextProbArr[j][k - 1];
 				}
 
-				startPos = aptamerBounds.startIndex + klength - 1;
-				endPos = aptamerBounds.endIndex;
+				startPos = bounds_array[0] + klength - 1;
+				endPos = bounds_array[1];
  
 				if (occRArr[numOR - 1] == roundArr.size() - 1)
 					lastRoundPool.add(new Pair<Integer, Integer>(aptamerId, occCArr[numOR - 1]));
@@ -1028,8 +1078,11 @@ public class AptaTraceMotif {
 					rms = (long) (((endTime - startTime) / (numDone * 1000000000.0)) * (poolSize - numDone));
 					rmh = (int) (rms / 3600.0);
 					rmm = (int) ((rms % 3600) / 60);
-					System.out.print("Finished reading " + numDone + "/" + poolSize + " structures, ETA "
-							+ String.format("%02d:%02d:%02d", rmh, rmm, rms % 60) + "   \r");
+					String info = "Finished reading " + numDone + "/" + poolSize + " structures, ETA "
+							+ String.format("%02d:%02d:%02d", rmh, rmm, rms % 60);
+					System.out.print(info+"\r"); 
+					
+					AptaLogger.log(Level.FINEST, this.getClass(), info + "\r");
 				}
 
 				firstRead = false;
@@ -1070,13 +1123,13 @@ public class AptaTraceMotif {
 					numRM++;
 					outputMotifs.get(j).normalizeProfile();
 					outputMotifs.get(j).calculateProportion(rc);
-					File out = new File(resultDirectory, outputPrefix + "_" + klength + "_clus" + (numRM) + "_pwm.txt");
+					File out = new File(resultDirectory, "motif_" + (numRM) + "_pwm.txt");
 					PrintWriter writer = new PrintWriter(out, "UTF8");
 
 					if (outputClusters) {
 						c2fc.put(j, numRM - 1);
 						File outlocal = new File(resultDirectory,
-								outputPrefix + "_" + klength + "_clus" + (numRM) + "_aptamers.txt");
+								"motif_" + (numRM) + "_aptamers.txt");
 						clusterWriter.add(new PrintWriter(outlocal, "UTF8"));
 					}
 
@@ -1093,7 +1146,7 @@ public class AptaTraceMotif {
 					seq.setAlphabetRibonucleotides();
 					seq.setBit(true);
 					File outPdf = new File(resultDirectory,
-							outputPrefix + "_" + klength + "_clus" + (numRM) + "_pwm.pdf");
+							"motif_" + (numRM) + "_pwm.pdf");
 					seq.saveAsPDF(600, 400, outPdf.toString());
 
 					double[][] traceMat = outputMotifs.get(j).getTraceMatrix();
@@ -1102,22 +1155,21 @@ public class AptaTraceMotif {
 					trace.setAlphabetContexts();
 					trace.setBit(false);
 					outPdf = new File(resultDirectory,
-							outputPrefix + "_" + klength + "_clus" + (numRM) + "_context.pdf");
+							"motif_" + (numRM) + "_context.pdf");
 					trace.saveAsPDF(600, 400, outPdf.toString());
 
 					File outTxt = new File(resultDirectory,
-							outputPrefix + "_" + klength + "_clus" + (numRM) + "_context.txt");
+							"motif_" + (numRM) + "_context.txt");
 					writer = new PrintWriter(outTxt.toString(), "UTF8");
 					outputMotifs.get(j).printContextTrace(writer, roundArr);
 					writer.close();
 
 					File file1 = new File(resultDirectory,
-							outputPrefix + "_" + klength + "_clus_tmp_" + (j + 1) + ".txt");
-					File file2 = new File(resultDirectory, outputPrefix + "_" + klength + "_clus" + (numRM) + ".txt");
+							"motif_tmp_" + (j + 1) + ".txt");
+					File file2 = new File(resultDirectory, "motif_" + (numRM) + ".txt");
 					file1.renameTo(file2);
 				} else {
-					File file1 = new File(outputPath + "/results/" + resultFolder + "/" + outputPrefix + "_" + klength
-							+ "_clus_tmp_" + (j + 1) + ".txt");
+					File file1 = new File(resultDirectory, "motif_tmp_" + (j + 1) + ".txt");
 					file1.delete();
 				}
 			if (filterClusters)
@@ -1142,14 +1194,14 @@ public class AptaTraceMotif {
 						outputMotifs.get(j).getProportion() * 100.00, outputMotifs.get(j).getTrace(roundIDs));
 			}
 
-		File out = new File(resultDirectory, outputPrefix + "_" + klength + "_fullsummary.pdf");
+		File out = new File(resultDirectory, "fullsummary.pdf");
 		summary2.saveAsPDF(out.toString());
 
 		if (outputClusters) {
 
 			System.out.println();
 			AptaLogger.log(Level.INFO, this.getClass(),
-					"Outputing aptamers in the last cycle where the motifs occur...");
+					"Writing aptamers in the last cycle where the motifs occur to file...");
 			
 			//presort the aptamers by count
 			SelectionCycle lastRound= experiment.getSelectionCycles().get(experiment.getSelectionCycles().size()-1);
@@ -1205,7 +1257,7 @@ public class AptaTraceMotif {
 					if (kmer2Clus.containsKey(id)) {
 						mid = kmer2Clus.get(id);
 						if ((!filtered[mid]) && (!seencid.contains(mid))) {
-							clusterWriter.get(c2fc.get(mid)).format("%s\t%d\t%d\t%.2f%%\n", aptamer, aptamerCount,
+							clusterWriter.get(c2fc.get(mid)).format("%s\t%s\t%d\t%d\t%.2f%%\n",aptamer_id, aptamer, aptamerCount,
 									(int) (aptamerCount * 1000000.0 / (rc[rc.length - 1] * 1.0)),
 									aptamerCount / (rc[rc.length - 1] * 1.0));
 							seencid.add(mid);

@@ -10,7 +10,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<VBox alignment="CENTER" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.charts.logo.BarColumnController">
+<VBox alignment="CENTER" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" fx:controller="gui.charts.logo.BarColumnController">
    <children>
       <GridPane fx:id="columnGridPane" minHeight="5.0" minWidth="5.0" VBox.vgrow="ALWAYS">
         <columnConstraints>

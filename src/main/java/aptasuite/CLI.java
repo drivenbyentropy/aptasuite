@@ -158,9 +158,9 @@ public class CLI {
 			}
 			
 			// reference publication to cite
-			AptaLogger.log(Level.INFO, this.getClass(), "If you use this software in your research, please cite AptaSIM as "
-					+ "Hoinka, J., Berezhnoy, A., Dao, P., Sauna, Z. E., Gilboa, E., & Przytycka, T. M. (2015). "
-					+ "Large scale analysis of the mutational landscape in HT-SELEX improves aptamer discovery. "
+			AptaLogger.log(Level.INFO, this.getClass(), "If you use this software in your research, please cite AptaSIM as \n"
+					+ "Hoinka, J., Berezhnoy, A., Dao, P., Sauna, Z. E., Gilboa, E., & Przytycka, T. M. (2015). \n"
+					+ "Large scale analysis of the mutational landscape in HT-SELEX improves aptamer discovery. \n"
 					+ "Nucleic Acids Research, 43(12), 5699–5707. http://doi.org/10.1093/nar/gkv308"
 					+ "");
 			
@@ -234,9 +234,9 @@ public class CLI {
 			}
 			
 			// reference publication to cite
-			AptaLogger.log(Level.INFO, this.getClass(), "If you use this software in your research, please cite AptaCLUSTER as "
-					+ "Hoinka, J., Berezhnoy, A., Sauna, Z. E., Gilboa, E., & Przytycka, T. M. (2014). "
-					+ "AptaCluster - A method to cluster HT-SELEX aptamer pools and lessons from its application. "
+			AptaLogger.log(Level.INFO, this.getClass(), "If you use this software in your research, please cite AptaCLUSTER as \n"
+					+ "Hoinka, J., Berezhnoy, A., Sauna, Z. E., Gilboa, E., & Przytycka, T. M. (2014). \n"
+					+ "AptaCluster - A method to cluster HT-SELEX aptamer pools and lessons from its application. \n"
 					+ "In Lecture Notes in Computer Science  (Vol. 8394 LNBI, pp. 115–128). http://doi.org/10.1007/978-3-319-05269-4_9"
 					+ "");
 			
@@ -458,7 +458,7 @@ public class CLI {
 		}
 		
 		// Create a new instance of the StructurePool
-		experiment.instantiateStructurePool(true);
+		experiment.instantiateStructurePool(true, true);
 		
 		// Start parallel processing of structure prediction
 		CapRFactory caprf = new CapRFactory(experiment.getAptamerPool().iterator());
@@ -610,7 +610,7 @@ public class CLI {
 		}
 		
 		// Create a new instance of the ClusterContainer
-		experiment.instantiateClusterContainer(true);
+		experiment.instantiateClusterContainer(true, true);
 
 		// Create AptaCluster instance
 		AptaCluster ac = new HashAptaCluster(
@@ -650,7 +650,7 @@ public class CLI {
 		// Get the instance of the StructurePool
 		if (experiment.getStructurePool() == null)
 		{
-			experiment.instantiateStructurePool(false);
+			experiment.instantiateStructurePool(false, true);
 		}	
 		
 		AptaTraceMotif aptatrace =new AptaTraceMotif(
@@ -1055,7 +1055,7 @@ public class CLI {
 					try {
 						if (experiment.getClusterContainer() == null)
 						{
-							experiment.instantiateClusterContainer(false);
+							experiment.instantiateClusterContainer(false, true);
 						}	
 					} catch(Exception e) { // We need to make sure a cluster pool exists
 						
@@ -1100,7 +1100,7 @@ public class CLI {
 					try {
 						if (experiment.getStructurePool() == null)
 						{
-							experiment.instantiateStructurePool(false);
+							experiment.instantiateStructurePool(false, true);
 						}	
 					} catch(Exception e) { // We need to make sure a cluster pool exists
 						

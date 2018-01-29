@@ -10,6 +10,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Iterator;
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import org.mapdb.BTreeMap;
 import org.mapdb.DB;
@@ -202,11 +204,6 @@ public class MapDBAptamerPool implements AptamerPool {
     				BloomFilter<String> localBloomFilter = new FilterBuilder(maxTreeMapCapacity, bloomFilterCollisionProbability).buildBloomFilter();
     				poolDataBloomFilter.add(localBloomFilter);
     				
-    				// Update values
-    				int currentDBmapSize = dbmap.size();
-    				poolSize += currentDBmapSize;
-    				currentTreeMapSize = currentDBmapSize;
-
     				// Now load and initialize the inverse view of the data
     				Path inverseFile = Paths.get(file.getParent().toString(), "inverse_" + file.getFileName().toString());
     				
@@ -226,17 +223,23 @@ public class MapDBAptamerPool implements AptamerPool {
     				BitSet localBitSet = new BitSet(maxTreeMapCapacity);
     				poolDataInverseFilters.add(localBitSet);
     				
-    				// Update bloom filter content
-    				Iterator<Entry<byte[], Integer>> dbmapIterator = dbmap.getEntries().iterator();
-    				while (dbmapIterator.hasNext()){
-    					Entry<byte[], Integer> current_element = dbmapIterator.next();
+    				// Update bloom filter content and determine database size
+    				final AtomicInteger currentDBmapSize = new AtomicInteger(0);
+    				inverse_dbmap.forEach((key,value) -> {
     					
-    					bloomFilter.add(current_element.getKey());
-    					localBloomFilter.add(current_element.getKey());
+    					bloomFilter.add(value);
+    					localBloomFilter.add(value);
     					
-    					this.poolDataInverseFilter.set(current_element.getValue());
-    					localBitSet.set(current_element.getValue());
-    				}
+    					this.poolDataInverseFilter.set(key);
+    					localBitSet.set(key);
+    					
+    					currentDBmapSize.getAndIncrement();
+    					
+    				});
+    				
+    				// Update values
+    				poolSize += currentDBmapSize.intValue();
+    				currentTreeMapSize = currentDBmapSize.intValue();
     				
     				// And finally load the bounds data
     				Path boundsFile = Paths.get(file.getParent().toString(), "bounds_" + file.getFileName().toString());
@@ -839,13 +842,48 @@ public class MapDBAptamerPool implements AptamerPool {
 	 * Eg. <code>for ( pool_it : pool.iterator() ){ }</code>
 	 */
 	private class PoolIterator implements Iterable<Entry<byte[], Integer>> {
-
+//
+//		@Override
+//	    public Iterator<Entry<byte[], Integer>> iterator() {
+//	        Iterator<Map.Entry<byte[], Integer>> it = new Iterator<Map.Entry<byte[], Integer>>() {
+//
+//	            private int currentTreeMapIndex = 0;
+//	            private Iterator<Entry<byte[], Integer>> currentTreeMapIterator= poolData.get(currentTreeMapIndex).getEntries().iterator();
+//	            
+//	            @Override
+//	            public boolean hasNext() {
+//	                return currentTreeMapIterator.hasNext() || currentTreeMapIndex < poolData.size()-1;
+//	            }
+//
+//	            @Override
+//	            public Entry<byte[], Integer> next() {
+//	            	
+//	            	// Move on to the next map if all items from the previous have been iterated over
+//	                if (!currentTreeMapIterator.hasNext() && currentTreeMapIndex < poolData.size()-1)
+//	                {
+//	                	currentTreeMapIndex++;
+//	                	currentTreeMapIterator= poolData.get(currentTreeMapIndex).getEntries().iterator();
+//	                }
+//	                
+//	                return currentTreeMapIterator.next();
+//	            }
+//
+//	            @Override
+//	            public void remove() {
+//	                throw new UnsupportedOperationException();
+//	            }
+//	        };
+//	        return it;
+//	    }
+		
 		@Override
-	    public Iterator<Entry<byte[], Integer>> iterator() {
-	        Iterator<Map.Entry<byte[], Integer>> it = new Iterator<Map.Entry<byte[], Integer>>() {
+		public Iterator<Entry<byte[], Integer>> iterator() {
+			Iterator<Map.Entry<byte[], Integer>> it = new Iterator<Map.Entry<byte[], Integer>>() {
 
+	            // Use the inverse map for iteration as its underlaying BTree structure
+	            // is several orders faster to traverse
 	            private int currentTreeMapIndex = 0;
-	            private Iterator<Entry<byte[], Integer>> currentTreeMapIterator= poolData.get(currentTreeMapIndex).getEntries().iterator();
+	            private Iterator<Entry<Integer, byte[]>> currentTreeMapIterator= poolDataInverse.get(currentTreeMapIndex).getEntries().iterator();
 	            
 	            @Override
 	            public boolean hasNext() {
@@ -859,10 +897,11 @@ public class MapDBAptamerPool implements AptamerPool {
 	                if (!currentTreeMapIterator.hasNext() && currentTreeMapIndex < poolData.size()-1)
 	                {
 	                	currentTreeMapIndex++;
-	                	currentTreeMapIterator= poolData.get(currentTreeMapIndex).getEntries().iterator();
+	                	currentTreeMapIterator= poolDataInverse.get(currentTreeMapIndex).getEntries().iterator();
 	                }
 	                
-	                return currentTreeMapIterator.next();
+	                Entry<Integer, byte[]> temp = currentTreeMapIterator.next();
+	                return new AbstractMap.SimpleEntry<byte[], Integer>(temp.getValue(), temp.getKey());
 	            }
 
 	            @Override
@@ -871,7 +910,9 @@ public class MapDBAptamerPool implements AptamerPool {
 	            }
 	        };
 	        return it;
-	    }
+	    }		
+		
+		
 	}
 	
 	/**
@@ -1049,7 +1090,7 @@ public class MapDBAptamerPool implements AptamerPool {
 			    .cleanerHackEnable() // Unmap (release resources) file when its closed.
 			    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
 			    .executorEnable()
-			    .fileChannelEnable()
+			    .fileChannelEnable() // not supported on MacOS?
 			    .make();
 		}
 		
@@ -1066,8 +1107,8 @@ public class MapDBAptamerPool implements AptamerPool {
 			    .make();
 		}
 		
+		return db;
 		
-		return db;		
 	}
 
 }

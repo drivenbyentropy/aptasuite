@@ -41,7 +41,7 @@ public class ProgressPaneLoggerHandler extends Handler{
 	public void publish(LogRecord arg0) {
 		
 		// Only certain levels should make it to the user screen
-		if (arg0.getLevel().equals(Level.INFO) || arg0.getLevel().equals(Level.SEVERE)){
+		if (arg0.getLevel().equals(Level.INFO) || arg0.getLevel().equals(Level.SEVERE) || arg0.getLevel().equals(Level.FINEST)){
 			pp.addLogMessage(getFormatter().format(arg0));
     	}
 		

@@ -117,7 +117,7 @@
                   </Separator>
                   <ScrollPane fitToHeight="true" fitToWidth="true" minHeight="300.0" style="-fx-background-color: transparent;" vbarPolicy="NEVER" HBox.hgrow="ALWAYS">
                      <content>
-                        <GridPane>
+                        <GridPane fx:id="chartGridPane">
                            <columnConstraints>
                               <ColumnConstraints hgrow="ALWAYS" />
                               <ColumnConstraints hgrow="ALWAYS" />
@@ -140,7 +140,7 @@
                                     </LineChart>
                                  </children>
                               </StackPane>
-                              <StackPane GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.vgrow="ALWAYS">
+                              <StackPane fx:id="reverseReadsStackPane" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.vgrow="ALWAYS">
                                  <children>
                                     <LineChart fx:id="reverseReadsLineChart" legendSide="LEFT" minWidth="700.0" stylesheets="@style.css" title="Reverse Reads Nucleotide Distribution (raw)">
                                       <xAxis>

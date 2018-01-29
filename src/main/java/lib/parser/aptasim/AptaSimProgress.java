@@ -30,7 +30,7 @@ public class AptaSimProgress implements ParserProgress{
 	 * 2 = selection stage
 	 * 3 = amplification stage
 	 */
-	int stage = 0;
+	public int stage = 0;
 	
 	/**
 	 * Header portion of the progress report
@@ -40,7 +40,7 @@ public class AptaSimProgress implements ParserProgress{
 	/**
 	 * The round currently being simulated
 	 */
-	private Integer round = null;
+	public Integer round = null;
 	
 	/**
 	 * Progress portion of the report

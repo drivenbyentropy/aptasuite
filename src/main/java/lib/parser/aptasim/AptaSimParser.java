@@ -131,6 +131,11 @@ public class AptaSimParser implements Parser, Runnable{
 	 */
 	private Metadata metadata = Configuration.getExperiment().getMetadata();
 	
+	/**
+	 * Sum over all processed reads 
+	 */
+	private Integer grand_total_processed_reads = 0;
+	
 	public AptaSimParser(){
 
 		// Set the nucleotide distribution
@@ -186,41 +191,37 @@ public class AptaSimParser implements Parser, Runnable{
 			HMMSequenceGenerator hmm = trainModel();
 			progress.reset();
 		
-			System.out.println();
-		
 			progress.initialPoolStage(0);
 			generatePoolWithModel(hmm);
-			progress.reset();
+
 		}
 		else{
 			progress.initialPoolStage(0);
 			generatePoolWithoutModel();
-			progress.reset();
 		}
-		
+
+		grand_total_processed_reads += progress.totalProcessedReads.get();
+		progress.reset();
 	
 		// Perform selection and amplification
 		ArrayList<SelectionCycle> cycles = Configuration.getExperiment().getSelectionCycles();
 		for (int x=1; x<cycles.size(); x++){
 			
-			System.out.println();
-			System.out.println();
-			
 			//do selection
 			progress.selectionStage(x);
 			selectBinders(cycles.get(x-1), cycles.get(x));
+			grand_total_processed_reads += progress.totalProcessedReads.get();
 			progress.reset();
 			
-			System.out.println();
 			
 			//amplify
 			progress.amplificationStage(x);
 			amplifyPool(cycles.get(x));
+			grand_total_processed_reads += progress.totalProcessedReads.get();
 			progress.reset();
 			
 		}
 		
-		System.out.println();
 		
 		// Clean up
 		removeTemporarySelectionCycles();
@@ -237,6 +238,25 @@ public class AptaSimParser implements Parser, Runnable{
 				cycle.setReadOnly();
 			}
 		}
+		
+		// Store the final progress data to the metadata statistics
+		Metadata metadata = Configuration.getExperiment().getMetadata();
+		
+		metadata.parserStatistics.put("processed_reads", this.grand_total_processed_reads);
+		int total_accepted = 0;
+		for (SelectionCycle sc : Configuration.getExperiment().getAllSelectionCycles()) {total_accepted += sc.getSize();}
+		metadata.parserStatistics.put("accepted_reads", total_accepted);
+		metadata.parserStatistics.put("contig_assembly_fails", 0);
+		metadata.parserStatistics.put("invalid_alphabet", 0);
+		metadata.parserStatistics.put("5_prime_error", 0);
+		metadata.parserStatistics.put("3_prime_error", 0);
+		metadata.parserStatistics.put("invalid_cycle", 0);
+		metadata.parserStatistics.put("total_primer_overlaps", 0);
+		
+		// Finally, store the metadata to disk
+		metadata.saveDataToFile();
+		
+		AptaLogger.log(Level.INFO, this.getClass(), "Parsing Completed, Data storage set to read-only and metadata written to file");
 		
 		// Save metadata to disk
 		metadata.saveDataToFile();
@@ -461,8 +481,14 @@ public class AptaSimParser implements Parser, Runnable{
 				bit.flip(pick);
 				
 				//add or update sample
-				next.addToSelectionCycle(Configuration.getExperiment().getAptamerPool().getAptamer(a_id), primer5.length(), randomized_region_size+primer5.length() );
+				byte[] aptamer = Configuration.getExperiment().getAptamerPool().getAptamer(a_id);
+				
+				next.addToSelectionCycle(aptamer, primer5.length(), randomized_region_size+primer5.length() );
 				progress.totalSampledReads.getAndIncrement();
+				
+				// And Metadata
+				this.addAcceptedNucleotideDistributions(next, aptamer, primer5.length(), randomized_region_size+primer5.length());
+				this.addNuceotideDistributions(aptamer, next);
 				
 				sample_total++;
 			}
@@ -525,6 +551,10 @@ public class AptaSimParser implements Parser, Runnable{
 							int m_id = cycle.addToSelectionCycle(mutant, primer5.length(), randomized_region_size+primer5.length());
 							progress.totalMutatedReads.getAndIncrement();
 							
+							this.addAcceptedNucleotideDistributions(cycle, mutant, primer5.length(), randomized_region_size+primer5.length());
+							this.addNuceotideDistributions(mutant, cycle);
+							
+							
 							// The mutant is set to the affinity of its parent sequence
 							int a_id = Configuration.getExperiment().getAptamerPool().getIdentifier(entry.getKey());
 							affinities.put(m_id, affinities.get(a_id));
@@ -533,6 +563,10 @@ public class AptaSimParser implements Parser, Runnable{
 						{
 							cycle.addToSelectionCycle(entry.getKey(), primer5.length(), randomized_region_size+primer5.length());
 							progress.totalSampledReads.getAndIncrement();
+							
+							this.addAcceptedNucleotideDistributions(cycle, entry.getKey(), primer5.length(), randomized_region_size+primer5.length());
+							this.addNuceotideDistributions(entry.getKey(), cycle);
+							
 						}
 					}
 					else{
