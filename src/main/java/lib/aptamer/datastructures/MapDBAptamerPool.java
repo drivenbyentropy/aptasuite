@@ -58,6 +58,17 @@ public class MapDBAptamerPool implements AptamerPool {
 	
 	
 	/**
+	 * The initial space reserved on disk for each map 
+	 */
+	private Integer allocateStartSize = Configuration.getParameters().getInt("MapDBAllocateStartSize");
+	
+	
+	/**
+	 * The amount by which each map will be incremented once it is full 
+	 */
+	private Integer allocateIncrement = Configuration.getParameters().getInt("MapDBAllocateIncrement");
+	
+	/**
 	 * The maximal number of unique aptamers to store in one TreeMap. The performance of TreeMap decreases
 	 * noticeable with large volumes of data. As a workaround, we split the data into buckets of TreeMaps
 	 * of size <code>maxItemsPerTreeMap</code>. 
@@ -1085,6 +1096,8 @@ public class MapDBAptamerPool implements AptamerPool {
 		if (!readonly) {
 			db = DBMaker
 			    .fileDB(file)
+			    .allocateStartSize( this.allocateStartSize )
+			    .allocateIncrement( this.allocateIncrement )
 			    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
 			    .fileMmapPreclearDisable() // Make mmap file faster
 			    .cleanerHackEnable() // Unmap (release resources) file when its closed.
@@ -1097,6 +1110,8 @@ public class MapDBAptamerPool implements AptamerPool {
 		else {
 			db = DBMaker
 			    .fileDB(file)
+			    .allocateStartSize( this.allocateStartSize )
+			    .allocateIncrement( this.allocateIncrement )
 			    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
 			    .fileMmapPreclearDisable() // Make mmap file faster
 			    .cleanerHackEnable() // Unmap (release resources) file when its closed.

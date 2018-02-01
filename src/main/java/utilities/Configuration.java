@@ -150,7 +150,10 @@ public class Configuration {
 		
 		// Performance Options
 		defaults.put("Performance.maxNumberOfCores", 50); // if larger than available, min of both is taken
-
+		defaults.put("MapDBAllocateStartSize", 1 * 1024*1024*1024); // for each file, initially allocate 1GB of storage, workaround for bug https://github.com/jankotek/mapdb/issues/723
+		defaults.put("MapDBAllocateIncrement", 100 * 1024*1024); // and increment it in 100mb chunks to keep the number of mmap file handles managable
+		
+		
 	}
 
 	/**

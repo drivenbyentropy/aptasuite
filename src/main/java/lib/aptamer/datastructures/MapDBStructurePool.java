@@ -95,6 +95,17 @@ public class MapDBStructurePool implements StructurePool {
 	private List<BloomFilter<Integer>> structureDataFilter = new ArrayList<BloomFilter<Integer>>();
 	
 	/**
+	 * The initial space reserved on disk for each map 
+	 */
+	private Integer allocateStartSize = Configuration.getParameters().getInt("MapDBAllocateStartSize");
+	
+	
+	/**
+	 * The amount by which each map will be incremented once it is full 
+	 */
+	private Integer allocateIncrement = Configuration.getParameters().getInt("MapDBAllocateIncrement");
+	
+	/**
 	 * Number of element found on disk
 	 */
 	private int structureDataSize = 0;
@@ -160,6 +171,8 @@ public class MapDBStructurePool implements StructurePool {
 	    				try {
 	    					db_structure = DBMaker
 	    						    .fileDB(file.toFile())
+	    						    .allocateStartSize( this.allocateStartSize )
+	    						    .allocateIncrement( this.allocateIncrement )
 	    						    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
 	    						    .fileMmapPreclearDisable() // Make mmap file faster
 	    						    .cleanerHackEnable() // Unmap (release resources) file when its closed.
@@ -229,6 +242,8 @@ public class MapDBStructurePool implements StructurePool {
 
 			DB db_structure = DBMaker
 				    .fileDB(Paths.get(structureDataPath.toString(), "data" + String.format("%04d", structureData.size()) + ".mapdb").toFile())
+				    .allocateStartSize( this.allocateStartSize )
+				    .allocateIncrement( this.allocateIncrement )
 				    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
 				    .fileMmapPreclearDisable() // Make mmap file faster
 				    .cleanerHackEnable() // Unmap (release resources) file when its closed.
@@ -278,6 +293,8 @@ public class MapDBStructurePool implements StructurePool {
 			
 			DB db_structure = DBMaker
 				    .fileDB(Paths.get(structureDataPath.toString(), "data" + String.format("%04d", structureData.size()) + ".mapdb").toFile())
+				    .allocateStartSize( this.allocateStartSize )
+				    .allocateIncrement( this.allocateIncrement )
 				    .fileMmapPreclearDisable() // Make mmap file faster
 				    .cleanerHackEnable() // Unmap (release resources) file when its closed.
 				    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
@@ -383,6 +400,8 @@ public class MapDBStructurePool implements StructurePool {
 				
 				DB db = DBMaker
 					    .fileDB(file.toFile())
+					    .allocateStartSize( this.allocateStartSize )
+					    .allocateIncrement( this.allocateIncrement )
 					    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
 					    .fileMmapPreclearDisable() // Make mmap file faster
 					    .cleanerHackEnable() // Unmap (release resources) file when its closed.
@@ -426,6 +445,8 @@ public class MapDBStructurePool implements StructurePool {
 				
 				DB db = DBMaker
 					    .fileDB(file.toFile())
+					    .allocateStartSize( this.allocateStartSize )
+					    .allocateIncrement( this.allocateIncrement )
 					    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
 					    .fileMmapPreclearDisable() // Make mmap file faster
 					    .cleanerHackEnable() // Unmap (release resources) file when its closed.

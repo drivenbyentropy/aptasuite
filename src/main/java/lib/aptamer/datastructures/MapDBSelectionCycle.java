@@ -73,6 +73,17 @@ public class MapDBSelectionCycle implements SelectionCycle{
 	
 	
 	/**
+	 * The initial space reserved on disk for each map 
+	 */
+	private Integer allocateStartSize = Configuration.getParameters().getInt("MapDBAllocateStartSize");
+	
+	
+	/**
+	 * The amount by which each map will be incremented once it is full 
+	 */
+	private Integer allocateIncrement = Configuration.getParameters().getInt("MapDBAllocateIncrement");
+	
+	/**
 	 * Bloom Filter for fast member lookup
 	 */
 	private transient BloomFilter<Integer> poolContent = new FilterBuilder(Configuration.getParameters().getInt("MapDBAptamerPool.bloomFilterCapacity"), Configuration.getParameters().getDouble("MapDBSelectionCycle.bloomFilterCollisionProbability")).buildBloomFilter();
@@ -130,6 +141,8 @@ public class MapDBSelectionCycle implements SelectionCycle{
 		// Create map or read from file
 		DB db = DBMaker
 			    .fileDB(Paths.get(poolDataPath.toString(), cycleFileName).toFile())
+			    .allocateStartSize( this.allocateStartSize )
+			    .allocateIncrement( this.allocateIncrement )
 			    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
 			    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
 			    .executorEnable()
@@ -374,6 +387,8 @@ public class MapDBSelectionCycle implements SelectionCycle{
 		
 		DB db = DBMaker
 			    .fileDB(Paths.get(poolDataPath.toString(), cycleFileName).toFile())
+			    .allocateStartSize( this.allocateStartSize )
+			    .allocateIncrement( this.allocateIncrement )
 			    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
 			    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
 			    .executorEnable()
@@ -400,6 +415,8 @@ public class MapDBSelectionCycle implements SelectionCycle{
 		
 		DB db = DBMaker
 			    .fileDB(Paths.get(poolDataPath.toString(), cycleFileName).toFile())
+			    .allocateStartSize( this.allocateStartSize )
+			    .allocateIncrement( this.allocateIncrement )
 			    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
 			    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
 			    .executorEnable()
@@ -461,6 +478,8 @@ public class MapDBSelectionCycle implements SelectionCycle{
 		
 		DB db = DBMaker
 			    .fileDB(Paths.get(poolDataPath.toString(), cycleFileName).toFile())
+			    .allocateStartSize( this.allocateStartSize )
+			    .allocateIncrement( this.allocateIncrement )
 			    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
 			    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
 			    .executorEnable()

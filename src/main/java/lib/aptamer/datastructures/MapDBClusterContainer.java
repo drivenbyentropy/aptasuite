@@ -34,6 +34,16 @@ public class MapDBClusterContainer implements ClusterContainer {
 	 */
 	private static final long serialVersionUID = -3411912606711493897L;
 
+	/**
+	 * The initial space reserved on disk for each map 
+	 */
+	private Integer allocateStartSize = Configuration.getParameters().getInt("MapDBAllocateStartSize");
+	
+	
+	/**
+	 * The amount by which each map will be incremented once it is full 
+	 */
+	private Integer allocateIncrement = Configuration.getParameters().getInt("MapDBAllocateIncrement");
 
 	/**
 	 * Bloom Filter for fast member lookup
@@ -70,6 +80,8 @@ public class MapDBClusterContainer implements ClusterContainer {
 		// Create map or read from file
 		DB db = DBMaker
 			    .fileDB(Paths.get(poolDataPath.toString(), containerFileName).toFile())
+			    .allocateStartSize( this.allocateStartSize )
+			    .allocateIncrement( this.allocateIncrement )
 			    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
 			    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
 			    .executorEnable()
@@ -243,6 +255,8 @@ public class MapDBClusterContainer implements ClusterContainer {
 		
 		DB db = DBMaker
 			    .fileDB(Paths.get(poolDataPath.toString(), containerFileName).toFile())
+			    .allocateStartSize( this.allocateStartSize )
+			    .allocateIncrement( this.allocateIncrement )
 			    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
 			    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
 			    .executorEnable()
@@ -272,6 +286,8 @@ public class MapDBClusterContainer implements ClusterContainer {
 		
 		DB db = DBMaker
 			    .fileDB(Paths.get(poolDataPath.toString(), containerFileName).toFile())
+			    .allocateStartSize( this.allocateStartSize )
+			    .allocateIncrement( this.allocateIncrement )
 			    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
 			    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
 			    .executorEnable()
