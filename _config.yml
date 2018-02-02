@@ -1,4 +1,4 @@
 plugins:
   - jekyll-seo-tag
 
-theme: jekyll-theme-cayman
+remote_theme: TaylanTatli/Halve
