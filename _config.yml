@@ -1,4 +1,4 @@
 plugins:
   - jekyll-seo-tag
 
-remote_theme: kippt/jekyll-incorporated
+remote_theme: drivenbyentropy/halve
