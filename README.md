@@ -1,5 +1,5 @@
 # AptaSUITE
-A full-featured aptamer bioinformatics collection for the comprehensive analysis of HT-SELEX experiments.
+A full-featured aptamer bioinformatics software collection for the comprehensive analysis of HT-SELEX experiments.
 
 AptaSUITE is a platform independent implementation of multiple algorithms designed for the identification of aptamer candidate sequences and the analysis of the SELEX process per se.
 
