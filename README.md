@@ -16,6 +16,6 @@ Download the latest precompiled version from the [release page](https://github.c
 Please see the [Wiki](https://github.com/drivenbyentropy/aptasuite/wiki) for a detailed manual.
 
 ## Screenshots
-Solarized dark             |  Solarized Ocean
 :-------------------------:|:-------------------------:
 ![image](https://drivenbyentropy.github.io/images/screnshot2.png)  |  ![image](https://drivenbyentropy.github.io/images/screnshot4.png)
+![image](https://drivenbyentropy.github.io/images/screnshot1.png)  |  ![image](https://drivenbyentropy.github.io/images/screnshot3.png)
