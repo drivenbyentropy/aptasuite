@@ -13,6 +13,21 @@ If you have any issues or recommendations, please feel free to open a [ticket](h
 Download the latest precompiled version from the [release page](https://github.com/drivenbyentropy/aptasuite/releases) or [build the project from source](https://github.com/drivenbyentropy/aptasuite/wiki/Compiling-from-source).
 
 ## Usage
+To open the GUI, either double-click on the executable jar file called ``aptasuite-x.y.z.jar`` or call the jar file from command line without parameters (``x.y.z`` corresponds to the version you downloaded):
+```
+$ java -jar aptasuite-x.y.z.jar
+```
+Then, follow the instructions on the screen to get started.
+
+To work with the command line interface, create a [configuration file](https://github.com/drivenbyentropy/aptasuite/wiki/The-configuration-file) and call the desired routines of aptasuite. For instance, to import a particular dataset, cluster it, perform sequence-structure identification, and to export the demultiplexed pools to file, you would call
+```
+$ java -jar path/to/aptasuite-x.y.z.jar -parse -cluster -predict structure -trace -export cycles
+```
+For a full list of commands, run
+```
+$ java -jar path/to/aptasuite-x.y.z.jar -help 
+```
+
 Please see the [Wiki](https://github.com/drivenbyentropy/aptasuite/wiki) for a detailed manual.
 
 ## Screenshots
