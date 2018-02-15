@@ -12,7 +12,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane fx:id="rootBorderPane" prefHeight="620.0" prefWidth="800.0" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml">
+<BorderPane fx:id="rootBorderPane" prefHeight="620.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1">
     <bottom>
         <fx:include source="actionBar.fxml" />
     </bottom>
@@ -29,7 +29,7 @@
                   <Font name="System Bold" size="14.0" />
                </font>
             </Label>
-            <Label minHeight="-Infinity" text="Specify the primer sequences as used during the selection. Note that the primers are to be specified in 5' to 3' orientation of the original aptamer. Optionally, you can also specify the randomized region size. If specified, all sequences which differ if length from that value will be filtered out." wrapText="true">
+            <Label minHeight="-Infinity" text="Specify the primer sequences as used during the selection. Note that the primers are to be specified in 5' to 3' orientation of the original aptamer as present during the selection, not based on the orientation in the sequencing data. Optionally, you can also specify the randomized region size. If specified, all sequences which differ if length from that value will be filtered out." wrapText="true">
                <font>
                   <Font size="12.0" />
                </font>

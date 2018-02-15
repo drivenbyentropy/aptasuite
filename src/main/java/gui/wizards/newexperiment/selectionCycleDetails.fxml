@@ -7,11 +7,12 @@
 <?import javafx.scene.control.Spinner?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.control.Tooltip?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<TitledPane fx:id="containerTitledPane" text="Untitled SELEX Cycle" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" fx:controller="gui.wizards.newexperiment.SelectionCycleDetailsController">
+<TitledPane fx:id="containerTitledPane" text="Untitled SELEX Cycle" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.wizards.newexperiment.SelectionCycleDetailsController">
    <content>
       <VBox spacing="10.0">
          <children>
@@ -118,6 +119,13 @@
                            <HBox.margin>
                               <Insets right="10.0" />
                            </HBox.margin>
+                           <tooltip>
+                              <Tooltip consumeAutoHidingEvents="false" text="Indices must be provided in 5' to 3' ordientation based on the forward read.&#10;&#10;E.g., if you used the follwing configuration in the experiment&#10;Fwd: 5'-ACGTGA-ForwardPrimerSeq-3'&#10;Rev: 5'-ACGTGA-ReversePrimerSeq-3'&#10;&#10;The PCR product's forward read corresponds to: &#10;5'-ACGTGA---ForwardPrimerSeq---RandomRegion---(reverse complement of ReversePrimerSeq)---TCACGT-3'&#10;&#10;And the Index5' and Index 3' should be ACGTGA and TCACGT respectively.">
+                                 <font>
+                                    <Font name="Monospaced Regular" size="11.0" />
+                                 </font>
+                              </Tooltip>
+                           </tooltip>
                         </Label>
                         <TextField fx:id="barcode5TextField" promptText="A,C,G, or T only" HBox.hgrow="ALWAYS">
                            <font>
@@ -134,8 +142,15 @@
                            <HBox.margin>
                               <Insets right="10.0" />
                            </HBox.margin>
+                           <tooltip>
+                              <Tooltip text="Indices must be provided in 5' to 3' ordientation based on the forward read.&#10;&#10;E.g., if you used the follwing configuration in the experiment&#10;Fwd: 5'-ACGTGA-ForwardPrimerSeq-3'&#10;Rev: 5'-ACGTGA-ReversePrimerSeq-3'&#10;&#10;The PCR product's forward read corresponds to: &#10;5'-ACGTGA---ForwardPrimerSeq---RandomRegion---(reverse complement of ReversePrimerSeq)---TCACGT-3'&#10;&#10;And the Index5' and Index 3' should be ACGTGA and TCACGT respectively.">
+                                 <font>
+                                    <Font name="Monospaced Regular" size="11.0" />
+                                 </font>
+                              </Tooltip>
+                           </tooltip>
                         </Label>
-                        <TextField fx:id="barcode3TextField" promptText="A,C,G, or T only" HBox.hgrow="ALWAYS">
+                        <TextField fx:id="barcode3TextField" promptText="A,C,G, or T only (see tooltip)" HBox.hgrow="ALWAYS">
                            <font>
                               <Font size="12.0" />
                            </font>
