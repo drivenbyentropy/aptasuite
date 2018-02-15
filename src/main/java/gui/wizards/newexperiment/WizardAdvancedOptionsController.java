@@ -40,6 +40,21 @@ import utilities.AptaLogger;
 public class WizardAdvancedOptionsController extends AbstractWizardController {
 
 	@FXML
+	private TextField aptaplexParserPairedEndMinOverlapTextField;
+	
+	@FXML
+	private TextField aptaplexParserPairedEndMaxMutationsTextField;
+	
+	@FXML
+	private TextField aptaplexParserPairedEndMaxScoreValueTextField;
+	
+	@FXML 
+	private TextField aptaplexParserBarcodeToleranceTextField;
+	
+	@FXML
+	private TextField aptaplexParserPrimerToleranceTextField;
+	
+	@FXML
 	private TextField mapDBAptamerPoolBloomFilterCapacityTextField;
 
 	@FXML
@@ -91,6 +106,13 @@ public class WizardAdvancedOptionsController extends AbstractWizardController {
     	storeReverseComplementComboBox.setConverter(new YesNoStringConverter());
     	
     	// Bind to datamodel
+    	aptaplexParserPairedEndMinOverlapTextField.textProperty().bindBidirectional(getDataModel().getAptaplexParserPairedEndMinOverlap(), new NumberStringConverter());
+    	aptaplexParserPairedEndMaxMutationsTextField.textProperty().bindBidirectional(getDataModel().getAptaplexParserPairedEndMaxMutations(), new NumberStringConverter());
+    	aptaplexParserPairedEndMaxScoreValueTextField.textProperty().bindBidirectional(getDataModel().getAptaplexParserPairedEndMaxScoreValue(), new NumberStringConverter());
+    	aptaplexParserBarcodeToleranceTextField.textProperty().bindBidirectional(getDataModel().getAptaplexParserBarcodeTolerance(), new NumberStringConverter());
+    	aptaplexParserPrimerToleranceTextField.textProperty().bindBidirectional(getDataModel().getAptaplexParserPrimerTolerance(), new NumberStringConverter());
+    	
+    	
     	mapDBAptamerPoolBloomFilterCapacityTextField.textProperty().bindBidirectional(getDataModel().getMapDBAptamerPoolBloomFilterCapacity(), new NumberStringConverter());
     	mapDBAptamerPoolBloomFilterCollisionProbabilityTextField.textProperty().bindBidirectional(getDataModel().getMapDBAptamerPoolBloomFilterCollisionProbability(), new NumberStringConverter());
     	mapDBAptamerPoolMaxTreeMapCapacityTextField.textProperty().bindBidirectional(getDataModel().getMapDBAptamerPoolMaxTreeMapCapacity(), new NumberStringConverter());

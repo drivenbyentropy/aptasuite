@@ -620,6 +620,37 @@ public class Wizard1Controller extends AbstractWizardController {
     			
     		}
     		
+    		if (getDataModel().getAptaplexParserPairedEndMinOverlap().get() != utilities.Configuration.getDefaults().getInt("AptaplexParser.PairedEndMinOverlap")) {
+    			
+    			utilities.Configuration.getParameters().setProperty("AptaplexParser.PairedEndMinOverlap", getDataModel().getAptaplexParserPairedEndMinOverlap().get());
+    			
+    		}
+    		
+    		if (getDataModel().getAptaplexParserPairedEndMaxMutations().get() != utilities.Configuration.getDefaults().getInt("AptaplexParser.PairedEndMaxMutations")) {
+    			
+    			utilities.Configuration.getParameters().setProperty("AptaplexParser.PairedEndMaxMutations", getDataModel().getAptaplexParserPairedEndMaxMutations().get());
+    			
+    		}
+    		
+    		if (getDataModel().getAptaplexParserPairedEndMaxScoreValue().get() != utilities.Configuration.getDefaults().getInt("AptaplexParser.PairedEndMaxScoreValue")) {
+    			
+    			utilities.Configuration.getParameters().setProperty("AptaplexParser.PairedEndMaxScoreValue", getDataModel().getAptaplexParserPairedEndMaxScoreValue().get());
+    			
+    		}   		
+    		
+    		if (getDataModel().getAptaplexParserBarcodeTolerance().get() != utilities.Configuration.getDefaults().getInt("AptaplexParser.BarcodeTolerance")) {
+    			
+    			utilities.Configuration.getParameters().setProperty("AptaplexParser.BarcodeTolerance", getDataModel().getAptaplexParserBarcodeTolerance().get());
+    			
+    		}   
+    		
+    		if (getDataModel().getAptaplexParserPrimerTolerance().get() != utilities.Configuration.getDefaults().getInt("AptaplexParser.PrimerTolerance")) {
+    			
+    			utilities.Configuration.getParameters().setProperty("AptaplexParser.PrimerTolerance", getDataModel().getAptaplexParserPrimerTolerance().get());
+    			
+    		}   
+    		
+    		
     		// Save to file
     		utilities.Configuration.writeConfiguration();
     		

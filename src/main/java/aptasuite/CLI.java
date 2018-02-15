@@ -14,6 +14,8 @@ import java.util.logging.Level;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.io.FileUtils;
+import org.datavec.api.records.reader.RecordReader;
+import org.datavec.image.recordreader.ImageRecordReader;
 import org.deeplearning4j.api.storage.StatsStorage;
 import org.deeplearning4j.eval.RegressionEvaluation;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
@@ -32,7 +34,6 @@ import org.deeplearning4j.parallelism.ParallelWrapper;
 import org.deeplearning4j.ui.api.UIServer;
 import org.deeplearning4j.ui.stats.StatsListener;
 import org.deeplearning4j.ui.storage.InMemoryStatsStorage;
-import org.nd4j.jita.conf.CudaEnvironment;
 import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.DataSet;
@@ -49,6 +50,7 @@ import lib.aptamer.datastructures.SelectionCycle;
 import lib.aptanet.DataInputIterator;
 import lib.aptanet.DataType;
 import lib.aptanet.Inequality;
+import lib.aptanet.PlayGround;
 import lib.aptanet.ScoreMethod;
 import lib.aptanet.SelectionCycleSplitDataInputIterator;
 import lib.aptanet.SequenceStructureDatasetIterator;
@@ -265,7 +267,8 @@ public class CLI {
 			AptaLogger.log(Level.INFO, this.getClass(), "If you use this software in your research, please cite AptaNET as "
 					+ "");
 			
-			runAptaNET( line.getOptionValue("config") );
+			//runAptaNET( line.getOptionValue("config") );
+			new PlayGround(line);
 
 		}
 		
@@ -689,14 +692,14 @@ public class CLI {
 		}	
 		
 		// Hardware tuning
-		CudaEnvironment.getInstance().getConfiguration().allowMultiGPU(true).allowCrossDeviceAccess(true);
-		Nd4j.getMemoryManager().setAutoGcWindow(1000); // Garbage collection every XXX ms 
-		long max_chache_in_gb = 2L;
-		CudaEnvironment.getInstance().getConfiguration()
-	    .setMaximumDeviceCacheableLength(1024 * 1024 * 1024L)
-	    .setMaximumDeviceCache(max_chache_in_gb * 1024 * 1024 * 1024L)
-	    .setMaximumHostCacheableLength(1024 * 1024 * 1024L)
-	    .setMaximumHostCache(max_chache_in_gb * 1024 * 1024 * 1024L);
+//		CudaEnvironment.getInstance().getConfiguration().allowMultiGPU(true).allowCrossDeviceAccess(true);
+//		Nd4j.getMemoryManager().setAutoGcWindow(1000); // Garbage collection every XXX ms 
+//		long max_chache_in_gb = 2L;
+//		CudaEnvironment.getInstance().getConfiguration()
+//	    .setMaximumDeviceCacheableLength(1024 * 1024 * 1024L)
+//	    .setMaximumDeviceCache(max_chache_in_gb * 1024 * 1024 * 1024L)
+//	    .setMaximumHostCacheableLength(1024 * 1024 * 1024L)
+//	    .setMaximumHostCache(max_chache_in_gb * 1024 * 1024 * 1024L);
 		
 		System.out.println("Load Data");
 		
@@ -970,6 +973,7 @@ public class CLI {
         
 	}	
 	
+
 	/**
 	 * Implements the logic concerning the export of the data to text files as
 	 * specified in the configuration

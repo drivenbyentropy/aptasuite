@@ -60,6 +60,17 @@ public class DataModel {
 	
 	private ObjectProperty<Integer> performanceMaxNumberOfCores  = new SimpleObjectProperty<Integer>(utilities.Configuration.getDefaults().getInt("Performance.maxNumberOfCores"));
 	
+	private SimpleIntegerProperty aptaplexParserPairedEndMinOverlap = new SimpleIntegerProperty((Integer) Configuration.getDefaults().getInt("AptaplexParser.PairedEndMinOverlap"));
+	
+	private SimpleIntegerProperty aptaplexParserPairedEndMaxMutations = new SimpleIntegerProperty((Integer) Configuration.getDefaults().getInt("AptaplexParser.PairedEndMaxMutations"));
+	
+	private SimpleIntegerProperty aptaplexParserPairedEndMaxScoreValue = new SimpleIntegerProperty((Integer) Configuration.getDefaults().getInt("AptaplexParser.PairedEndMaxScoreValue"));
+	
+	private SimpleIntegerProperty aptaplexParserBarcodeTolerance = new SimpleIntegerProperty((Integer) Configuration.getDefaults().getInt("AptaplexParser.BarcodeTolerance"));
+	
+	private SimpleIntegerProperty aptaplexParserPrimerTolerance = new SimpleIntegerProperty((Integer) Configuration.getDefaults().getInt("AptaplexParser.PrimerTolerance"));
+	
+	
 	private File lastSelectedDirectory = null;
 	
 	
@@ -277,6 +288,76 @@ public class DataModel {
 	 */
 	public void setStoreReverseComplement(BooleanProperty storeReverseComplement) {
 		this.storeReverseComplement = storeReverseComplement;
+	}
+
+	/**
+	 * @return the aptaplexParserPairedEndMinOverlap
+	 */
+	public SimpleIntegerProperty getAptaplexParserPairedEndMinOverlap() {
+		return aptaplexParserPairedEndMinOverlap;
+	}
+
+	/**
+	 * @param aptaplexParserPairedEndMinOverlap the aptaplexParserPairedEndMinOverlap to set
+	 */
+	public void setAptaplexParserPairedEndMinOverlap(SimpleIntegerProperty aptaplexParserPairedEndMinOverlap) {
+		this.aptaplexParserPairedEndMinOverlap = aptaplexParserPairedEndMinOverlap;
+	}
+
+	/**
+	 * @return the aptaplexParserPairedEndMaxMutations
+	 */
+	public SimpleIntegerProperty getAptaplexParserPairedEndMaxMutations() {
+		return aptaplexParserPairedEndMaxMutations;
+	}
+
+	/**
+	 * @param aptaplexParserPairedEndMaxMutations the aptaplexParserPairedEndMaxMutations to set
+	 */
+	public void setAptaplexParserPairedEndMaxMutations(SimpleIntegerProperty aptaplexParserPairedEndMaxMutations) {
+		this.aptaplexParserPairedEndMaxMutations = aptaplexParserPairedEndMaxMutations;
+	}
+
+	/**
+	 * @return the aptaplexParserPairedEndMaxScoreValue
+	 */
+	public SimpleIntegerProperty getAptaplexParserPairedEndMaxScoreValue() {
+		return aptaplexParserPairedEndMaxScoreValue;
+	}
+
+	/**
+	 * @param aptaplexParserPairedEndMaxScoreValue the aptaplexParserPairedEndMaxScoreValue to set
+	 */
+	public void setAptaplexParserPairedEndMaxScoreValue(SimpleIntegerProperty aptaplexParserPairedEndMaxScoreValue) {
+		this.aptaplexParserPairedEndMaxScoreValue = aptaplexParserPairedEndMaxScoreValue;
+	}
+
+	/**
+	 * @return the aptaplexParserBarcodeTolerance
+	 */
+	public SimpleIntegerProperty getAptaplexParserBarcodeTolerance() {
+		return aptaplexParserBarcodeTolerance;
+	}
+
+	/**
+	 * @param aptaplexParserBarcodeTolerance the aptaplexParserBarcodeTolerance to set
+	 */
+	public void setAptaplexParserBarcodeTolerance(SimpleIntegerProperty aptaplexParserBarcodeTolerance) {
+		this.aptaplexParserBarcodeTolerance = aptaplexParserBarcodeTolerance;
+	}
+
+	/**
+	 * @return the aptaplexParserPrimerTolerance
+	 */
+	public SimpleIntegerProperty getAptaplexParserPrimerTolerance() {
+		return aptaplexParserPrimerTolerance;
+	}
+
+	/**
+	 * @param aptaplexParserPrimerTolerance the aptaplexParserPrimerTolerance to set
+	 */
+	public void setAptaplexParserPrimerTolerance(SimpleIntegerProperty aptaplexParserPrimerTolerance) {
+		this.aptaplexParserPrimerTolerance = aptaplexParserPrimerTolerance;
 	}
 	
 	

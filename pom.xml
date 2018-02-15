@@ -6,6 +6,7 @@
 	<version>0.0.1</version>
 	<name>AptaSUITE</name>
 	<description>A full-featured software collection for the comprehensive analysis of HT-SELEX experiments with both graphical and command line based user interfaces.</description>
+	
 	<profiles>
 		<!-- Temporary profile to compile on NCBI windows machine -->
     	<profile>
@@ -247,6 +248,13 @@
 		    <version>8.0.1</version>
 		</dependency>		
 		<dependency>
+			<groupId>fr.orsay.lri</groupId>
+			<artifactId>varna</artifactId>
+			<version>3.93</version>
+		</dependency>
+		
+		<!-- DEEP LEARNING FOR JAVA BEGIN -->
+		<dependency>
 			<groupId>org.datavec</groupId>
 			<artifactId>datavec-api</artifactId>
 			<version>${nd4j.version}</version>
@@ -259,7 +267,7 @@
 			<groupId>org.nd4j</groupId>
 			<artifactId>${nd4j.backend}</artifactId>  <!-- WE NEED TO CHANGE THIS IN PROPERTIES FOR CPU/CUDA SUPPORT -->
 		</dependency>
-		<!-- Dependency for parallel wrapper (for multi-GPU parameter averaging -->
+		<!-- Dependency for parallel wrapper (for multi-GPU parameter averaging) -->
 		<dependency>
 			<groupId>org.deeplearning4j</groupId>
 			<artifactId>deeplearning4j-parallel-wrapper</artifactId>
@@ -282,12 +290,10 @@
 			<artifactId>slf4j-simple</artifactId>
 			<version>1.7.12</version>
 		</dependency>
-		<dependency>
-			<groupId>fr.orsay.lri</groupId>
-			<artifactId>varna</artifactId>
-			<version>3.93</version>
-		</dependency>
+		<!-- DEEP LEARNING FOR JAVA END -->
 	</dependencies>
+	
+	
 	<repositories>
 		<repository>
 			<snapshots>
@@ -306,12 +312,16 @@
    		</repository>
 		
 	</repositories>
+	
+	
 	<properties>
-		<nd4j.backend>nd4j-cuda-8.0-platform</nd4j.backend>
+		<!-- <nd4j.backend>nd4j-cuda-8.0-platform</nd4j.backend> -->
+		<nd4j.backend>nd4j-native-platform</nd4j.backend>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
 		<nd4j.version>0.9.1</nd4j.version>
 		<deeplearning4j-ui.version>0.6.0</deeplearning4j-ui.version>
 	</properties>
+	
 </project>

@@ -14,7 +14,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane prefHeight="620.0" prefWidth="800.0" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml">
+<BorderPane prefHeight="620.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1">
     <bottom>
         <fx:include source="actionBar.fxml" />
     </bottom>
@@ -39,18 +39,24 @@
                       <ColumnConstraints hgrow="ALWAYS" />
                     </columnConstraints>
                     <rowConstraints>
-                      <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                      <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                      <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                      <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                      <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                      <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                     </rowConstraints>
                      <children>
-                        <Label text="Database Options">
+                        <Label text="Database Options" GridPane.rowIndex="8">
                            <font>
                               <Font name="System Bold" size="14.0" />
                            </font>
@@ -58,7 +64,18 @@
                               <Insets right="10.0" />
                            </GridPane.margin>
                         </Label>
-                        <Label text="MapDBAptamerPool.bloomFilterCapacity:" GridPane.rowIndex="1">
+                        <Label text="MapDBAptamerPool.bloomFilterCapacity:" GridPane.rowIndex="9">
+                           <font>
+                              <Font size="12.0" />
+                           </font>
+                           <GridPane.margin>
+                              <Insets right="10.0" />
+                           </GridPane.margin>
+                           <tooltip>
+                              <Tooltip text="This should be set to a value greater or equal to the &#10;total number of unique aptamers in the experiment." />
+                           </tooltip>
+                        </Label>
+                        <Label text="MapDBAptamerPool.bloomFilterCollisionProbability:" GridPane.rowIndex="10">
                            <font>
                               <Font size="12.0" />
                            </font>
@@ -66,7 +83,18 @@
                               <Insets right="10.0" />
                            </GridPane.margin>
                         </Label>
-                        <Label text="MapDBAptamerPool.bloomFilterCollisionProbability:" GridPane.rowIndex="2">
+                        <Label text="MapDBAptamerPool.maxTreeMapCapacity:" GridPane.rowIndex="11">
+                           <font>
+                              <Font size="12.0" />
+                           </font>
+                           <GridPane.margin>
+                              <Insets right="10.0" />
+                           </GridPane.margin>
+                           <tooltip>
+                              <Tooltip text="The number of items per map before opening a new file." />
+                           </tooltip>
+                        </Label>
+                        <Label text="MapDBSelectionCycle.bloomFilterCollisionProbability:" GridPane.rowIndex="12">
                            <font>
                               <Font size="12.0" />
                            </font>
@@ -74,23 +102,7 @@
                               <Insets right="10.0" />
                            </GridPane.margin>
                         </Label>
-                        <Label text="MapDBAptamerPool.maxTreeMapCapacity:" GridPane.rowIndex="3">
-                           <font>
-                              <Font size="12.0" />
-                           </font>
-                           <GridPane.margin>
-                              <Insets right="10.0" />
-                           </GridPane.margin>
-                        </Label>
-                        <Label text="MapDBSelectionCycle.bloomFilterCollisionProbability:" GridPane.rowIndex="4">
-                           <font>
-                              <Font size="12.0" />
-                           </font>
-                           <GridPane.margin>
-                              <Insets right="10.0" />
-                           </GridPane.margin>
-                        </Label>
-                        <Label text="Performance Options" GridPane.rowIndex="5">
+                        <Label text="Performance Options" GridPane.rowIndex="13">
                            <font>
                               <Font name="System Bold" size="14.0" />
                            </font>
@@ -98,7 +110,7 @@
                               <Insets right="10.0" />
                            </GridPane.margin>
                         </Label>
-                        <Label text="Maximum number of CPUs:" GridPane.rowIndex="6">
+                        <Label text="Maximum number of CPUs:" GridPane.rowIndex="14">
                            <font>
                               <Font size="12.0" />
                            </font>
@@ -106,17 +118,17 @@
                               <Insets right="10.0" />
                            </GridPane.margin>
                         </Label>
-                        <TextField fx:id="mapDBAptamerPoolBloomFilterCapacityTextField" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-                        <TextField fx:id="mapDBAptamerPoolBloomFilterCollisionProbabilityTextField" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-                        <TextField fx:id="mapDBAptamerPoolMaxTreeMapCapacityTextField" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-                        <TextField fx:id="mapDBSelectionCycleBloomFilterCollisionProbabilityTextField" GridPane.columnIndex="1" GridPane.rowIndex="4" />
-                        <Spinner fx:id="performanceMaxNumberOfCoresSpinner" max="1000" min="1" GridPane.columnIndex="1" GridPane.rowIndex="6" />
-                        <Label text="Aptamer Properties" GridPane.rowIndex="7">
+                        <TextField fx:id="mapDBAptamerPoolBloomFilterCapacityTextField" GridPane.columnIndex="1" GridPane.rowIndex="9" />
+                        <TextField fx:id="mapDBAptamerPoolBloomFilterCollisionProbabilityTextField" GridPane.columnIndex="1" GridPane.rowIndex="10" />
+                        <TextField fx:id="mapDBAptamerPoolMaxTreeMapCapacityTextField" GridPane.columnIndex="1" GridPane.rowIndex="11" />
+                        <TextField fx:id="mapDBSelectionCycleBloomFilterCollisionProbabilityTextField" GridPane.columnIndex="1" GridPane.rowIndex="12" />
+                        <Spinner fx:id="performanceMaxNumberOfCoresSpinner" max="1000" min="1" GridPane.columnIndex="1" GridPane.rowIndex="14" />
+                        <Label text="Aptamer Properties" GridPane.rowIndex="6">
                            <font>
                               <Font name="System Bold" size="14.0" />
                            </font>
                         </Label>
-                        <Label text="Store Reverse Complement:" GridPane.rowIndex="8">
+                        <Label text="Store Reverse Complement:" GridPane.rowIndex="7">
                            <font>
                               <Font size="12.0" />
                            </font>
@@ -128,7 +140,77 @@
                               </Tooltip>
                            </tooltip>
                         </Label>
-                        <ComboBox fx:id="storeReverseComplementComboBox" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="8" />
+                        <ComboBox fx:id="storeReverseComplementComboBox" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="7" />
+                        <Label text="Parser Options">
+                           <font>
+                              <Font name="System Bold" size="14.0" />
+                           </font>
+                        </Label>
+                        <Label fx:id="AptaplexParserPairedEndMinOverlapTextField" text="AptaplexParser.PairedEndMinOverlap:" GridPane.rowIndex="1">
+                           <font>
+                              <Font size="12.0" />
+                           </font>
+                           <tooltip>
+                              <Tooltip text="Milab option: smallest required overlap between the forwar read and&#10;the reverse complement of the reverse read when creating the contig.">
+                                 <font>
+                                    <Font size="12.0" />
+                                 </font>
+                              </Tooltip>
+                           </tooltip>
+                        </Label>
+                        <Label text="AptaplexParser.PairedEndMaxMutations:" GridPane.rowIndex="2">
+                           <font>
+                              <Font size="12.0" />
+                           </font>
+                           <tooltip>
+                              <Tooltip text="Maximal number of mutations in the overlapping&#10;region for a sequence to be accepted.">
+                                 <font>
+                                    <Font size="12.0" />
+                                 </font>
+                              </Tooltip>
+                           </tooltip>
+                        </Label>
+                        <Label text="AptaplexParser.PairedEndMaxScoreValue:" GridPane.rowIndex="3">
+                           <font>
+                              <Font size="12.0" />
+                           </font>
+                           <tooltip>
+                              <Tooltip text="Highest score of the current quality score model  (55 for phred).">
+                                 <font>
+                                    <Font size="12.0" />
+                                 </font>
+                              </Tooltip>
+                           </tooltip>
+                        </Label>
+                        <Label text="AptaplexParser.BarcodeTolerance:" GridPane.rowIndex="4">
+                           <font>
+                              <Font size="12.0" />
+                           </font>
+                           <tooltip>
+                              <Tooltip text="Maximal number of nucleotide mismatches allowed in the barcodes.">
+                                 <font>
+                                    <Font size="12.0" />
+                                 </font>
+                              </Tooltip>
+                           </tooltip>
+                        </Label>
+                        <Label text="AptaplexParser.PrimerTolerance:" GridPane.rowIndex="5">
+                           <font>
+                              <Font size="12.0" />
+                           </font>
+                           <tooltip>
+                              <Tooltip text="Maximal number of nucleotide mismatches allowed in the primers.">
+                                 <font>
+                                    <Font size="12.0" />
+                                 </font>
+                              </Tooltip>
+                           </tooltip>
+                        </Label>
+                        <TextField fx:id="aptaplexParserPairedEndMinOverlapTextField" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                        <TextField fx:id="aptaplexParserPairedEndMaxMutationsTextField" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                        <TextField fx:id="aptaplexParserPairedEndMaxScoreValueTextField" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                        <TextField fx:id="aptaplexParserBarcodeToleranceTextField" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+                        <TextField fx:id="aptaplexParserPrimerToleranceTextField" GridPane.columnIndex="1" GridPane.rowIndex="5" />
                      </children>
                      <VBox.margin>
                         <Insets />

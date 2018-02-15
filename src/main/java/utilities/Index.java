@@ -8,6 +8,8 @@ package utilities;
  * Implement various routines for translating 
  * mappings of 2d matrices into 1d arrays and back.
  * 
+ * Note that only indices above the diagonal will return meaningful values;
+ * 
  * This class only computes the indices to be accessed,
  * and does not return any values of the matrix itself.
  */

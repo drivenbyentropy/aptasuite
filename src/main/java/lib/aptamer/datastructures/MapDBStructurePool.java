@@ -111,13 +111,6 @@ public class MapDBStructurePool implements StructurePool {
 	private int structureDataSize = 0;
 	
 	/**
-	 * The number of elements of the tree map that is currently been filled.
-	 * We need to keep this record separately as the .size() function of dbmap
-	 * objects is noticeably slow.
-	 */
-	private int currentTreeMapSize = 0;
-	
-	/**
 	 * Constructor
 	 * @param projectPath must point to the current projects working directory
 	 * all files related to the analysis of the HT-SELEX experiment are stored 
@@ -206,17 +199,20 @@ public class MapDBStructurePool implements StructurePool {
 	    				BloomFilter<Integer> localBloomFilter = new FilterBuilder(maxTreeMapCapacity, bloomFilterCollisionProbability).buildBloomFilter();
 	    				structureDataFilter.add(localBloomFilter);
 	    				
-	    				// Update values
-	    				currentTreeMapSize = dbmap.size();
-	    				structureDataSize += currentTreeMapSize;
 	    				
 	    				// Update the filter content
+	    				int currentTreeMapSize = 0;
 	    				Iterator<Integer> iterator = dbmap.keyIterator();
+	    				
 	    				while (iterator.hasNext()){
 	    					Integer item = iterator.next();
 	    					localBloomFilter.add(item);
 	    					globalStructureDataFilter.add(item);
+	    					currentTreeMapSize++;
 	    				}
+	    				
+	    				// Update values
+	    				structureDataSize += currentTreeMapSize;
 	    				
 	    				AptaLogger.log(Level.CONFIG, this.getClass(), 
 	    						"Found and loaded file " + file.toString() + "\n" +
@@ -263,8 +259,6 @@ public class MapDBStructurePool implements StructurePool {
 			BloomFilter<Integer> localBloomFilter = new FilterBuilder(maxTreeMapCapacity, bloomFilterCollisionProbability).buildBloomFilter();
 			structureDataFilter.add(localBloomFilter);
 			
-			currentTreeMapSize = 0;
-			
 			AptaLogger.log(Level.CONFIG, this.getClass(), "Created new file " + Paths.get(structureDataPath.toString(), "data" + String.format("%04d", structureData.size()) + ".mapdb").toFile());
 		
 		}
@@ -283,11 +277,17 @@ public class MapDBStructurePool implements StructurePool {
 	@Override
 	public synchronized void registerStructure(int id, double[] structure) {
 		
-		// Check that the current map is not at max capacity and create a new map if that is the case
-		if (currentTreeMapSize == maxTreeMapCapacity){
+		// Compute the structureData id into which this item would go into
+		int structureDataIndex = id / maxTreeMapCapacity;
+		
+		AptaLogger.log(Level.CONFIG, this.getClass(), String.format("%s    %s   %s   %s", maxTreeMapCapacity, id, structureDataIndex, structureData.size()));
+		
+			
+		// Create as many new maps as required
+		while (structureDataIndex >= structureData.size() ) {
 			
 			AptaLogger.log(Level.CONFIG, this.getClass(), 
-					"Current Structure Map is at max capacity creating new file " + Paths.get(structureDataPath.toString(), "data" + String.format("%04d", structureData.size()) + ".mapdb").toString() + "\n" +
+					"Creating new file " + Paths.get(structureDataPath.toString(), "data" + String.format("%04d", structureData.size()) + ".mapdb").toString() + "\n" +
 					"Total number of aptamers: " + this.structureDataSize 
 					);
 			
@@ -314,16 +314,15 @@ public class MapDBStructurePool implements StructurePool {
 			BloomFilter<Integer> localBloomFilter = new FilterBuilder(maxTreeMapCapacity, bloomFilterCollisionProbability).buildBloomFilter();
 			this.structureDataFilter.add(localBloomFilter);
 			
-			currentTreeMapSize = 0;
-			
 		}
+			
+		
 
 		// Now insert the sequence
 		structureDataSize++;
-		structureData.get(structureData.size()-1).put(id,structure);
-		currentTreeMapSize++;
+		structureData.get(structureDataIndex).put(id,structure);
 		this.globalStructureDataFilter.add(id);
-		this.structureDataFilter.get(structureData.size()-1).add(id);
+		this.structureDataFilter.get(structureDataIndex).add(id);
 		
 	}
 

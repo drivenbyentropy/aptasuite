@@ -46,6 +46,7 @@ import lib.aptamer.datastructures.Experiment;
 import lib.aptamer.datastructures.SelectionCycle;
 import lib.parser.aptaplex.AptaPlexParser;
 import lib.parser.aptasim.AptaSimParser;
+import lib.parser.aptasim.AptaSimParserSoumitra;
 import lib.parser.aptasim.AptaSimProgress;
 import utilities.AptaLogger;
 import utilities.Configuration;
@@ -462,7 +463,8 @@ public class AptaSimWizardController {
 
 				// Initialize the parser and run it in a thread
 				AptaLogger.log(Level.CONFIG, getClass(), "Initializing AptaSIM");
-				AptaSimParser parser = new AptaSimParser();
+//				AptaSimParser parser = new AptaSimParser();
+				AptaSimParserSoumitra parser = new AptaSimParserSoumitra();
 
 				parserThread = new Thread(parser, "AptaSIM Main");
 
