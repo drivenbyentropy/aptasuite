@@ -651,7 +651,7 @@ public class Wizard1Controller extends AbstractWizardController {
     		}   
     		
     		
-    		// Save to file
+    		// Save to file 
     		utilities.Configuration.writeConfiguration();
     		
     		try {
