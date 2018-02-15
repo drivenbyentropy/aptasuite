@@ -200,6 +200,9 @@ public class AptaPlexConsumer implements Runnable {
 				// process queueElement
 				read = (Read) queueElement;
 
+				// Store nucleotide distribution and quality score
+				addNuceotideDistributions();
+				addQualityScores();
 
 				// Differentiate between single-end and paired-end sequencing
 				if (read.reverse_read != null) {
@@ -354,8 +357,6 @@ public class AptaPlexConsumer implements Runnable {
 						 
 					 }
 					 
-					 addNuceotideDistributions();
-					 addQualityScores();
 					 progress.totalAcceptedReads.incrementAndGet();
 					 
 				 }else { // Handle errors
