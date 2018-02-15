@@ -353,15 +353,20 @@ public class Wizard1Controller extends AbstractWizardController {
     		
     	}
     	
+    	
+    	
     	if(getDataModel().getIsDemultiplexed().not().get()) {
     		
 	    	// Make sure that if the user specified a 3' primer barcode once, they specify it everywhere
 	    	Map<Boolean, Long> num_true = hasBarcode3.stream().collect(Collectors.groupingBy(e -> e, Collectors.counting()));
+	    	// Add 0 counts manually if required
+	    	num_true.putIfAbsent(true, 0L);
+	    	num_true.putIfAbsent(false, 0L);
 	    	
 	    	// If we have no data, we can skip the next step
 	    	if (num_true != null) { 
 	    	
-		    	if (num_true.get(true) != 0 || num_true.get(true) != this.selectionCycleDetailsControllers.size()) {
+		    	if (num_true.get(true) != 0 && num_true.get(true) != this.selectionCycleDetailsControllers.size()) {
 		    	
 			    	for (int x=0; x<this.selectionCycleDetailsControllers.size(); x++) {
 			    		

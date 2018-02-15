@@ -263,9 +263,9 @@ public class Configuration {
 			        //.setFile(filePath.toFile())
 			        .setListDelimiterHandler(new DefaultListDelimiterHandler(',')));
 			
-			org.apache.commons.configuration2.Configuration userParameters = builder.getConfiguration();
+			// For some reason this needs be called to initialize correctly
+			builder.getConfiguration();
 			
-
 			//We need to explicitly save the file before setting it in the builder, for whatever reason...
 			builder.getFileHandler().save(filePath.toFile());
 			builder.getFileHandler().setFile(filePath.toFile());
