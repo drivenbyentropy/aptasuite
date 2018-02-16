@@ -333,24 +333,29 @@ public class SequencingDataCycleController {
 		seriesG.setName("G");
 		seriesT.setName("T");
 		
-		for ( Entry<Integer, ConcurrentHashMap<Byte, Integer>> position : experiment.getMetadata().nucleotideDistributionAccepted.get(cycle.getName()).get(this.randomizedRegionSizeComboBox.getValue()).entrySet()) {
-			
-			Number a = position.getValue().get((byte) 'A' );
-			if (this.percentageRadioButton.selectedProperty().get()) { a = a.doubleValue() / cycle.getSize(); a = a.doubleValue()*100.0; }
-			seriesA.getData().add( new XYChart.Data<String, Number>(position.getKey().toString(), a) );
-			
-			Number c = position.getValue().get((byte) 'C' );
-			if (this.percentageRadioButton.selectedProperty().get()) { c = c.doubleValue() / cycle.getSize(); c = c.doubleValue()*100.0;}
-			seriesC.getData().add( new XYChart.Data<String, Number>(position.getKey().toString(), c) );
-			
-			Number g = position.getValue().get((byte) 'G' );
-			if (this.percentageRadioButton.selectedProperty().get()) { g = g.doubleValue() / cycle.getSize(); g = g.doubleValue()*100.0;}
-			seriesG.getData().add( new XYChart.Data<String, Number>(position.getKey().toString(), g) );
-			
-			Number t = position.getValue().get((byte) 'T' );
-			if (this.percentageRadioButton.selectedProperty().get()) { t = t.doubleValue() / cycle.getSize(); t = t.doubleValue()*100.0;}
-			seriesT.getData().add( new XYChart.Data<String, Number>(position.getKey().toString(), t) );
-			
+		// Skip in case not a single read was accepted
+		if (experiment.getMetadata().nucleotideDistributionAccepted.get(cycle.getName()).containsKey(this.randomizedRegionSizeComboBox.getValue())) {
+		
+			for ( Entry<Integer, ConcurrentHashMap<Byte, Integer>> position : experiment.getMetadata().nucleotideDistributionAccepted.get(cycle.getName()).get(this.randomizedRegionSizeComboBox.getValue()).entrySet()) {
+				
+				Number a = position.getValue().get((byte) 'A' );
+				if (this.percentageRadioButton.selectedProperty().get()) { a = a.doubleValue() / cycle.getSize(); a = a.doubleValue()*100.0; }
+				seriesA.getData().add( new XYChart.Data<String, Number>(position.getKey().toString(), a) );
+				
+				Number c = position.getValue().get((byte) 'C' );
+				if (this.percentageRadioButton.selectedProperty().get()) { c = c.doubleValue() / cycle.getSize(); c = c.doubleValue()*100.0;}
+				seriesC.getData().add( new XYChart.Data<String, Number>(position.getKey().toString(), c) );
+				
+				Number g = position.getValue().get((byte) 'G' );
+				if (this.percentageRadioButton.selectedProperty().get()) { g = g.doubleValue() / cycle.getSize(); g = g.doubleValue()*100.0;}
+				seriesG.getData().add( new XYChart.Data<String, Number>(position.getKey().toString(), g) );
+				
+				Number t = position.getValue().get((byte) 'T' );
+				if (this.percentageRadioButton.selectedProperty().get()) { t = t.doubleValue() / cycle.getSize(); t = t.doubleValue()*100.0;}
+				seriesT.getData().add( new XYChart.Data<String, Number>(position.getKey().toString(), t) );
+				
+			}
+		
 		}
 		
 		// Needs to be in this order because the color choice will be determined based on this order and the CSS file 

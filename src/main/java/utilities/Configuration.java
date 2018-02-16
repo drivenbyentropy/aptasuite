@@ -422,4 +422,17 @@ public class Configuration {
 		
 	}
 	
+	/**
+	 * Resets the config to its initial state
+	 */
+	public static void reset() {
+		
+		Configuration.experiment = null;
+		Configuration.parameters = null;
+		Configuration.builder = null;
+		Configuration.defaultBuilder = null;
+		Configuration.configurationPath = null;
+		
+	}
+	
 }

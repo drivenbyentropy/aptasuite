@@ -463,7 +463,7 @@ public class RootLayoutController {
     		
     	}
 
-    	// Create a context with the main class as content so that we can inistialize the 
+    	// Create a context with the main class as content so that we can initialize the 
     	// main GUI after parsing is completed
     	context = ApplicationContext.getInstance();
     	

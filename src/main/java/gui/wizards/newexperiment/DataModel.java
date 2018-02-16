@@ -58,7 +58,7 @@ public class DataModel {
 	
 	private SimpleDoubleProperty mapDBSelectionCycleBloomFilterCollisionProbability = new SimpleDoubleProperty((Double) Configuration.getDefaults().getDouble("MapDBSelectionCycle.bloomFilterCollisionProbability"));
 	
-	private ObjectProperty<Integer> performanceMaxNumberOfCores  = new SimpleObjectProperty<Integer>(utilities.Configuration.getDefaults().getInt("Performance.maxNumberOfCores"));
+	private ObjectProperty<Integer> performanceMaxNumberOfCores  = new SimpleObjectProperty<Integer>( (Integer)  Configuration.getDefaults().getInt("Performance.maxNumberOfCores"));
 	
 	private SimpleIntegerProperty aptaplexParserPairedEndMinOverlap = new SimpleIntegerProperty((Integer) Configuration.getDefaults().getInt("AptaplexParser.PairedEndMinOverlap"));
 	

@@ -29,6 +29,20 @@ public class Aptasuite {
 	
 	public static void main(String[] args) {
 		
+		// Log system info for debugging purposes
+		
+		StringBuilder sysinfo = new StringBuilder();
+		String sep = System.lineSeparator();
+		sysinfo.append(String.format("System Information:%sJava Version: %s%s", sep, System.getProperty("java.version"), sep));
+		sysinfo.append(String.format("JavaFX Version: %s%s", System.getProperties().get("javafx.runtime.version"), sep));
+		sysinfo.append(String.format("OS Name: %s%s", System.getProperties().get("os.name"), sep));
+		sysinfo.append(String.format("OS Version: %s%s", System.getProperties().get("os.version"), sep));
+		sysinfo.append(String.format("OS Architecture: %s%s", System.getProperties().get("os.arch"), sep));
+		sysinfo.append(String.format("CPU cores: %s%s", Runtime.getRuntime().availableProcessors(), sep));
+		sysinfo.append(String.format("System Memory: %s%s", Runtime.getRuntime().totalMemory(), sep));
+		
+		AptaLogger.log(Level.INFO, Aptasuite.class, sysinfo.toString());
+		
 		// case command line interface
 		if (args.length != 0) { 
 

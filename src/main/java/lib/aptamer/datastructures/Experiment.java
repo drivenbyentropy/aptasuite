@@ -834,8 +834,12 @@ public class Experiment implements Serializable{
 			
 		}		
 
-		// And finally the logger
+		
+		// The logger
 		AptaLogger.close();
+
+		// And finally the configuration file
+		Configuration.reset();
 		
 	}
 	
