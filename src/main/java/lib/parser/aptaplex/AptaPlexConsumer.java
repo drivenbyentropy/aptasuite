@@ -199,11 +199,9 @@ public class AptaPlexConsumer implements Runnable {
 
 				// process queueElement
 				read = (Read) queueElement;
-
-				// Store nucleotide distribution and quality score
-				addNuceotideDistributions();
-				addQualityScores();
-
+				
+				AptaLogger.log(Level.CONFIG, this.getClass(), read.toString());
+				
 				// Differentiate between single-end and paired-end sequencing
 				if (read.reverse_read != null) {
 
@@ -297,14 +295,14 @@ public class AptaPlexConsumer implements Runnable {
 					 
 					 if (!storeReverseComplement) { // Do we have to compute the reverse complement?
 					 
-						 read.selection_cycle.addToSelectionCycle(
-								 Arrays.copyOfRange(contig, randomized_region_start_index-primer5.length, randomized_region_end_index+primer3.length)
-								 ,primer5.length
-								 ,primer5.length + (randomized_region_end_index-randomized_region_start_index)
-								 );
+						read.selection_cycle.addToSelectionCycle(
+							 Arrays.copyOfRange(contig, randomized_region_start_index-primer5.length, randomized_region_end_index+primer3.length)
+							 ,primer5.length
+							 ,primer5.length + (randomized_region_end_index-randomized_region_start_index)
+							 );
 						 
-						 // Add metadata information
-						 addAcceptedNucleotideDistributions(read.selection_cycle, contig, randomized_region_start_index, randomized_region_end_index);
+					 	// Add metadata information
+						addAcceptedNucleotideDistributions(read.selection_cycle, contig, randomized_region_start_index, randomized_region_end_index);
 
 					 } else { // We do!
 						 
@@ -357,6 +355,10 @@ public class AptaPlexConsumer implements Runnable {
 						 
 					 }
 					 
+				 	 // Store nucleotide distribution and quality score
+				 	 addNuceotideDistributions();
+					 addQualityScores();
+					 
 					 progress.totalAcceptedReads.incrementAndGet();
 					 
 				 }else { // Handle errors
@@ -375,8 +377,8 @@ public class AptaPlexConsumer implements Runnable {
 				 }
 
 			} catch (Exception e) {
-				AptaLogger.log(Level.SEVERE, this.getClass(), String.format("Aptamer: %s Bounds: %s %s", new String(contig), randomized_region_start_index, randomized_region_end_index));
 				AptaLogger.log(Level.SEVERE, this.getClass(), org.apache.commons.lang.exception.ExceptionUtils.getStackTrace(e));
+				AptaLogger.log(Level.SEVERE, this.getClass(), String.format("Aptamer: %s Bounds: %s %s", new String(contig), randomized_region_start_index, randomized_region_end_index));
 			}
 		}
 
@@ -480,7 +482,7 @@ public class AptaPlexConsumer implements Runnable {
 	 * @return Result object containing the start index of the position and the
 	 *         score. null if no match was found
 	 */
-	public Result matchPrimer(byte[] c, byte[] primer) { //TODO: Change to private
+	private Result matchPrimer(byte[] c, byte[] primer) { 
 		
 		if (primer.length > 32) { // we default to the slower edit distance
 			return editDistance.indexOf(c, primer, primerTolerance, 0, c.length);
@@ -734,7 +736,6 @@ public class AptaPlexConsumer implements Runnable {
 				
 				// Add nucleotides
 				forward.get(i).put(read.forward_read[i], forward.get(i).get(read.forward_read[i])+1 );
-				
 			}
 			
 		}

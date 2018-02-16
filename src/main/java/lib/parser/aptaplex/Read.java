@@ -44,4 +44,16 @@ public class Read {
 	 * performed. We need to preassign the selection cycle
 	 */
 	public SelectionCycle selection_cycle = null;
+	
+	@Override
+	public String toString() {
+		
+		return String.format("Forward Read:    %s\nForward Quality: %s\nReverse Read:    %s\nReverse Quality: %s",
+				this.forward_read == null ? "null" : new String(this.forward_read), 
+				this.forward_quality == null ? "null" : new String(this.forward_quality), 
+				this.reverse_read == null ? "null" : new String(this.reverse_read), 
+				this.reverse_quality == null ? "null" : new String(this.reverse_quality) );
+		
+	}
+	
 }

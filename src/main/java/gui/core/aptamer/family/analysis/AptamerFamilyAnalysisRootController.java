@@ -930,6 +930,8 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
         int fromIndex = pageIndex * rows_per_sequence_table_page;
         int toIndex = Math.min(fromIndex + rows_per_sequence_table_page, aptamer_ids.length);
         
+        //System.out.println(String.format("INDEX %s   FROM %s   TO %s   APTAMER ID SIZE %s", pageIndex, fromIndex, toIndex, aptamer_ids.length));
+        
         // Populate data
         ObservableList<SequenceTableRowData> data = FXCollections.observableArrayList( new ArrayList<SequenceTableRowData>() );
         for (int x=fromIndex; x<toIndex; x++) {
