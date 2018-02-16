@@ -1634,77 +1634,6 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 		}
 		
 		
-		
-		// Delete any previously existing cluster data
-		try {
-			FileUtils.deleteDirectory(Paths.get(projectPath.toString(), "clusterdata").toFile());
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		AptaLogger.log(Level.INFO, this.getClass(), "Initializing AptaCluster");
-		
-		// Create a new instance of the ClusterContainer
-		experiment.instantiateClusterContainer(true, true);
-
-		// Either use defaults, or set new user value in config
-		int randomizedRegionSize = Configuration.getParameters().containsKey("Aptacluster.RandomizedRegionSize") ? Configuration.getParameters().getInt("Aptacluster.RandomizedRegionSize") : randomizedRegionSizeComboBox.getValue();
-		int lshDimension = Configuration.getParameters().containsKey("Aptacluster.LSHDimension") ? Configuration.getParameters().getInt("Aptacluster.LSHDimension") : localitySensitiveHashingDimensionComboBox.getValue();
-		int lshIterations = Configuration.getParameters().getInt("Aptacluster.LSHIterations");
-		int editDistance = Configuration.getParameters().getInt("Aptacluster.EditDistance");
-		int kmerSize = Configuration.getParameters().getInt("Aptacluster.KmerSize");
-		int kmerCutoffIterations = Configuration.getParameters().getInt("Aptacluster.KmerCutoffIterations");
-		
-		if ( Configuration.getParameters().containsKey("Aptacluster.RandomizedRegionSize") && randomizedRegionSizeComboBox.getValue() != Configuration.getParameters().getInt("Aptacluster.RandomizedRegionSize") ) {
-			
-			randomizedRegionSize = randomizedRegionSizeComboBox.getValue();
-			Configuration.getParameters().setProperty("Aptacluster.RandomizedRegionSize", randomizedRegionSize);
-			
-		}
-		
-		if ( Configuration.getParameters().containsKey("Aptacluster.LSHDimension") && localitySensitiveHashingDimensionComboBox.getValue() != Configuration.getParameters().getInt("Aptacluster.LSHDimension") ) {
-			
-			lshDimension = localitySensitiveHashingDimensionComboBox.getValue();
-			Configuration.getParameters().setProperty("Aptacluster.LSHDimension", lshDimension);
-			
-		}
-
-		if ( localitySensitiveHashingIterationsComboBox.getValue() != Configuration.getParameters().getInt("Aptacluster.LSHIterations") ) {
-			
-			lshIterations = localitySensitiveHashingIterationsComboBox.getValue();
-			Configuration.getParameters().setProperty("Aptacluster.LSHIterations", lshIterations);
-			
-		}
-		
-		if ( Integer.parseInt(editDistanceTextField.getText()) != Configuration.getParameters().getInt("Aptacluster.EditDistance") ) {
-			
-			editDistance = Integer.parseInt(editDistanceTextField.getText());
-			Configuration.getParameters().setProperty("Aptacluster.EditDistance", editDistance);
-			
-		}
-		
-		if ( Integer.parseInt(kmerSizeTextField.getText()) != Configuration.getParameters().getInt("Aptacluster.KmerSize") ) {
-			
-			kmerSize = Integer.parseInt(kmerSizeTextField.getText());
-			Configuration.getParameters().setProperty("Aptacluster.KmerSize", kmerSize);
-			
-		}
-
-		if ( Integer.parseInt(kmerCutoffIterationsTextField.getText()) != Configuration.getParameters().getInt("Aptacluster.KmerCutoffIterations") ) {
-			
-			kmerCutoffIterations = Integer.parseInt(kmerCutoffIterationsTextField.getText());
-			Configuration.getParameters().setProperty("Aptacluster.KmerCutoffIterations", kmerCutoffIterations);
-			
-		}				
-		
-		int randomizedRegionSizeFinal = randomizedRegionSize;
-		int lshDimensionFinal = lshDimension;
-		int lshIterationsFinal = lshIterations;
-		int editDistanceFinal = editDistance;
-		int kmerSizeFinal = kmerSize;
-		int kmerCutoffIterationsFinal = kmerCutoffIterations;
-		
 		// We want the gui not to block on initialization, hence we wrap this into a progress pane
 		ProgressPaneController pp = ProgressPaneController.getProgressPane(null, this.rootStackPane);
 		
@@ -1712,6 +1641,80 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 			
 			@Override
 			public void run() {
+				
+				// Delete any previously existing cluster data
+				try {
+					FileUtils.deleteDirectory(Paths.get(projectPath.toString(), "clusterdata").toFile());
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+				AptaLogger.log(Level.INFO, this.getClass(), "Initializing AptaCluster");
+				
+				// Create a new instance of the ClusterContainer
+				experiment.instantiateClusterContainer(true, true);
+
+				AptaLogger.log(Level.INFO, this.getClass(), "Initialization Complete");
+				
+				// Either use defaults, or set new user value in config
+				int randomizedRegionSize = Configuration.getParameters().containsKey("Aptacluster.RandomizedRegionSize") ? Configuration.getParameters().getInt("Aptacluster.RandomizedRegionSize") : randomizedRegionSizeComboBox.getValue();
+				int lshDimension = Configuration.getParameters().containsKey("Aptacluster.LSHDimension") ? Configuration.getParameters().getInt("Aptacluster.LSHDimension") : localitySensitiveHashingDimensionComboBox.getValue();
+				int lshIterations = Configuration.getParameters().getInt("Aptacluster.LSHIterations");
+				int editDistance = Configuration.getParameters().getInt("Aptacluster.EditDistance");
+				int kmerSize = Configuration.getParameters().getInt("Aptacluster.KmerSize");
+				int kmerCutoffIterations = Configuration.getParameters().getInt("Aptacluster.KmerCutoffIterations");
+				
+				if ( Configuration.getParameters().containsKey("Aptacluster.RandomizedRegionSize") && randomizedRegionSizeComboBox.getValue() != Configuration.getParameters().getInt("Aptacluster.RandomizedRegionSize") ) {
+					
+					randomizedRegionSize = randomizedRegionSizeComboBox.getValue();
+					Configuration.getParameters().setProperty("Aptacluster.RandomizedRegionSize", randomizedRegionSize);
+					
+				}
+				
+				if ( Configuration.getParameters().containsKey("Aptacluster.LSHDimension") && localitySensitiveHashingDimensionComboBox.getValue() != Configuration.getParameters().getInt("Aptacluster.LSHDimension") ) {
+					
+					lshDimension = localitySensitiveHashingDimensionComboBox.getValue();
+					Configuration.getParameters().setProperty("Aptacluster.LSHDimension", lshDimension);
+					
+				}
+
+				if ( localitySensitiveHashingIterationsComboBox.getValue() != Configuration.getParameters().getInt("Aptacluster.LSHIterations") ) {
+					
+					lshIterations = localitySensitiveHashingIterationsComboBox.getValue();
+					Configuration.getParameters().setProperty("Aptacluster.LSHIterations", lshIterations);
+					
+				}
+				
+				if ( Integer.parseInt(editDistanceTextField.getText()) != Configuration.getParameters().getInt("Aptacluster.EditDistance") ) {
+					
+					editDistance = Integer.parseInt(editDistanceTextField.getText());
+					Configuration.getParameters().setProperty("Aptacluster.EditDistance", editDistance);
+					
+				}
+				
+				if ( Integer.parseInt(kmerSizeTextField.getText()) != Configuration.getParameters().getInt("Aptacluster.KmerSize") ) {
+					
+					kmerSize = Integer.parseInt(kmerSizeTextField.getText());
+					Configuration.getParameters().setProperty("Aptacluster.KmerSize", kmerSize);
+					
+				}
+
+				if ( Integer.parseInt(kmerCutoffIterationsTextField.getText()) != Configuration.getParameters().getInt("Aptacluster.KmerCutoffIterations") ) {
+					
+					kmerCutoffIterations = Integer.parseInt(kmerCutoffIterationsTextField.getText());
+					Configuration.getParameters().setProperty("Aptacluster.KmerCutoffIterations", kmerCutoffIterations);
+					
+				}				
+				
+				int randomizedRegionSizeFinal = randomizedRegionSize;
+				int lshDimensionFinal = lshDimension;
+				int lshIterationsFinal = lshIterations;
+				int editDistanceFinal = editDistance;
+				int kmerSizeFinal = kmerSize;
+				int kmerCutoffIterationsFinal = kmerCutoffIterations;
+				
+				AptaLogger.log(Level.INFO, this.getClass(), "Starting AptaCluster");
 				
 				// Create AptaCluster instance
 				AptaCluster ac = new HashAptaCluster(
@@ -1736,7 +1739,7 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 		
 		pp.setLogic(logic);
 		pp.setShowProgressBar(true);
-		pp.setShowLogs(false);
+		pp.setShowLogs(true);
 		pp.run();
 		
 	}

@@ -600,6 +600,7 @@ public class AptaSimWizardController {
 		
 		if (!was_interrupted) {
 			
+			this.rootLayoutController.setExperiment(experiment);
 			this.rootLayoutController.showInitialTabs();
 			
 		}

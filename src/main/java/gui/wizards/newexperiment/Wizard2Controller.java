@@ -290,12 +290,16 @@ public class Wizard2Controller extends AbstractWizardController {
     @ActionMethod("closeWizard")
     public void closeWizard() {
     	
-    	// notify the gui to initialize loading the tabs
+    	// We need to set the experiment in the main controller
+    	rootLayoutController.setExperiment(experiment);
+    	
+    	// Notify the gui to initialize loading the tabs
     	rootLayoutController.showInitialTabs();
     	
-    	// get a handle to the stage
+    	// Get a handle to the stage
         Stage stage = (Stage) getFinishButton().getScene().getWindow();
-        // close it
+
+        // Close it
         stage.close();
     	
     }

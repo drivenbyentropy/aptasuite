@@ -158,7 +158,7 @@ public class RootLayoutController {
 	/**
 	 * Instance of the current experiment
 	 */
-    SimpleObjectProperty<Experiment> experiment = new SimpleObjectProperty<>(null);
+    private SimpleObjectProperty<Experiment> experiment = new SimpleObjectProperty<>(null);
 
     
 	@PostConstruct
@@ -877,6 +877,20 @@ public class RootLayoutController {
     	
     	
     }
+
+	/**
+	 * @return the experiment
+	 */
+	public Experiment getExperiment() {
+		return experiment.get();
+	}
+
+	/**
+	 * @param experiment the experiment to set
+	 */
+	public void setExperiment(Experiment experiment) {
+		this.experiment.set(experiment);
+	}
     
     
 }
