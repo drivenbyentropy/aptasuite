@@ -165,6 +165,8 @@ public class ExportWizardController {
 				Boolean compress = compressFilesCheckbox.isSelected();
 				String extension = sequenceFormatComboBox.getSelectionModel().getSelectedItem() + (compress ? ".gz" : "");
 				
+				Configuration.getParameters().setProperty("Export.compress", compress);
+				
 				// Export Pool	
 				if (exportSequencesCheckBox.isSelected()) {
 				
