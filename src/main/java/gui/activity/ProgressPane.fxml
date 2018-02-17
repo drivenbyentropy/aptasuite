@@ -8,7 +8,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane fx:id="progressAnchorPane" style="-fx-background-color: rgba(160,160,160,0.7);" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.activity.ProgressPaneController">
+<AnchorPane fx:id="progressAnchorPane" style="-fx-background-color: rgba(160,160,160,0.7);" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" fx:controller="gui.activity.ProgressPaneController">
    <children>
       <VBox fx:id="progressVBox" alignment="CENTER" spacing="5.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>

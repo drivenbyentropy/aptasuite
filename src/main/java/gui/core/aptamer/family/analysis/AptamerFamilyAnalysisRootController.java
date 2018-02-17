@@ -930,8 +930,6 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
         int fromIndex = pageIndex * rows_per_sequence_table_page;
         int toIndex = Math.min(fromIndex + rows_per_sequence_table_page, aptamer_ids.length);
         
-        //System.out.println(String.format("INDEX %s   FROM %s   TO %s   APTAMER ID SIZE %s", pageIndex, fromIndex, toIndex, aptamer_ids.length));
-        
         // Populate data
         ObservableList<SequenceTableRowData> data = FXCollections.observableArrayList( new ArrayList<SequenceTableRowData>() );
         for (int x=fromIndex; x<toIndex; x++) {
@@ -1288,50 +1286,50 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 			public void run() {
 				
 				// Compute the number of aptamers belonging to this cluster
-				int cluster_diversity = (max_items==-1) ? 0 : max_items;
-				if (max_items == -1) {
+				int cluster_diversity = 0;
 					
-					AptaLogger.log(Level.INFO, this.getClass(), "Determining cluster diversity");
-					
-					Iterator<Entry<Integer, Integer>> cluster_it = clusters.iterator().iterator();
-					Iterator<Entry<Integer, Integer>> cardinality_it = reference_cycle.iterator().iterator();
-					Entry<Integer, Integer> cluster_entry = cluster_it.next();
-					Entry<Integer, Integer> cardinality_entry = cardinality_it.next();
-					
-					while ( cluster_it.hasNext() || cardinality_it.hasNext() ) { // Ids are sorted in both cases
+				AptaLogger.log(Level.INFO, this.getClass(), "Determining cluster diversity");
+				
+				Iterator<Entry<Integer, Integer>> cluster_it = clusters.iterator().iterator();
+				Iterator<Entry<Integer, Integer>> cardinality_it = reference_cycle.iterator().iterator();
+				Entry<Integer, Integer> cluster_entry = cluster_it.next();
+				Entry<Integer, Integer> cardinality_entry = cardinality_it.next();
+				
+				while ( cluster_it.hasNext() || cardinality_it.hasNext() ) { // Ids are sorted in both cases
 
-						progress.incrementAndGet();
+					progress.incrementAndGet();
+					
+					if ( cluster_entry.getKey().equals(cardinality_entry.getKey()) ) {
+
+						if (cluster_entry.getValue() == cluster_id) {
+							
+							cluster_diversity += 1;  
+							cluster_membership.set(cluster_entry.getKey());
+							
+						}
 						
-						if ( cluster_entry.getKey().equals(cardinality_entry.getKey()) ) {
-
-							if (cluster_entry.getValue() == cluster_id) {
-								
-								cluster_diversity += 1;  
-								cluster_membership.set(cluster_entry.getKey());
-								
-							}
+						cluster_entry = cluster_it.next();
+						cardinality_entry = cardinality_it.next();
+						
+					}
+					else {
+						
+						if (cluster_entry.getKey() < cardinality_entry.getKey()) {
 							
 							cluster_entry = cluster_it.next();
-							cardinality_entry = cardinality_it.next();
 							
 						}
 						else {
 							
-							if (cluster_entry.getKey() < cardinality_entry.getKey()) {
-								
-								cluster_entry = cluster_it.next();
-								
-							}
-							else {
-								
-								cardinality_entry = cardinality_it.next();
-								
-							}
+							cardinality_entry = cardinality_it.next();
 							
 						}
+						
 					}
-					
 				}
+					
+				
+				System.out.println("DIVERSITY " + cluster_diversity);
 				
 				// Get all Aptamers which are members of the cluster and are present in the selected cycle
 				aptamer_ids = new int[cluster_diversity];
@@ -1360,11 +1358,10 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 				int[] counts = new int[aptamer_ids.length];
 				counter = 0;
 				
-				Iterator<Entry<Integer, Integer>> cluster_it = clusters.iterator().iterator();
-				Iterator<Entry<Integer, Integer>> cardinality_it = reference_cycle.iterator().iterator();
-				Entry<Integer, Integer> cluster_entry = cluster_it.next();
-				Entry<Integer, Integer> cardinality_entry = cardinality_it.next();
-				
+				cluster_it = clusters.iterator().iterator();
+				cardinality_it = reference_cycle.iterator().iterator();
+				cluster_entry = cluster_it.next();
+				cardinality_entry = cardinality_it.next();
 				
 				while ( cluster_it.hasNext() || cardinality_it.hasNext() ) { // Ids are sorted in both cases
 

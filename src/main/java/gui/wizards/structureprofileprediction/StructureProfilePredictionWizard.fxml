@@ -11,7 +11,7 @@
 <?import javafx.scene.text.Font?>
 
 
-<BorderPane xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.wizards.structureprofileprediction.StructureProfilePredictionWizardController">
+<BorderPane xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" fx:controller="gui.wizards.structureprofileprediction.StructureProfilePredictionWizardController">
    <center>
       <VBox spacing="10.0" BorderPane.alignment="CENTER">
          <children>
