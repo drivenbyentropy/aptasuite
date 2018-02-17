@@ -200,8 +200,6 @@ public class AptaPlexConsumer implements Runnable {
 				// process queueElement
 				read = (Read) queueElement;
 				
-				AptaLogger.log(Level.CONFIG, this.getClass(), read.toString());
-				
 				// Differentiate between single-end and paired-end sequencing
 				if (read.reverse_read != null) {
 

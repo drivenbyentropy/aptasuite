@@ -135,7 +135,7 @@ public class Configuration {
 
 		// Export
 		defaults.put("Export.compress", true); // Whether the resulting files should be gzip compressed or not
-		defaults.put("Export.SequenceFormat", "fastq"); // The output format for nucleotide data [Fastq, Fasta, Raw]
+		defaults.put("Export.SequenceFormat", "fastq"); // The output format for nucleotide data [fastq, fasta]
 		defaults.put("Export.IncludePrimerRegions", true); // If false, the 5' and 3' primers will not be exported
 		defaults.put("Export.MinimalClusterSize", 1); // The smallest amount of members a cluster should contain in
 														// order to be exported

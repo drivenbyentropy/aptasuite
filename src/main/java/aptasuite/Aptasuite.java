@@ -39,9 +39,9 @@ public class Aptasuite {
 		sysinfo.append(String.format("OS Version: %s%s", System.getProperties().get("os.version"), sep));
 		sysinfo.append(String.format("OS Architecture: %s%s", System.getProperties().get("os.arch"), sep));
 		sysinfo.append(String.format("CPU cores: %s%s", Runtime.getRuntime().availableProcessors(), sep));
-		sysinfo.append(String.format("System Memory: %s%s", Runtime.getRuntime().totalMemory(), sep));
+		sysinfo.append(String.format("System Memory: %s Mb%s", Runtime.getRuntime().totalMemory(), sep));
 		
-		AptaLogger.log(Level.INFO, Aptasuite.class, sysinfo.toString());
+		AptaLogger.log(Level.CONFIG, Aptasuite.class, sysinfo.toString());
 		
 		// case command line interface
 		if (args.length != 0) { 

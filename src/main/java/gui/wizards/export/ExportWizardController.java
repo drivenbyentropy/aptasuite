@@ -126,10 +126,9 @@ public class ExportWizardController {
 		minimalClusterSizeLabel.disableProperty().bind(this.exportClustersCheckBox.selectedProperty().not());
 		
 		//Sequence Format Options
-		sequenceFormatComboBox.getItems().add("fastq");
-		sequenceFormatComboBox.getItems().add("fasta");
-		sequenceFormatComboBox.getItems().add("raw");
-		sequenceFormatComboBox.setValue(Configuration.getParameters().getString("Export.SequenceFormat","fastq"));
+		sequenceFormatComboBox.getItems().add("Fastq");
+		sequenceFormatComboBox.getItems().add("Fasta");
+		sequenceFormatComboBox.setValue(Configuration.getParameters().getString("Export.SequenceFormat","Fastq"));
 	}
 	
 	
@@ -165,7 +164,13 @@ public class ExportWizardController {
 				Boolean compress = compressFilesCheckbox.isSelected();
 				String extension = sequenceFormatComboBox.getSelectionModel().getSelectedItem() + (compress ? ".gz" : "");
 				
-				Configuration.getParameters().setProperty("Export.compress", compress);
+				// Write configuration so that exporter module knows
+				Configuration.getParameters().setProperty("Export.PoolCardinalityFormat", poolCardinalityFormatComboBox.getValue().toLowerCase());
+				Configuration.getParameters().setProperty("Export.SequenceFormat", sequenceFormatComboBox.getValue().toLowerCase());
+				Configuration.getParameters().setProperty("Export.MinimalClusterSize", Integer.parseInt(minimalClusterSizeTextField.getText()));
+				Configuration.getParameters().setProperty("Export.ClusterFilterCriteria", clusterFilterCriteriaComboBox.getValue());
+				Configuration.getParameters().setProperty("Export.IncludePrimerRegions", withPrimersCheckBox.isSelected());
+				Configuration.getParameters().setProperty("Export.compress", compress);				
 				
 				// Export Pool	
 				if (exportSequencesCheckBox.isSelected()) {
