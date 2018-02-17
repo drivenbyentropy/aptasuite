@@ -967,8 +967,12 @@ public class AptamerPoolRootController implements Initializable{
 			
 			AptaLogger.log(Level.INFO, this.getClass(), "Prioritizing data");
 			
+			System.out.println("HEREeee");
+			
 			// We can now move the items of this selection cycle to the front
 			moveMaskedToFront(id_mask, aptamer_ids.length, aptamer_ids, counts);
+			
+			System.out.println("HERE");
 			
 			// And sort the ids according to the count data
 			AptaLogger.log(Level.INFO, this.getClass(), "Sorting data");
@@ -1011,7 +1015,7 @@ public class AptamerPoolRootController implements Initializable{
 		
 		else { // Case for enrichment
 			
-			AptaLogger.log(Level.INFO, this.getClass(), "Retrievingfff data for selection cycle " + this.cycle_to_sort_by_string);
+			AptaLogger.log(Level.INFO, this.getClass(), "Retrieving data for selection cycle " + this.cycle_to_sort_by_string);
 			
 			SelectionCycle previous_cycle = cycle_to_sort_by.getPreviousSelectionCycle();
 			double previous_cycle_size = previous_cycle.getSize();
@@ -1052,8 +1056,11 @@ public class AptamerPoolRootController implements Initializable{
 			
 			AptaLogger.log(Level.INFO, this.getClass(), "Prioritizing data");
 			
+			
 			// We can now move the ids to the front for sorting
 			moveMaskedToFront(id_mask, aptamer_ids.length, aptamer_ids, enrichments);
+			
+			System.out.println("HEREeee");
 			
 			// And finally sort the data
 			if ( this.sortByComboBox.getSelectionModel().getSelectedItem() == "Enrichment (desc)" ) {
@@ -1115,29 +1122,27 @@ public class AptamerPoolRootController implements Initializable{
 	 */
 	private void moveMaskedToFront(BitSet mask, int size, int[] ... arrays ) {
 		
-		// We look for 0s from the left and 1s from the right and swap them 
-		int left = 0;
-		int right = size-1;
-		while (left<right-1) {
+		int dest = 0;
+		
+		for (int source = 0; source < size; source++) {
 			
-			// move to the right until we find a 0
-			while( mask.get(left) ) left++;
-			
-			// move to the left until we find a 1
-			while ( !mask.get(right) ) right--;
-			
-			// now swap
-			mask.flip(left);
-			mask.flip(right);
-			
-			for(int[] array : arrays) {
-			
-				int temp = array[left];
-				array[left] = array[right];
-				array[right] = temp;
-				
+			if (mask.get(source)) {
+
+				// now swap
+				mask.flip(source);
+				mask.flip(dest);
+
+				for (int[] array : arrays) {
+
+					int temp = array[source];
+					array[source] = array[dest];
+					array[dest] = temp;
+
+				}
+
+				dest++;
+
 			}
-			
 		}
 		
 	}
