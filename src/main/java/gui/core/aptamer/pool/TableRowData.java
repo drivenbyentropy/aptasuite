@@ -4,6 +4,7 @@
 package gui.core.aptamer.pool;
 
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -22,12 +23,18 @@ public class TableRowData {
 	
     private DecimalFormat df = new DecimalFormat("0.00E00");
     private DecimalFormat df_count = new DecimalFormat("#.###");
+    DecimalFormatSymbols sym = DecimalFormatSymbols.getInstance();
     
     public TableRowData(int id, String sequence, AptamerPoolRootController aprc) {
     	
     	this.id = new SimpleObjectProperty<Integer>(id);
     	this.sequence = new SimpleStringProperty(sequence);
     	this.aptamerPoolRootController = aprc;
+    	
+    	// We need to set the decimal separator, otherwise Parsing to double will fail in countries using comma
+    	sym.setDecimalSeparator('.');
+    	df.setDecimalFormatSymbols(sym);
+    	df_count.setDecimalFormatSymbols(sym);
     }
 
 	/**

@@ -5,6 +5,7 @@ import java.awt.geom.Rectangle2D;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 
@@ -49,6 +50,7 @@ public class LogoSummary
 	
 	private DecimalFormat 			formatter_pvalue = new DecimalFormat("0.###E0");
 	private NumberFormat			formatter_abundance = new DecimalFormat("#0.00");
+	DecimalFormatSymbols sym = DecimalFormatSymbols.getInstance();
 	
 	// Constructor of main frame
 	/**
@@ -56,6 +58,10 @@ public class LogoSummary
 	 */
 	public LogoSummary()
 	{
+		// We need to set the decimal separator, otherwise Parsing to double will fail in countries using comma
+		sym.setDecimalSeparator('.');
+		formatter_pvalue.setDecimalFormatSymbols(sym);
+		
 		table = new ArrayList<ArrayList<Object>>();
 		//add header
 		ArrayList<Object> header = new ArrayList<Object>();

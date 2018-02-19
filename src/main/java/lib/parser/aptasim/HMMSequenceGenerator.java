@@ -1,6 +1,7 @@
 package lib.parser.aptasim;
 
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -16,6 +17,8 @@ public class HMMSequenceGenerator
 	private Random rand = new Random();
 	private Map<String, Double> dist = new HashMap<String, Double>();
 	private static final DecimalFormat df = new DecimalFormat("0.00000000");
+	DecimalFormatSymbols sym = DecimalFormatSymbols.getInstance();
+	
 	private String p5 = null;
 	private String p3 = null;
 	
@@ -32,6 +35,10 @@ public class HMMSequenceGenerator
 	
 	public HMMSequenceGenerator(int degree, String p5, String p3)
 	{
+		// We need to set the decimal separator, otherwise Parsing to double will fail in countries using comma
+		sym.setDecimalSeparator('.');
+		df.setDecimalFormatSymbols(sym);
+		
 		
 		this.p3 = p3;
 		this.p5 = p5;

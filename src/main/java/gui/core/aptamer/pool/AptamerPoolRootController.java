@@ -967,12 +967,8 @@ public class AptamerPoolRootController implements Initializable{
 			
 			AptaLogger.log(Level.INFO, this.getClass(), "Prioritizing data");
 			
-			System.out.println("HEREeee");
-			
 			// We can now move the items of this selection cycle to the front
 			moveMaskedToFront(id_mask, aptamer_ids.length, aptamer_ids, counts);
-			
-			System.out.println("HERE");
 			
 			// And sort the ids according to the count data
 			AptaLogger.log(Level.INFO, this.getClass(), "Sorting data");
@@ -1059,8 +1055,6 @@ public class AptamerPoolRootController implements Initializable{
 			
 			// We can now move the ids to the front for sorting
 			moveMaskedToFront(id_mask, aptamer_ids.length, aptamer_ids, enrichments);
-			
-			System.out.println("HEREeee");
 			
 			// And finally sort the data
 			if ( this.sortByComboBox.getSelectionModel().getSelectedItem() == "Enrichment (desc)" ) {
