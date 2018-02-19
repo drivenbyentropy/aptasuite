@@ -21,6 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.IntStream;
 
 import javax.annotation.PostConstruct;
 
@@ -397,14 +398,10 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 		
 		// Iterate over randomized region size combobox and only add values to the LSH combobox which 
 		// are <= to the selected item of the former.
-		for ( Integer item : this.randomizedRegionSizeComboBox.getItems()) {
+		for ( Integer item=1; item<= this.randomizedRegionSizeComboBox.getSelectionModel().getSelectedItem(); item++ ) {
 			
-			if (item <= this.randomizedRegionSizeComboBox.getSelectionModel().getSelectedItem()) {
-				
 				this.localitySensitiveHashingDimensionComboBox.getItems().add(0,item);
 				
-			}
-			
 		}
 		
 		// Set the default to 75% of the Randomized Region size

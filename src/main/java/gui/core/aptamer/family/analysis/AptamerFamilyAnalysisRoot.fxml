@@ -27,7 +27,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" fx:controller="gui.core.aptamer.family.analysis.AptamerFamilyAnalysisRootController">
+<AnchorPane xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.core.aptamer.family.analysis.AptamerFamilyAnalysisRootController">
    <children>
       <StackPane fx:id="rootStackPane" layoutX="210.0" layoutY="125.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
@@ -230,6 +230,9 @@
                                  <font>
                                     <Font size="12.0" />
                                  </font>
+                                 <tooltip>
+                                    <Tooltip text="Counts per Million" />
+                                 </tooltip>
                               </RadioButton>
                               <RadioButton minWidth="-Infinity" mnemonicParsing="false" onAction="#redrawTableContent" selected="true" text="Hide" toggleGroup="$showPrimersToggleGroup" GridPane.columnIndex="1" GridPane.rowIndex="1">
                                  <font>
