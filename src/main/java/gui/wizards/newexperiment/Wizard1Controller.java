@@ -652,7 +652,7 @@ public class Wizard1Controller extends AbstractWizardController {
     		if (getDataModel().getAptaplexParserPrimerTolerance().get() != utilities.Configuration.getDefaults().getInt("AptaplexParser.PrimerTolerance")) {
     			
     			utilities.Configuration.getParameters().setProperty("AptaplexParser.PrimerTolerance", getDataModel().getAptaplexParserPrimerTolerance().get());
-    			
+
     		}   
     		
     		

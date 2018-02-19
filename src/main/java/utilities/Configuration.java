@@ -375,7 +375,7 @@ public class Configuration {
 	}
 	
 	/**
-	 * Returns a HashMap of the default values
+	 * Returns PropertiesConfiguration of the default values
 	 * @return
 	 */
 	public static PropertiesConfiguration getDefaults(){

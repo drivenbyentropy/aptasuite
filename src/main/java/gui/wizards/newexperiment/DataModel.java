@@ -7,6 +7,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.configuration2.PropertiesConfiguration;
+
 import io.datafx.controller.injection.scopes.FlowScoped;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
@@ -50,30 +52,29 @@ public class DataModel {
 	
 	private StringProperty fileFormat = new SimpleStringProperty("FASTQ");
 	
-	private SimpleIntegerProperty mapDBAptamerPoolBloomFilterCapacity= new SimpleIntegerProperty((Integer) Configuration.getDefaults().getInt("MapDBAptamerPool.bloomFilterCapacity"));
+	private SimpleIntegerProperty mapDBAptamerPoolBloomFilterCapacity= new SimpleIntegerProperty( Configuration.getDefaults().containsKey("MapDBAptamerPool.bloomFilterCapacity") ? Configuration.getDefaults().getInt("MapDBAptamerPool.bloomFilterCapacity") : Configuration.getParameters().getInt("MapDBAptamerPool.bloomFilterCapacity") );
 
-	private SimpleDoubleProperty mapDBAptamerPoolBloomFilterCollisionProbability = new SimpleDoubleProperty((Double) Configuration.getDefaults().getDouble("MapDBAptamerPool.bloomFilterCollisionProbability"));
+	private SimpleDoubleProperty mapDBAptamerPoolBloomFilterCollisionProbability = new SimpleDoubleProperty( Configuration.getDefaults().containsKey("MapDBAptamerPool.bloomFilterCollisionProbability") ? Configuration.getDefaults().getDouble("MapDBAptamerPool.bloomFilterCollisionProbability") : Configuration.getParameters().getDouble("MapDBAptamerPool.bloomFilterCollisionProbability") );
 	
-	private SimpleIntegerProperty mapDBAptamerPoolMaxTreeMapCapacity =  new SimpleIntegerProperty((Integer) Configuration.getDefaults().getInt("MapDBAptamerPool.maxTreeMapCapacity"));
+	private SimpleIntegerProperty mapDBAptamerPoolMaxTreeMapCapacity =  new SimpleIntegerProperty( Configuration.getDefaults().containsKey("MapDBAptamerPool.maxTreeMapCapacity") ? Configuration.getDefaults().getInt("MapDBAptamerPool.maxTreeMapCapacity") : Configuration.getParameters().getInt("MapDBAptamerPool.maxTreeMapCapacity") );
 	
-	private SimpleDoubleProperty mapDBSelectionCycleBloomFilterCollisionProbability = new SimpleDoubleProperty((Double) Configuration.getDefaults().getDouble("MapDBSelectionCycle.bloomFilterCollisionProbability"));
+	private SimpleDoubleProperty mapDBSelectionCycleBloomFilterCollisionProbability = new SimpleDoubleProperty( Configuration.getDefaults().containsKey("MapDBSelectionCycle.bloomFilterCollisionProbability") ? Configuration.getDefaults().getDouble("MapDBSelectionCycle.bloomFilterCollisionProbability") : Configuration.getParameters().getDouble("MapDBSelectionCycle.bloomFilterCollisionProbability") ); 
 	
-	private ObjectProperty<Integer> performanceMaxNumberOfCores  = new SimpleObjectProperty<Integer>( (Integer)  Configuration.getDefaults().getInt("Performance.maxNumberOfCores"));
+	private ObjectProperty<Integer> performanceMaxNumberOfCores  = new SimpleObjectProperty<Integer>( (Integer) (Configuration.getDefaults().containsKey("Performance.maxNumberOfCores") ? Configuration.getDefaults().getInt("Performance.maxNumberOfCores") : Configuration.getParameters().getInt("Performance.maxNumberOfCores")) );
 	
-	private SimpleIntegerProperty aptaplexParserPairedEndMinOverlap = new SimpleIntegerProperty((Integer) Configuration.getDefaults().getInt("AptaplexParser.PairedEndMinOverlap"));
+	private SimpleIntegerProperty aptaplexParserPairedEndMinOverlap = new SimpleIntegerProperty( Configuration.getDefaults().containsKey("AptaplexParser.PairedEndMinOverlap") ? Configuration.getDefaults().getInt("AptaplexParser.PairedEndMinOverlap") : Configuration.getParameters().getInt("AptaplexParser.PairedEndMinOverlap") );
 	
-	private SimpleIntegerProperty aptaplexParserPairedEndMaxMutations = new SimpleIntegerProperty((Integer) Configuration.getDefaults().getInt("AptaplexParser.PairedEndMaxMutations"));
+	private SimpleIntegerProperty aptaplexParserPairedEndMaxMutations = new SimpleIntegerProperty( Configuration.getDefaults().containsKey("AptaplexParser.PairedEndMaxMutations") ? Configuration.getDefaults().getInt("AptaplexParser.PairedEndMaxMutations") : Configuration.getParameters().getInt("AptaplexParser.PairedEndMaxMutations") );
 	
-	private SimpleIntegerProperty aptaplexParserPairedEndMaxScoreValue = new SimpleIntegerProperty((Integer) Configuration.getDefaults().getInt("AptaplexParser.PairedEndMaxScoreValue"));
+	private SimpleIntegerProperty aptaplexParserPairedEndMaxScoreValue = new SimpleIntegerProperty( Configuration.getDefaults().containsKey("AptaplexParser.PairedEndMaxScoreValue") ? Configuration.getDefaults().getInt("AptaplexParser.PairedEndMaxScoreValue") : Configuration.getParameters().getInt("AptaplexParser.PairedEndMaxScoreValue") );
 	
-	private SimpleIntegerProperty aptaplexParserBarcodeTolerance = new SimpleIntegerProperty((Integer) Configuration.getDefaults().getInt("AptaplexParser.BarcodeTolerance"));
+	private SimpleIntegerProperty aptaplexParserBarcodeTolerance = new SimpleIntegerProperty( Configuration.getDefaults().containsKey("AptaplexParser.BarcodeTolerance") ? Configuration.getDefaults().getInt("AptaplexParser.BarcodeTolerance") : Configuration.getParameters().getInt("AptaplexParser.BarcodeTolerance") ); 
 	
-	private SimpleIntegerProperty aptaplexParserPrimerTolerance = new SimpleIntegerProperty((Integer) Configuration.getDefaults().getInt("AptaplexParser.PrimerTolerance"));
-	
+	private SimpleIntegerProperty aptaplexParserPrimerTolerance = new SimpleIntegerProperty( Configuration.getDefaults().containsKey("AptaplexParser.PrimerTolerance") ? Configuration.getDefaults().getInt("AptaplexParser.PrimerTolerance") : Configuration.getParameters().getInt("AptaplexParser.PrimerTolerance") );
 	
 	private File lastSelectedDirectory = null;
-	
-	
+
+
 	/**
 	 * Container storing all instances of the selectionCycleDetails for later access
 	 */
