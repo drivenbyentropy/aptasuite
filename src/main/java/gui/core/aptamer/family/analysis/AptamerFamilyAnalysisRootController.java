@@ -546,7 +546,6 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 			public void run() {
 				
 				// Fill cardinality array
-				
 				if (clusterOrderSizeRadioButton.isSelected()) { // For size
 					
 					Iterator<Entry<Integer, Integer>> cluster_it = clusters.iterator().iterator();
@@ -554,32 +553,33 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 					Entry<Integer, Integer> cluster_entry = cluster_it.next();
 					Entry<Integer, Integer> cardinality_entry = cardinality_it.next();
 					
-					while ( cluster_it.hasNext() || cardinality_it.hasNext() ) { // Ids are sorted in both cases
+					
+					while ( cluster_it.hasNext() && cardinality_it.hasNext() ) { // Ids are sorted in both cases
 
 						progress.incrementAndGet();
-						
-						if ( cluster_entry.getKey().equals(cardinality_entry.getKey()) ) {
 
-							cardinalities[cluster_entry.getValue()] += cardinality_entry.getValue();  
+						if (cluster_entry.getKey() < cardinality_entry.getKey()) {
+							
 							cluster_entry = cluster_it.next();
+							
+						}
+						else if (cluster_entry.getKey() > cardinality_entry.getKey()){
+							
 							cardinality_entry = cardinality_it.next();
 							
 						}
+						
+						// Process
 						else {
-							
-							if (cluster_entry.getKey() < cardinality_entry.getKey()) {
-								
-								cluster_entry = cluster_it.next();
-								
-							}
-							else {
-								
-								cardinality_entry = cardinality_it.next();
-								
-							}
+
+							cardinalities[cluster_entry.getValue()] += cardinality_entry.getValue();  
+							cluster_entry = cluster_it.next();
 							
 						}
-					}		
+
+
+					}	
+							
 					
 				} else { //For Diversity
 					
@@ -588,31 +588,28 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 					Entry<Integer, Integer> cluster_entry = cluster_it.next();
 					Entry<Integer, Integer> cardinality_entry = cardinality_it.next();
 					
-					while ( cluster_it.hasNext() || cardinality_it.hasNext() ) { // Ids are sorted in both cases
+					while ( cluster_it.hasNext() && cardinality_it.hasNext() ) { // Ids are sorted in both cases
 
 						progress.incrementAndGet();
 						
-						if ( cluster_entry.getKey().equals(cardinality_entry.getKey()) ) {
-
-							cardinalities[cluster_entry.getValue()] += 1;  
+						if (cluster_entry.getKey() < cardinality_entry.getKey()) {
+							
 							cluster_entry = cluster_it.next();
+							
+						}
+						else if (cluster_entry.getKey() > cardinality_entry.getKey()){
+							
 							cardinality_entry = cardinality_it.next();
 							
 						}
+						
 						else {
-							
-							if (cluster_entry.getKey() < cardinality_entry.getKey()) {
-								
-								cluster_entry = cluster_it.next();
-								
-							}
-							else {
-								
-								cardinality_entry = cardinality_it.next();
-								
-							}
+
+							cardinalities[cluster_entry.getValue()] += 1;  
+							cluster_entry = cluster_it.next();
 							
 						}
+						
 					}		
 					
 				}
@@ -722,7 +719,10 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
         ObservableList<ClusterTableRowData> data = FXCollections.observableArrayList( new ArrayList<ClusterTableRowData>() );
         for (int x=fromIndex; x<toIndex; x++) {
         	
-        	data.add(new ClusterTableRowData( cluster_ids[x], cardinalities[x]));
+        	// we need to filter out clusters which have no aptamers in the selected cycle
+        	if (cardinalities[x] != 0) {
+        		data.add(new ClusterTableRowData( cluster_ids[x], cardinalities[x]));
+        	}
         	
         }
         
@@ -1134,22 +1134,38 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 		// Reference Cycle 
 		SelectionCycle reference_cycle = this.referenceSelectionCycleComboBox.getSelectionModel().getSelectedItem();
 		
-		// Initialize logo and mutation data structures
-		double[][] logo_data = new double[4][this.randomizedRegionSizeComboBox.getSelectionModel().getSelectedItem()];
-		double[][] mutation_data = new double[4][this.randomizedRegionSizeComboBox.getSelectionModel().getSelectedItem()];
-		
 		// Get the seed sequence of the cluster
 		byte[] seed = pool.getAptamer(this.aptamer_ids[0]);
 		AptamerBounds seed_bounds = pool.getAptamerBounds(this.aptamer_ids[0]);
+		
+		//AptamerBounds bound = experiment.getAptamerPool().getAptamerBounds(this.sequenceTableView.getItems().get(0).getId().getValue());
+		
+		// Determine the size of the randomized region based on the sequece table content
+		int randomized_region_size = seed_bounds.endIndex - seed_bounds.startIndex;
+		
+		// Initialize logo and mutation data structures
+		double[][] logo_data = new double[4][randomized_region_size];
+		double[][] mutation_data = new double[4][randomized_region_size];
 			
 		Iterator<Entry<Integer, byte[]>> pool_it = pool.inverse_view_iterator().iterator();
 		Iterator<Entry<Integer, Integer>> cardinality_it = reference_cycle.iterator().iterator();
 		Entry<Integer, byte[]> pool_entry = pool_it.next();
 		Entry<Integer, Integer> cardinality_entry = cardinality_it.next();
 		
-		while ( pool_it.hasNext() || cardinality_it.hasNext() ) { // Ids are sorted in both cases
+		while ( pool_it.hasNext() && cardinality_it.hasNext() ) { // Ids are sorted in both cases
 
-			if ( pool_entry.getKey().equals(cardinality_entry.getKey()) ) { // aptamer is in the referece cycle
+			if (pool_entry.getKey() < cardinality_entry.getKey()) {
+				
+				pool_entry = pool_it.next();
+				
+			}
+			else if (pool_entry.getKey() > cardinality_entry.getKey()) {
+				
+				cardinality_entry = cardinality_it.next();
+				
+			}
+			
+			else { // aptamer is in the referece cycle
 
 				if ( cluster_membership.get(pool_entry.getKey()) ) {
 				
@@ -1174,26 +1190,10 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 				
 				// Advance the iterators
 				pool_entry = pool_it.next();
-				cardinality_entry = cardinality_it.next();
-				
-			}
-			else {
-				
-				if (pool_entry.getKey() < cardinality_entry.getKey()) {
-					
-					pool_entry = pool_it.next();
-					
-				}
-				else {
-					
-					cardinality_entry = cardinality_it.next();
-					
-				}
 				
 			}
 			
 		}
-		
 		
 		// Create metadata
 		String[] labels = new String[seed_bounds.endIndex - seed_bounds.startIndex];
@@ -1295,11 +1295,22 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 				Entry<Integer, Integer> cluster_entry = cluster_it.next();
 				Entry<Integer, Integer> cardinality_entry = cardinality_it.next();
 				
-				while ( cluster_it.hasNext() || cardinality_it.hasNext() ) { // Ids are sorted in both cases
+				while ( cluster_it.hasNext() && cardinality_it.hasNext() ) { // Ids are sorted in both cases
 
 					progress.incrementAndGet();
 					
-					if ( cluster_entry.getKey().equals(cardinality_entry.getKey()) ) {
+					if (cluster_entry.getKey() < cardinality_entry.getKey()) {
+						
+						cluster_entry = cluster_it.next();
+						
+					}
+					else if (cluster_entry.getKey() > cardinality_entry.getKey()) {
+						
+						cardinality_entry = cardinality_it.next();
+						
+					}
+					
+					else {
 
 						if (cluster_entry.getValue() == cluster_id) {
 							
@@ -1309,27 +1320,11 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 						}
 						
 						cluster_entry = cluster_it.next();
-						cardinality_entry = cardinality_it.next();
 						
 					}
-					else {
-						
-						if (cluster_entry.getKey() < cardinality_entry.getKey()) {
-							
-							cluster_entry = cluster_it.next();
-							
-						}
-						else {
-							
-							cardinality_entry = cardinality_it.next();
-							
-						}
-						
-					}
-				}
 					
+				}
 				
-				System.out.println("DIVERSITY " + cluster_diversity);
 				
 				// Get all Aptamers which are members of the cluster and are present in the selected cycle
 				aptamer_ids = new int[cluster_diversity];
@@ -1363,11 +1358,22 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 				cluster_entry = cluster_it.next();
 				cardinality_entry = cardinality_it.next();
 				
-				while ( cluster_it.hasNext() || cardinality_it.hasNext() ) { // Ids are sorted in both cases
+				while ( cluster_it.hasNext() && cardinality_it.hasNext() ) { // Ids are sorted in both cases
 
 					progress.incrementAndGet();
 					
-					if ( cluster_entry.getKey().equals(cardinality_entry.getKey()) ) {
+					if (cluster_entry.getKey() < cardinality_entry.getKey()) {
+						
+						cluster_entry = cluster_it.next();
+						
+					}
+					else if (cluster_entry.getKey() > cardinality_entry.getKey()){
+						
+						cardinality_entry = cardinality_it.next();
+						
+					}
+					
+					else {
 
 						if (cluster_entry.getValue() == cluster_id) {
 							
@@ -1376,23 +1382,9 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 						}
 						
 						cluster_entry = cluster_it.next();
-						cardinality_entry = cardinality_it.next();
 						
 					}
-					else {
-						
-						if (cluster_entry.getKey() < cardinality_entry.getKey()) {
-							
-							cluster_entry = cluster_it.next();
-							
-						}
-						else {
-							
-							cardinality_entry = cardinality_it.next();
-							
-						}
-						
-					}
+					
 				}
 				
 				// Now sort the aptamers

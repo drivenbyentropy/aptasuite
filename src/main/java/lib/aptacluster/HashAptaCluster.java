@@ -82,7 +82,7 @@ public class HashAptaCluster implements AptaCluster {
 	/**
 	 * Counter for unique cluster ids, thread safe
 	 */
-	private AtomicInteger cluster_id = new AtomicInteger(0);
+	private AtomicInteger cluster_id = new AtomicInteger(-1);
 	
 	/**
 	 * List of aptamer ids sorted (descending) by the commutative cardinality in all selection cycles

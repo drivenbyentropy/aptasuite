@@ -219,7 +219,7 @@ public class LogoChartPanelController {
 			e.printStackTrace();
 		}
 		
-		// Add the remainin columns
+		// Add the remaining columns
 		for(int column_index=0; column_index<data[0].length; column_index++) {
 			
 			FXMLLoader loader = new FXMLLoader(getClass().getResource("BarColumn.fxml"));
