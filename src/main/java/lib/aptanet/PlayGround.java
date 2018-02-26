@@ -36,6 +36,8 @@ import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 
 import lib.aptamer.datastructures.Experiment;
+import lib.aptanet.input.InputEncoding;
+import lib.aptanet.input.SequenceBPPMRecordReader;
 import utilities.AptaLogger;
 import utilities.Configuration;
 

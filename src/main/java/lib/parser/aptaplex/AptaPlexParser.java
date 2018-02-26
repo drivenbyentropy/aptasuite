@@ -28,7 +28,13 @@ public class AptaPlexParser implements Parser, Runnable{
 	/**
 	 * The progress of the parser instance. Writable to the consumers and thread-safe
 	 */
-	private static final AptaPlexProgress progress = new AptaPlexProgress();
+	private static AptaPlexProgress progress;
+	
+	public AptaPlexParser() {
+		
+		progress = new AptaPlexProgress();
+		
+	}
 	
 	@Override
 	public void parse() {

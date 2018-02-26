@@ -226,6 +226,7 @@ public class Wizard2Controller extends AbstractWizardController {
 				while (progress == null) {
 					if (parser != null) {
 						progress = (AptaPlexProgress) parser.Progress();
+						System.out.println("GOT PROGRESS INSTANCE  " + progress);
 					}
 					else {
 						Thread.sleep(1000);
@@ -237,6 +238,7 @@ public class Wizard2Controller extends AbstractWizardController {
 					Platform.runLater(new Runnable() {
 						@Override
 						public void run() {
+								System.out.println("Progress " + progress);
                 				totalAcceptedReadsTextField.textProperty().set(progress.totalAcceptedReads.toString());
                 				totalProcessedReadsTextField.textProperty().set(progress.totalProcessedReads.toString());
                 				contigAssemblyFailureTextField.textProperty().set(progress.totalContigAssemblyFails.toString());
