@@ -21,11 +21,7 @@ import org.apache.commons.io.FileUtils;
 
 import gui.activity.ProgressPaneController;
 import gui.core.RootLayoutController;
-import gui.wizards.newexperiment.SelectionCycleDataModel;
-import gui.wizards.newexperiment.Wizard1Controller;
-import gui.wizards.newexperiment.Wizard2Controller;
 import javafx.application.Platform;
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
@@ -44,9 +40,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import lib.aptamer.datastructures.Experiment;
 import lib.aptamer.datastructures.SelectionCycle;
-import lib.parser.aptaplex.AptaPlexParser;
 import lib.parser.aptasim.AptaSimParser;
-import lib.parser.aptasim.AptaSimParserSoumitra;
 import lib.parser.aptasim.AptaSimProgress;
 import utilities.AptaLogger;
 import utilities.Configuration;
@@ -463,8 +457,7 @@ public class AptaSimWizardController {
 
 				// Initialize the parser and run it in a thread
 				AptaLogger.log(Level.CONFIG, getClass(), "Initializing AptaSIM");
-//				AptaSimParser parser = new AptaSimParser();
-				AptaSimParserSoumitra parser = new AptaSimParserSoumitra();
+				AptaSimParser parser = new AptaSimParser();
 
 				parserThread = new Thread(parser, "AptaSIM Main");
 
