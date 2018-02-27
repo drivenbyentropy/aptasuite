@@ -86,13 +86,29 @@ public class ExperimentOverviewRandomizedRegionSizeDistributionController {
 			
 		}
 		
+		// Get the largest size (but at least 10) and pad with zeros and 5 to the right
+		int maximum = Math.max( 10, totals.keySet().stream().max( (x,y) -> Integer.compare(x, y) ).get() ) + 5; 
+		//int minimum = totals.keySet().stream().min( (x,y) -> Integer.compare(x, y) ).get();
+		
+		for (int x=0; x<maximum; x++) {
+			
+			if (!totals.containsKey(x)) {
+				
+				totals.put(x, 0);
+				
+			}
+			
+		}
+		
 		// Create the dataset for plotting
 		XYChart.Series<String,Number> chart_data = new XYChart.Series(); 
 		chart_data.setName("Randomized Region Sizes in the Aptamer Pool");
-		for ( Entry<Integer, Integer> item : totals.entrySet()) {
+		for ( int x=0; x<maximum; x++) {
 			
-			chart_data.getData().add(new XYChart.Data<String,Number>(item.getKey().toString(), item.getValue()));
-			total += item.getValue();
+			
+			
+			chart_data.getData().add(new XYChart.Data<String,Number>(x+"", totals.get(x)));
+			total += totals.get(x);
 		}
 		
 		return chart_data;
