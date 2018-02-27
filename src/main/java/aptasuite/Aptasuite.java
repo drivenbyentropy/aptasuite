@@ -1,5 +1,6 @@
 package aptasuite;
 
+import java.util.Locale;
 import java.util.logging.Level;
 
 import org.apache.commons.cli.CommandLine;
@@ -25,9 +26,12 @@ public class Aptasuite {
 	                         "org.apache.commons.logging.impl.NoOpLog");
 	      System.setProperty("org.apache.commons.beanutils.level" , "SEVERE");
 	   }
-	
+
 	
 	public static void main(String[] args) {
+
+		// Set a local for the instance so that we do not run into formatting exceptions in different countries
+		Locale.setDefault( new Locale("en", "US") );
 		
 		// Log system info for debugging purposes
 		
