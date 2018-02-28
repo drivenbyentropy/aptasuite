@@ -322,7 +322,7 @@ public class MotifAnalysisRootController implements Initializable{
 			
 			    TreeItem selectedItem = (TreeItem) newValue;
 
-			    if (selectedItem.isLeaf()) {
+			    if (selectedItem != null && selectedItem.isLeaf()) {
 			    	
 			    	// Update the UI if the user has selected a leaf
 			    	updateMotifInformation(selectedItem);
