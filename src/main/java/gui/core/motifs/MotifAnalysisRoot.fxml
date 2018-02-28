@@ -10,6 +10,7 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.RadioButton?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.TextField?>
@@ -27,7 +28,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" fx:controller="gui.core.motifs.MotifAnalysisRootController">
+<AnchorPane xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.core.motifs.MotifAnalysisRootController">
    <children>
       <StackPane fx:id="rootStackPane" layoutX="210.0" layoutY="125.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
@@ -216,209 +217,213 @@
                                           <StackPane fx:id="sequenceTableStackPane" />
                                           <StackPane prefWidth="200.0">
                                              <children>
-                                                <SplitPane dividerPositions="0.3111888111888112, 0.5, 0.5, 0.5" orientation="VERTICAL">
-                                                  <items>
-                                                      <TitledPane text="Motif Overview">
-                                                        <content>
-                                                          <AnchorPane>
-                                                               <children>
-                                                                  <HBox layoutX="9.600000381469727" layoutY="9.600000381469727" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                                <ScrollPane fitToWidth="true">
+                                                   <content>
+                                                      <SplitPane dividerPositions="0.3111888111888112, 0.5, 0.5, 0.5" orientation="VERTICAL">
+                                                        <items>
+                                                            <TitledPane text="Motif Overview">
+                                                              <content>
+                                                                <AnchorPane>
                                                                      <children>
-                                                                        <GridPane>
-                                                                          <columnConstraints>
-                                                                            <ColumnConstraints fillWidth="false" hgrow="NEVER" minWidth="-Infinity" />
-                                                                            <ColumnConstraints fillWidth="false" hgrow="SOMETIMES" minWidth="-Infinity" />
-                                                                          </columnConstraints>
-                                                                          <rowConstraints>
-                                                                            <RowConstraints maxHeight="25.0" minHeight="25.0" prefHeight="25.0" valignment="TOP" vgrow="NEVER" />
-                                                                            <RowConstraints maxHeight="25.0" minHeight="25.0" prefHeight="25.0" valignment="TOP" vgrow="NEVER" />
-                                                                            <RowConstraints maxHeight="25.0" minHeight="25.0" prefHeight="25.0" valignment="TOP" vgrow="NEVER" />
-                                                                              <RowConstraints maxHeight="25.0" minHeight="25.0" prefHeight="25.0" valignment="TOP" vgrow="NEVER" />
-                                                                          </rowConstraints>
+                                                                        <HBox layoutX="9.600000381469727" layoutY="9.600000381469727" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                                                            <children>
-                                                                              <Label text="Seed Kmer">
-                                                                                 <font>
-                                                                                    <Font size="12.0" />
-                                                                                 </font>
-                                                                                 <GridPane.margin>
-                                                                                    <Insets right="10.0" />
-                                                                                 </GridPane.margin>
-                                                                              </Label>
-                                                                              <Label text="Seed Pvalue" GridPane.rowIndex="1">
-                                                                                 <font>
-                                                                                    <Font size="12.0" />
-                                                                                 </font>
-                                                                                 <GridPane.margin>
-                                                                                    <Insets right="10.0" />
-                                                                                 </GridPane.margin>
-                                                                              </Label>
-                                                                              <Label text="Seed Frequency" GridPane.rowIndex="2">
-                                                                                 <font>
-                                                                                    <Font size="12.0" />
-                                                                                 </font>
-                                                                                 <GridPane.margin>
-                                                                                    <Insets right="10.0" />
-                                                                                 </GridPane.margin>
-                                                                              </Label>
-                                                                              <Label text="Motif Frequency" GridPane.rowIndex="3">
-                                                                                 <font>
-                                                                                    <Font size="12.0" />
-                                                                                 </font>
-                                                                                 <GridPane.margin>
-                                                                                    <Insets right="10.0" />
-                                                                                 </GridPane.margin>
-                                                                              </Label>
-                                                                              <Label fx:id="seedKmerLabel" GridPane.columnIndex="1">
-                                                                                 <font>
-                                                                                    <Font size="12.0" />
-                                                                                 </font>
-                                                                              </Label>
-                                                                              <Label fx:id="seedPValueLabel" GridPane.columnIndex="1" GridPane.rowIndex="1">
-                                                                                 <font>
-                                                                                    <Font size="12.0" />
-                                                                                 </font>
-                                                                              </Label>
-                                                                              <Label fx:id="seedFrequencyLabel" GridPane.columnIndex="1" GridPane.rowIndex="2">
-                                                                                 <font>
-                                                                                    <Font size="12.0" />
-                                                                                 </font>
-                                                                              </Label>
-                                                                              <Label fx:id="motifFrequencyLabel" GridPane.columnIndex="1" GridPane.rowIndex="3">
-                                                                                 <font>
-                                                                                    <Font size="12.0" />
-                                                                                 </font>
-                                                                              </Label>
-                                                                           </children>
-                                                                        </GridPane>
-                                                                        <Separator maxHeight="1.7976931348623157E308" orientation="VERTICAL">
-                                                                           <HBox.margin>
-                                                                              <Insets left="10.0" right="10.0" />
-                                                                           </HBox.margin>
-                                                                        </Separator>
-                                                                        <VBox>
-                                                                           <children>
-                                                                              <Label text="K-Mer Alignment">
-                                                                                 <font>
-                                                                                    <Font size="12.0" />
-                                                                                 </font>
-                                                                              </Label>
-                                                                              <ListView fx:id="kmerListView" style="-fx-background-color: transparent; -fx-font-family: Monospaced; -fx-font-size: 12px;" />
-                                                                           </children>
-                                                                        </VBox>
-                                                                     </children>
-                                                                  </HBox>
-                                                               </children>
-                                                            </AnchorPane>
-                                                        </content>
-                                                         <font>
-                                                            <Font size="12.0" />
-                                                         </font>
-                                                      </TitledPane>
-                                                      <TitledPane maxHeight="1.7976931348623157E308" text="Motif Sequence Logo">
-                                                         <content>
-                                                          <AnchorPane fx:id="motifSequenceLogoAnchorPane" />
-                                                         </content>
-                                                         <font>
-                                                            <Font size="12.0" />
-                                                         </font>
-                                                      </TitledPane>
-                                                      <TitledPane maxHeight="1.7976931348623157E308" text="Motif Context Trace">
-                                                         <content>
-                                                          <AnchorPane fx:id="contextLogoAnchorPane" />
-                                                         </content>
-                                                         <font>
-                                                            <Font size="12.0" />
-                                                         </font>
-                                                      </TitledPane>
-                                                      <TitledPane maxHeight="1.7976931348623157E308" text="Motif Coverage">
-                                                         <content>
-                                                            <AnchorPane fx:id="contextLogoAnchorPane1">
-                                                               <children>
-                                                                  <StackPane fx:id="motifCoverageStackPane" layoutX="9.600000381469727" layoutY="9.600000381469727" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-                                                                     <children>
-                                                                        <VBox>
-                                                                           <children>
-                                                                              <HBox alignment="CENTER_LEFT">
+                                                                              <GridPane>
+                                                                                <columnConstraints>
+                                                                                  <ColumnConstraints fillWidth="false" hgrow="NEVER" minWidth="-Infinity" />
+                                                                                  <ColumnConstraints fillWidth="false" hgrow="SOMETIMES" minWidth="-Infinity" />
+                                                                                </columnConstraints>
+                                                                                <rowConstraints>
+                                                                                  <RowConstraints maxHeight="25.0" minHeight="25.0" prefHeight="25.0" valignment="TOP" vgrow="NEVER" />
+                                                                                  <RowConstraints maxHeight="25.0" minHeight="25.0" prefHeight="25.0" valignment="TOP" vgrow="NEVER" />
+                                                                                  <RowConstraints maxHeight="25.0" minHeight="25.0" prefHeight="25.0" valignment="TOP" vgrow="NEVER" />
+                                                                                    <RowConstraints maxHeight="25.0" minHeight="25.0" prefHeight="25.0" valignment="TOP" vgrow="NEVER" />
+                                                                                </rowConstraints>
                                                                                  <children>
-                                                                                    <Label minWidth="-Infinity" text="Cycle:">
-                                                                                       <HBox.margin>
+                                                                                    <Label text="Seed Kmer">
+                                                                                       <font>
+                                                                                          <Font size="12.0" />
+                                                                                       </font>
+                                                                                       <GridPane.margin>
                                                                                           <Insets right="10.0" />
-                                                                                       </HBox.margin>
+                                                                                       </GridPane.margin>
+                                                                                    </Label>
+                                                                                    <Label text="Seed Pvalue" GridPane.rowIndex="1">
+                                                                                       <font>
+                                                                                          <Font size="12.0" />
+                                                                                       </font>
+                                                                                       <GridPane.margin>
+                                                                                          <Insets right="10.0" />
+                                                                                       </GridPane.margin>
+                                                                                    </Label>
+                                                                                    <Label text="Seed Frequency" GridPane.rowIndex="2">
+                                                                                       <font>
+                                                                                          <Font size="12.0" />
+                                                                                       </font>
+                                                                                       <GridPane.margin>
+                                                                                          <Insets right="10.0" />
+                                                                                       </GridPane.margin>
+                                                                                    </Label>
+                                                                                    <Label text="Motif Frequency" GridPane.rowIndex="3">
+                                                                                       <font>
+                                                                                          <Font size="12.0" />
+                                                                                       </font>
+                                                                                       <GridPane.margin>
+                                                                                          <Insets right="10.0" />
+                                                                                       </GridPane.margin>
+                                                                                    </Label>
+                                                                                    <Label fx:id="seedKmerLabel" GridPane.columnIndex="1">
                                                                                        <font>
                                                                                           <Font size="12.0" />
                                                                                        </font>
                                                                                     </Label>
-                                                                                    <ComboBox fx:id="motifCoverageCycleComboBox" maxWidth="1.7976931348623157E308" onAction="#redrawDistributionPlotContent" HBox.hgrow="ALWAYS" />
+                                                                                    <Label fx:id="seedPValueLabel" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                                                                                       <font>
+                                                                                          <Font size="12.0" />
+                                                                                       </font>
+                                                                                    </Label>
+                                                                                    <Label fx:id="seedFrequencyLabel" GridPane.columnIndex="1" GridPane.rowIndex="2">
+                                                                                       <font>
+                                                                                          <Font size="12.0" />
+                                                                                       </font>
+                                                                                    </Label>
+                                                                                    <Label fx:id="motifFrequencyLabel" GridPane.columnIndex="1" GridPane.rowIndex="3">
+                                                                                       <font>
+                                                                                          <Font size="12.0" />
+                                                                                       </font>
+                                                                                    </Label>
                                                                                  </children>
-                                                                              </HBox>
-                                                                              <AreaChart fx:id="motifCoverageAreaChart" legendVisible="false">
-                                                                                <xAxis>
-                                                                                  <NumberAxis side="BOTTOM" />
-                                                                                </xAxis>
-                                                                                <yAxis>
-                                                                                  <NumberAxis side="LEFT" />
-                                                                                </yAxis>
-                                                                              </AreaChart>
-                                                                           </children>
-                                                                        </VBox>
-                                                                     </children>
-                                                                  </StackPane>
-                                                               </children>
-                                                            </AnchorPane>
-                                                         </content>
-                                                         <font>
-                                                            <Font size="12.0" />
-                                                         </font>
-                                                      </TitledPane>
-                                                      <TitledPane text="Cardinality Chart (Selected Sequences)">
-                                                        <content>
-                                                          <AnchorPane>
-                                                               <children>
-                                                                  <StackPane fx:id="cardinalityChartStackPane" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-                                                                     <children>
-                                                                        <VBox>
-                                                                           <children>
-                                                                              <HBox alignment="CENTER_LEFT" minHeight="-Infinity" minWidth="-Infinity">
+                                                                              </GridPane>
+                                                                              <Separator maxHeight="1.7976931348623157E308" orientation="VERTICAL">
+                                                                                 <HBox.margin>
+                                                                                    <Insets left="10.0" right="10.0" />
+                                                                                 </HBox.margin>
+                                                                              </Separator>
+                                                                              <VBox>
                                                                                  <children>
-                                                                                    <RadioButton mnemonicParsing="false" selected="true" text="Show Enrichments">
+                                                                                    <Label text="K-Mer Alignment">
                                                                                        <font>
                                                                                           <Font size="12.0" />
                                                                                        </font>
-                                                                                       <HBox.margin>
-                                                                                          <Insets right="10.0" />
-                                                                                       </HBox.margin>
-                                                                                       <toggleGroup>
-                                                                                          <ToggleGroup fx:id="chartToggleGroup" />
-                                                                                       </toggleGroup>
-                                                                                    </RadioButton>
-                                                                                    <RadioButton fx:id="plotCountsRadioButton" mnemonicParsing="false" selected="true" text="Show Counts" toggleGroup="$chartToggleGroup">
-                                                                                       <font>
-                                                                                          <Font size="12.0" />
-                                                                                       </font>
-                                                                                    </RadioButton>
+                                                                                    </Label>
+                                                                                    <ListView fx:id="kmerListView" prefHeight="200.0" style="-fx-background-color: transparent; -fx-font-family: Monospaced; -fx-font-size: 12px;" />
                                                                                  </children>
-                                                                              </HBox>
-                                                                              <LineChart fx:id="cardinalityLineChart" legendSide="RIGHT" stylesheets="@../aptamer/family/analysis/style_cardinality.css">
-                                                                                <xAxis>
-                                                                                  <CategoryAxis side="BOTTOM" />
-                                                                                </xAxis>
-                                                                                <yAxis>
-                                                                                  <NumberAxis side="LEFT" />
-                                                                                </yAxis>
-                                                                              </LineChart>
+                                                                              </VBox>
                                                                            </children>
-                                                                        </VBox>
+                                                                        </HBox>
                                                                      </children>
-                                                                  </StackPane>
-                                                               </children>
-                                                            </AnchorPane>
-                                                        </content>
-                                                         <font>
-                                                            <Font size="12.0" />
-                                                         </font>
-                                                      </TitledPane>
-                                                  </items>
-                                                </SplitPane>
+                                                                  </AnchorPane>
+                                                              </content>
+                                                               <font>
+                                                                  <Font size="12.0" />
+                                                               </font>
+                                                            </TitledPane>
+                                                            <TitledPane maxHeight="1.7976931348623157E308" text="Motif Sequence Logo">
+                                                               <content>
+                                                                <AnchorPane fx:id="motifSequenceLogoAnchorPane" />
+                                                               </content>
+                                                               <font>
+                                                                  <Font size="12.0" />
+                                                               </font>
+                                                            </TitledPane>
+                                                            <TitledPane maxHeight="1.7976931348623157E308" text="Motif Context Trace">
+                                                               <content>
+                                                                <AnchorPane fx:id="contextLogoAnchorPane" />
+                                                               </content>
+                                                               <font>
+                                                                  <Font size="12.0" />
+                                                               </font>
+                                                            </TitledPane>
+                                                            <TitledPane maxHeight="1.7976931348623157E308" text="Motif Coverage">
+                                                               <content>
+                                                                  <AnchorPane fx:id="contextLogoAnchorPane1">
+                                                                     <children>
+                                                                        <StackPane fx:id="motifCoverageStackPane" layoutX="9.600000381469727" layoutY="9.600000381469727" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                                                           <children>
+                                                                              <VBox>
+                                                                                 <children>
+                                                                                    <HBox alignment="CENTER_LEFT">
+                                                                                       <children>
+                                                                                          <Label minWidth="-Infinity" text="Cycle:">
+                                                                                             <HBox.margin>
+                                                                                                <Insets right="10.0" />
+                                                                                             </HBox.margin>
+                                                                                             <font>
+                                                                                                <Font size="12.0" />
+                                                                                             </font>
+                                                                                          </Label>
+                                                                                          <ComboBox fx:id="motifCoverageCycleComboBox" maxWidth="1.7976931348623157E308" onAction="#redrawDistributionPlotContent" HBox.hgrow="ALWAYS" />
+                                                                                       </children>
+                                                                                    </HBox>
+                                                                                    <AreaChart fx:id="motifCoverageAreaChart" legendVisible="false">
+                                                                                      <xAxis>
+                                                                                        <NumberAxis side="BOTTOM" />
+                                                                                      </xAxis>
+                                                                                      <yAxis>
+                                                                                        <NumberAxis side="LEFT" />
+                                                                                      </yAxis>
+                                                                                    </AreaChart>
+                                                                                 </children>
+                                                                              </VBox>
+                                                                           </children>
+                                                                        </StackPane>
+                                                                     </children>
+                                                                  </AnchorPane>
+                                                               </content>
+                                                               <font>
+                                                                  <Font size="12.0" />
+                                                               </font>
+                                                            </TitledPane>
+                                                            <TitledPane maxHeight="1.7976931348623157E308" text="Cardinality Chart (Selected Sequences)">
+                                                              <content>
+                                                                <AnchorPane>
+                                                                     <children>
+                                                                        <StackPane fx:id="cardinalityChartStackPane" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                                                           <children>
+                                                                              <VBox>
+                                                                                 <children>
+                                                                                    <HBox alignment="CENTER_LEFT" minHeight="-Infinity" minWidth="-Infinity">
+                                                                                       <children>
+                                                                                          <RadioButton mnemonicParsing="false" selected="true" text="Show Enrichments">
+                                                                                             <font>
+                                                                                                <Font size="12.0" />
+                                                                                             </font>
+                                                                                             <HBox.margin>
+                                                                                                <Insets right="10.0" />
+                                                                                             </HBox.margin>
+                                                                                             <toggleGroup>
+                                                                                                <ToggleGroup fx:id="chartToggleGroup" />
+                                                                                             </toggleGroup>
+                                                                                          </RadioButton>
+                                                                                          <RadioButton fx:id="plotCountsRadioButton" mnemonicParsing="false" selected="true" text="Show Counts" toggleGroup="$chartToggleGroup">
+                                                                                             <font>
+                                                                                                <Font size="12.0" />
+                                                                                             </font>
+                                                                                          </RadioButton>
+                                                                                       </children>
+                                                                                    </HBox>
+                                                                                    <LineChart fx:id="cardinalityLineChart" legendSide="RIGHT" stylesheets="@../aptamer/family/analysis/style_cardinality.css">
+                                                                                      <xAxis>
+                                                                                        <CategoryAxis side="BOTTOM" />
+                                                                                      </xAxis>
+                                                                                      <yAxis>
+                                                                                        <NumberAxis side="LEFT" />
+                                                                                      </yAxis>
+                                                                                    </LineChart>
+                                                                                 </children>
+                                                                              </VBox>
+                                                                           </children>
+                                                                        </StackPane>
+                                                                     </children>
+                                                                  </AnchorPane>
+                                                              </content>
+                                                               <font>
+                                                                  <Font size="12.0" />
+                                                               </font>
+                                                            </TitledPane>
+                                                        </items>
+                                                      </SplitPane>
+                                                   </content>
+                                                </ScrollPane>
                                              </children>
                                           </StackPane>
                                       </items>

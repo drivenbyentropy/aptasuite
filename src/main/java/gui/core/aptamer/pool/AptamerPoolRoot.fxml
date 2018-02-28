@@ -28,7 +28,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" fx:controller="gui.core.aptamer.pool.AptamerPoolRootController">
+<AnchorPane xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.core.aptamer.pool.AptamerPoolRootController">
    <children>
       <StackPane fx:id="aptamerPoolRootStackPane" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
@@ -255,188 +255,192 @@
                         <StackPane fx:id="poolTableViewStackPane" />
                         <StackPane>
                            <children>
-                              <SplitPane fx:id="detailsSplitPane" dividerPositions="0.30043541364296084, 0.5645863570391872, 0.8258345428156749" orientation="VERTICAL">
-                                <items>
-                                    <TitledPane animated="false" maxHeight="1.7976931348623157E308" text="Cardinality Chart (Selected Items, Positive Cycles Only)">
-                                      <content>
-                                        <AnchorPane>
-                                             <children>
-                                                <StackPane layoutX="8.800000190734863" layoutY="8.800000190734863" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                              <ScrollPane fitToWidth="true">
+                                 <content>
+                                    <SplitPane fx:id="detailsSplitPane" dividerPositions="0.30043541364296084, 0.5645863570391872, 0.8258345428156749" orientation="VERTICAL">
+                                      <items>
+                                          <TitledPane animated="false" maxHeight="1.7976931348623157E308" text="Cardinality Chart (Selected Items, Positive Cycles Only)">
+                                            <content>
+                                              <AnchorPane>
                                                    <children>
-                                                      <VBox>
+                                                      <StackPane layoutX="8.800000190734863" layoutY="8.800000190734863" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                                          <children>
-                                                            <HBox alignment="CENTER_LEFT" minHeight="-Infinity" minWidth="-Infinity">
+                                                            <VBox>
                                                                <children>
-                                                                  <RadioButton mnemonicParsing="false" onAction="#showCardinalityPlots" selected="true" text="Show Enrichments">
-                                                                     <font>
-                                                                        <Font size="12.0" />
-                                                                     </font>
-                                                                     <HBox.margin>
-                                                                        <Insets right="10.0" />
-                                                                     </HBox.margin>
-                                                                     <toggleGroup>
-                                                                        <ToggleGroup fx:id="chartToggleGroup" />
-                                                                     </toggleGroup>
-                                                                  </RadioButton>
-                                                                  <RadioButton fx:id="plotCountsRadioButton" mnemonicParsing="false" onAction="#showCardinalityPlots" selected="true" text="Show Counts" toggleGroup="$chartToggleGroup">
-                                                                     <font>
-                                                                        <Font size="12.0" />
-                                                                     </font>
-                                                                  </RadioButton>
-                                                               </children>
-                                                               <VBox.margin>
-                                                                  <Insets top="10.0" />
-                                                               </VBox.margin>
-                                                            </HBox>
-                                                            <LineChart fx:id="cardinalityLineChart" legendSide="RIGHT" stylesheets="@style.css">
-                                                              <xAxis>
-                                                                <CategoryAxis side="BOTTOM" />
-                                                              </xAxis>
-                                                              <yAxis>
-                                                                <NumberAxis side="LEFT" />
-                                                              </yAxis>
-                                                            </LineChart>
-                                                         </children>
-                                                      </VBox>
-                                                   </children>
-                                                </StackPane>
-                                             </children>
-                                          </AnchorPane>
-                                      </content>
-                                       <font>
-                                          <Font size="12.0" />
-                                       </font>
-                                    </TitledPane>
-                                    <TitledPane maxHeight="1.7976931348623157E308" text="Secondary Structure (Prediction: RNAFold4J, Visualization: Varna)">
-                                      <content>
-                                          <StackPane>
-                                             <children>
-                                                <VBox fx:id="secondaryStructureVBox">
-                                                   <children>
-                                                      <Label fx:id="varnaSequenceLabel" VBox.vgrow="ALWAYS">
-                                                         <font>
-                                                            <Font name="Monospaced Regular" size="12.0" />
-                                                         </font>
-                                                      </Label>
-                                                      <Label fx:id="varnaStructureLabel" VBox.vgrow="ALWAYS">
-                                                         <font>
-                                                            <Font name="Monospaced Regular" size="12.0" />
-                                                         </font>
-                                                      </Label>
-                                                      <Label fx:id="varnaMFELabel" VBox.vgrow="ALWAYS">
-                                                         <font>
-                                                            <Font name="Monospaced Regular" size="12.0" />
-                                                         </font>
-                                                      </Label>
-                                                      <SwingNode fx:id="varnaSwingNode" VBox.vgrow="ALWAYS" />
-                                                   </children>
-                                                </VBox>
-                                             </children>
-                                          </StackPane>
-                                      </content>
-                                       <font>
-                                          <Font size="12.0" />
-                                       </font>
-                                    </TitledPane>
-                                    <TitledPane maxHeight="1.7976931348623157E308" text="Base Pair Probability Matrix (Prediction: RNAFold4J)">
-                                      <content>
-                                        <AnchorPane>
-                                             <children>
-                                                <StackPane layoutX="9.600000381469727" layoutY="9.600000381469727" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-                                                   <children>
-                                                      <GridPane fx:id="bppmGridPane" alignment="CENTER">
-                                                        <rowConstraints>
-                                                          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                                                          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                                                          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                                                        </rowConstraints>
-                                                      </GridPane>
-                                                   </children>
-                                                </StackPane>
-                                             </children>
-                                          </AnchorPane>
-                                      </content>
-                                       <font>
-                                          <Font size="12.0" />
-                                       </font>
-                                    </TitledPane>
-                                    <TitledPane maxHeight="1.7976931348623157E308" text="Structural Context Distribution (Prediction: CapR4J)">
-                                       <content>
-                                          <AnchorPane>
-                                             <children>
-                                                <StackPane layoutX="9.600000381469727" layoutY="9.600000381469727" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-                                                   <children>
-                                                      <VBox prefHeight="200.0" prefWidth="100.0">
-                                                         <children>
-                                                            <GridPane>
-                                                              <columnConstraints>
-                                                                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-                                                                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-                                                                  <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-                                                              </columnConstraints>
-                                                              <rowConstraints>
-                                                                <RowConstraints vgrow="SOMETIMES" />
-                                                                <RowConstraints vgrow="SOMETIMES" />
-                                                              </rowConstraints>
-                                                               <children>
-                                                                  <Label style="-fx-text-fill: #FF7070;" text="H: Hairpin">
-                                                                     <font>
-                                                                        <Font name="Monospaced Regular" size="12.0" />
-                                                                     </font>
-                                                                     <GridPane.margin>
-                                                                        <Insets />
-                                                                     </GridPane.margin>
-                                                                  </Label>
-                                                                  <Label style="-fx-text-fill: #FA9600;" text="B: Buldge Loop" GridPane.columnIndex="1">
-                                                                     <font>
-                                                                        <Font name="Monospaced Regular" size="12.0" />
-                                                                     </font>
-                                                                  </Label>
-                                                                  <Label style="-fx-text-fill: #A0A0FF;" text="I: Inner Loop" GridPane.columnIndex="2">
-                                                                     <font>
-                                                                        <Font name="Monospaced Regular" size="12.0" />
-                                                                     </font>
-                                                                  </Label>
-                                                                  <Label style="-fx-text-fill: CYAN;" text="M: Multiple Loop" GridPane.rowIndex="1">
-                                                                     <font>
-                                                                        <Font name="Monospaced Regular" size="12.0" />
-                                                                     </font>
-                                                                  </Label>
-                                                                  <Label style="-fx-text-fill: PINK;" text="D: Dangling End" GridPane.columnIndex="1" GridPane.rowIndex="1">
-                                                                     <font>
-                                                                        <Font name="Monospaced Regular" size="12.0" />
-                                                                     </font>
-                                                                  </Label>
-                                                                  <Label style="-fx-text-fill: #C8C8C8;" text="P: Paired" GridPane.columnIndex="2" GridPane.rowIndex="1">
-                                                                     <font>
-                                                                        <Font name="Monospaced Regular" size="12.0" />
-                                                                     </font>
-                                                                  </Label>
-                                                               </children>
-                                                            </GridPane>
-                                                            <ScrollPane style="-fx-background-color: transparent;" vbarPolicy="NEVER">
-                                                               <content>
-                                                                  <VBox>
+                                                                  <HBox alignment="CENTER_LEFT" minHeight="-Infinity" minWidth="-Infinity">
                                                                      <children>
-                                                                        <StackPane fx:id="contextProbabilityStackPane" minHeight="100.0" VBox.vgrow="ALWAYS" />
-                                                                        <Region prefHeight="30.0" prefWidth="0.0" />
+                                                                        <RadioButton mnemonicParsing="false" onAction="#showCardinalityPlots" selected="true" text="Show Enrichments">
+                                                                           <font>
+                                                                              <Font size="12.0" />
+                                                                           </font>
+                                                                           <HBox.margin>
+                                                                              <Insets right="10.0" />
+                                                                           </HBox.margin>
+                                                                           <toggleGroup>
+                                                                              <ToggleGroup fx:id="chartToggleGroup" />
+                                                                           </toggleGroup>
+                                                                        </RadioButton>
+                                                                        <RadioButton fx:id="plotCountsRadioButton" mnemonicParsing="false" onAction="#showCardinalityPlots" selected="true" text="Show Counts" toggleGroup="$chartToggleGroup">
+                                                                           <font>
+                                                                              <Font size="12.0" />
+                                                                           </font>
+                                                                        </RadioButton>
                                                                      </children>
-                                                                  </VBox>
-                                                               </content>
-                                                            </ScrollPane>
+                                                                     <VBox.margin>
+                                                                        <Insets top="10.0" />
+                                                                     </VBox.margin>
+                                                                  </HBox>
+                                                                  <LineChart fx:id="cardinalityLineChart" legendSide="RIGHT" stylesheets="@style.css">
+                                                                    <xAxis>
+                                                                      <CategoryAxis side="BOTTOM" />
+                                                                    </xAxis>
+                                                                    <yAxis>
+                                                                      <NumberAxis side="LEFT" />
+                                                                    </yAxis>
+                                                                  </LineChart>
+                                                               </children>
+                                                            </VBox>
+                                                         </children>
+                                                      </StackPane>
+                                                   </children>
+                                                </AnchorPane>
+                                            </content>
+                                             <font>
+                                                <Font size="12.0" />
+                                             </font>
+                                          </TitledPane>
+                                          <TitledPane maxHeight="1.7976931348623157E308" text="Secondary Structure (Prediction: RNAFold4J, Visualization: Varna)">
+                                            <content>
+                                                <StackPane>
+                                                   <children>
+                                                      <VBox fx:id="secondaryStructureVBox">
+                                                         <children>
+                                                            <Label fx:id="varnaSequenceLabel" VBox.vgrow="ALWAYS">
+                                                               <font>
+                                                                  <Font name="Monospaced Regular" size="12.0" />
+                                                               </font>
+                                                            </Label>
+                                                            <Label fx:id="varnaStructureLabel" VBox.vgrow="ALWAYS">
+                                                               <font>
+                                                                  <Font name="Monospaced Regular" size="12.0" />
+                                                               </font>
+                                                            </Label>
+                                                            <Label fx:id="varnaMFELabel" VBox.vgrow="ALWAYS">
+                                                               <font>
+                                                                  <Font name="Monospaced Regular" size="12.0" />
+                                                               </font>
+                                                            </Label>
+                                                            <SwingNode fx:id="varnaSwingNode" VBox.vgrow="ALWAYS" />
                                                          </children>
                                                       </VBox>
                                                    </children>
                                                 </StackPane>
-                                             </children>
-                                          </AnchorPane>
-                                       </content>
-                                       <font>
-                                          <Font size="12.0" />
-                                       </font>
-                                    </TitledPane>
-                                </items>
-                              </SplitPane>
+                                            </content>
+                                             <font>
+                                                <Font size="12.0" />
+                                             </font>
+                                          </TitledPane>
+                                          <TitledPane maxHeight="1.7976931348623157E308" text="Base Pair Probability Matrix (Prediction: RNAFold4J)">
+                                            <content>
+                                              <AnchorPane>
+                                                   <children>
+                                                      <StackPane layoutX="9.600000381469727" layoutY="9.600000381469727" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                                         <children>
+                                                            <GridPane fx:id="bppmGridPane" alignment="CENTER">
+                                                              <rowConstraints>
+                                                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                                              </rowConstraints>
+                                                            </GridPane>
+                                                         </children>
+                                                      </StackPane>
+                                                   </children>
+                                                </AnchorPane>
+                                            </content>
+                                             <font>
+                                                <Font size="12.0" />
+                                             </font>
+                                          </TitledPane>
+                                          <TitledPane maxHeight="1.7976931348623157E308" text="Structural Context Distribution (Prediction: CapR4J)">
+                                             <content>
+                                                <AnchorPane>
+                                                   <children>
+                                                      <StackPane layoutX="9.600000381469727" layoutY="9.600000381469727" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                                         <children>
+                                                            <VBox prefHeight="200.0" prefWidth="100.0">
+                                                               <children>
+                                                                  <GridPane>
+                                                                    <columnConstraints>
+                                                                      <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                                                                      <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                                                                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                                                                    </columnConstraints>
+                                                                    <rowConstraints>
+                                                                      <RowConstraints vgrow="SOMETIMES" />
+                                                                      <RowConstraints vgrow="SOMETIMES" />
+                                                                    </rowConstraints>
+                                                                     <children>
+                                                                        <Label style="-fx-text-fill: #FF7070;" text="H: Hairpin">
+                                                                           <font>
+                                                                              <Font name="Monospaced Regular" size="12.0" />
+                                                                           </font>
+                                                                           <GridPane.margin>
+                                                                              <Insets />
+                                                                           </GridPane.margin>
+                                                                        </Label>
+                                                                        <Label style="-fx-text-fill: #FA9600;" text="B: Buldge Loop" GridPane.columnIndex="1">
+                                                                           <font>
+                                                                              <Font name="Monospaced Regular" size="12.0" />
+                                                                           </font>
+                                                                        </Label>
+                                                                        <Label style="-fx-text-fill: #A0A0FF;" text="I: Inner Loop" GridPane.columnIndex="2">
+                                                                           <font>
+                                                                              <Font name="Monospaced Regular" size="12.0" />
+                                                                           </font>
+                                                                        </Label>
+                                                                        <Label style="-fx-text-fill: CYAN;" text="M: Multiple Loop" GridPane.rowIndex="1">
+                                                                           <font>
+                                                                              <Font name="Monospaced Regular" size="12.0" />
+                                                                           </font>
+                                                                        </Label>
+                                                                        <Label style="-fx-text-fill: PINK;" text="D: Dangling End" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                                                                           <font>
+                                                                              <Font name="Monospaced Regular" size="12.0" />
+                                                                           </font>
+                                                                        </Label>
+                                                                        <Label style="-fx-text-fill: #C8C8C8;" text="P: Paired" GridPane.columnIndex="2" GridPane.rowIndex="1">
+                                                                           <font>
+                                                                              <Font name="Monospaced Regular" size="12.0" />
+                                                                           </font>
+                                                                        </Label>
+                                                                     </children>
+                                                                  </GridPane>
+                                                                  <ScrollPane style="-fx-background-color: transparent;" vbarPolicy="NEVER">
+                                                                     <content>
+                                                                        <VBox>
+                                                                           <children>
+                                                                              <StackPane fx:id="contextProbabilityStackPane" minHeight="100.0" VBox.vgrow="ALWAYS" />
+                                                                              <Region prefHeight="30.0" prefWidth="0.0" />
+                                                                           </children>
+                                                                        </VBox>
+                                                                     </content>
+                                                                  </ScrollPane>
+                                                               </children>
+                                                            </VBox>
+                                                         </children>
+                                                      </StackPane>
+                                                   </children>
+                                                </AnchorPane>
+                                             </content>
+                                             <font>
+                                                <Font size="12.0" />
+                                             </font>
+                                          </TitledPane>
+                                      </items>
+                                    </SplitPane>
+                                 </content>
+                              </ScrollPane>
                            </children>
                         </StackPane>
                     </items>
