@@ -295,7 +295,7 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 	public void initializeContent() {
 		
 		initializeControlBars();
-
+		
 		// Temp, load this depending on the data available on disk
 		ProgressPaneController pp = ProgressPaneController.getProgressPane(null, this.rootStackPane);
 		
@@ -303,6 +303,10 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 			
 			@Override
 			public void run() {
+				
+				// Fill any UI elements of the clusterview which require dynamic content
+				initializeClusterViewElements();
+				
 				loadClusterInformation(pp);
 				
 				isInitialized = true;
@@ -444,9 +448,6 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 	 */
 	private void loadClusterInformation(ProgressPaneController pp) {
 		
-				// Fill any UI elements of the clusterview which require dynamic content
-				initializeClusterViewElements();
-				
 				// Make sure we have cluster information at this point
 				boolean clusters_present = true;
 				if (experiment.getClusterContainer() == null)
@@ -531,7 +532,7 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 			
 		}
 
-		SelectionCycle reference_cycle = referenceSelectionCycleComboBox.getValue();
+		SelectionCycle reference_cycle = referenceSelectionCycleComboBox.getSelectionModel().getSelectedItem();
 		
 		// We use a runnable to obtain a nice GUI update 
 		AtomicInteger progress = new AtomicInteger(0);
