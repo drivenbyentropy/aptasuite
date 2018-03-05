@@ -1,0 +1,4 @@
+.column-header-background {
+    visibility: hidden; 
+    -fx-padding: -2em;
+}

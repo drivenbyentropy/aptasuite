@@ -21,15 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.IntStream;
-
-import javax.annotation.PostConstruct;
-
 import org.apache.commons.io.FileUtils;
-
-import com.itextpdf.text.pdf.AcroFields.Item;
-import com.sun.javafx.tk.FontMetrics;
-import com.sun.javafx.tk.Toolkit;
 
 import exceptions.InformationNotFoundException;
 import gui.activity.ProgressPaneController;
@@ -37,9 +29,10 @@ import gui.charts.logo.Alphabet;
 import gui.charts.logo.LogoChartPanelController;
 import gui.charts.logo.Scale;
 import gui.core.Initializable;
-import gui.core.aptamer.pool.TableRowData;
 import gui.misc.FXConcurrent;
+import gui.wizards.aptamut.AptaMutRootController;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -47,6 +40,8 @@ import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.ScatterChart;
@@ -58,11 +53,11 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ContentDisplay;
+import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.Pagination;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.SelectionMode;
-import javafx.scene.control.SplitPane;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -74,9 +69,11 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.stage.Stage;
 import lib.aptacluster.AptaCluster;
 import lib.aptacluster.HashAptaCluster;
 import lib.aptamer.datastructures.AptamerBounds;
@@ -87,7 +84,7 @@ import lib.aptamer.datastructures.SelectionCycle;
 import utilities.AptaColors;
 import utilities.AptaLogger;
 import utilities.Configuration;
-import utilities.QSComparator;
+import utilities.GUIUtilities;
 import utilities.Quicksort;
 
 /**
@@ -184,6 +181,12 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 	private RadioButton clusterEnrichmentScaleLogarithmicRadioButton;
 	
 	@FXML
+	private VBox aptaMutVBox;
+	
+	@FXML
+	private ComboBox<SelectionCycle> aptaMutReferenceCycleComboBox;
+	
+	@FXML
 	/**
 	 * The left cluster table instance
 	 */
@@ -265,12 +268,7 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 	 * The font used in the table
 	 */
 	private Font table_font = Font.font("monospace", FontWeight.BOLD, 14);
-	
-	/**
-	 * Used to estimate the width on certain elements
-	 */
-	private FontMetrics fontMetrics = Toolkit.getToolkit().getFontLoader().getFontMetrics(table_font);
-	
+
 	
 	/**
 	 * True if the user has search of clusters containing aptamers with a particular regular expression
@@ -388,6 +386,7 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 		
 		// Make sure the user selects a comparison cycle before being able to press GO
 		this.clusterComparisonGoButton.disableProperty().bind(this.clusterEnrichmentCompareToCycleComboBox.valueProperty().isNull());
+		
 	}
 	
 	/**
@@ -478,6 +477,13 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 					initializeClusterTable();
 					
 					initializeClusterTablePagination();
+					
+					// Make AptaMUT available once the user has selected a cluster
+					// Disable AptaMut if user has not selected any cluster
+					this.aptaMutVBox.disableProperty().bind( 
+							Bindings.size(this.clusterTableView.getSelectionModel().getSelectedIndices()).isNotEqualTo(1)
+							.or(Bindings.equal(this.referenceSelectionCycleComboBox.getSelectionModel().selectedIndexProperty(), 0) )
+					);
 				}
 		
 	}
@@ -499,8 +505,28 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 			// Fill the combo box with all selection cycles
 			this.referenceSelectionCycleComboBox.getItems().addAll(all_cycles);
 		
+			// Set listener to fill the reference cycle for AptaMUT according to the selection of this combobox
+			this.referenceSelectionCycleComboBox.valueProperty().addListener((options, oldValue, newValue) -> {
+				
+				this.aptaMutReferenceCycleComboBox.getItems().clear();
+				
+				// Only add up to the cycle selected for the cluster table 
+				all_cycles.forEach((cycle) -> {
+					
+					if (cycle.getRound() < newValue.getRound()) {
+						
+						this.aptaMutReferenceCycleComboBox.getItems().add(cycle);
+						
+					}
+					
+				});
+				
+				this.aptaMutReferenceCycleComboBox.getSelectionModel().selectLast();
+				
+			});
+			
 			// And set the last cycle as default
-			this.referenceSelectionCycleComboBox.getSelectionModel().select(all_cycles.size()-1);
+			this.referenceSelectionCycleComboBox.getSelectionModel().selectLast();
 			
 		});
 		
@@ -1047,7 +1073,7 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 		title.setWrapText(false);
 		title.setPadding(header_padding);
 		count_column.setGraphic(title);
-	    double textwidth = fontMetrics.computeStringWidth(title.getText());
+	    double textwidth = GUIUtilities.computeStringWidth(title.getText(), table_font);
 		
 		count_column.setCellValueFactory(param -> param.getValue().getCount( cycle ));
 		count_column.setStyle( "-fx-alignment: CENTER-LEFT;");
@@ -1062,7 +1088,7 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 		title2.setWrapText(false);
 		title2.setPadding(header_padding);
 		frequency_column.setGraphic(title2);
-	    textwidth = fontMetrics.computeStringWidth(title2.getText());
+	    textwidth = GUIUtilities.computeStringWidth(title2.getText(), table_font);
 		
 		frequency_column.setCellValueFactory(param -> param.getValue().getFrequency( cycle ));
 		frequency_column.setStyle( "-fx-alignment: CENTER-LEFT;");
@@ -1083,7 +1109,7 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 			title3.setWrapText(false);
 			title3.setPadding(header_padding);
 			enrichment_column.setGraphic(title3);
-		    textwidth = fontMetrics.computeStringWidth(title3.getText());
+		    textwidth = GUIUtilities.computeStringWidth(title3.getText(), table_font);
 		    
 			enrichment_column.setCellValueFactory(param -> param.getValue().getEnrichment( cycle ));
 			enrichment_column.setStyle( "-fx-alignment: CENTER-LEFT;");
@@ -1733,6 +1759,44 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 		
 	}
 
+	@FXML
+	public void runAptaMutButtonAction() {
+		
+		// Run the wizard
+    	Parent root;
+        try {
+        	
+        	FXMLLoader loader = new FXMLLoader(getClass().getClassLoader().getResource("gui/wizards/aptamut/AptaMutRoot.fxml"));
+        	
+            root = loader.load();
+            AptaMutRootController controller = (AptaMutRootController) loader.getController();
+            
+            
+            Stage stage = new Stage();
+            stage.setTitle("AptaMut for Cycles " + this.aptaMutReferenceCycleComboBox.getSelectionModel().getSelectedItem() + " and " + this.referenceSelectionCycleComboBox.getSelectionModel().getSelectedItem());
+            stage.setScene(new Scene(root,  Control.USE_COMPUTED_SIZE, Control.USE_COMPUTED_SIZE));
+    		
+            stage.setOnCloseRequest((e) -> { 
+    			e.consume(); 
+    			controller.close(); 
+    			});
+            
+            stage.show();
+            
+            controller.setInputData(
+            		this.aptaMutReferenceCycleComboBox.getSelectionModel().getSelectedItem(), 
+            		this.referenceSelectionCycleComboBox.getSelectionModel().getSelectedItem(),
+            		this.cluster_membership, 
+            		this.aptamer_ids[0]
+            		);
+            controller.populateTableData();
+            
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+		
+	}
 
 	/**
 	 * @return the rawCountsRadionButton

@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.net.URL?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.control.RadioButton?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.wizards.aptamut.AptaMutRootController">
+   <center>
+      <VBox prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER">
+         <children>
+            <Label text="Seed sequence:">
+               <font>
+                  <Font name="System Bold" size="12.0" />
+               </font>
+               <VBox.margin>
+                  <Insets left="5.0" />
+               </VBox.margin>
+            </Label>
+            <TableView fx:id="seedTableView" fixedCellSize="25.0" maxHeight="50.0" minHeight="50.0" prefHeight="50.0" stylesheets="@hide_scrollbar.css" VBox.vgrow="NEVER">
+              <columns>
+                  <TableColumn fx:id="seedIDTableColumn" prefWidth="75.0" text="ID" />
+                  <TableColumn fx:id="seedSequenceTableColumn" prefWidth="75.0" text="Sequence" />
+                <TableColumn fx:id="seedFrequency1TableColumn" prefWidth="75.0" text="Frequency" />
+                <TableColumn fx:id="seedFrequency2TableColumn" prefWidth="75.0" text="Frequency" />
+                  <TableColumn fx:id="seedEnrichmentTableColumn" prefWidth="75.0" text="Enrichment" />
+                  <TableColumn fx:id="seedScoreTableColumn" prefWidth="75.0" text="Log Score" />
+              </columns>
+            </TableView>
+            <Label text="Enriched sequences in cluster:">
+               <font>
+                  <Font name="System Bold" size="12.0" />
+               </font>
+               <VBox.margin>
+                  <Insets left="5.0" top="5.0" />
+               </VBox.margin>
+            </Label>
+            <TableView fx:id="enrichedTableView" fixedCellSize="25.0">
+               <columns>
+                  <TableColumn fx:id="enrichedIDTableColumn" prefWidth="75.0" text="ID" />
+                  <TableColumn fx:id="enrichedSequenceTableColumn" prefWidth="75.0" text="Sequence" />
+                  <TableColumn fx:id="enrichedFrequency1TableColumn" prefWidth="75.0" text="Frequency" />
+                  <TableColumn fx:id="enrichedFrequency2TableColumn" prefWidth="75.0" text="Frequency" />
+                  <TableColumn fx:id="enrichedEnrichmentTableColumn" prefWidth="75.0" text="Enrichment" />
+                  <TableColumn fx:id="enrichedScoreTableColumn" prefWidth="75.0" text="Score" />
+               </columns>
+               <stylesheets>
+                  <URL value="@style.css" />
+                  <URL value="@hide_scrollbar.css" />
+               </stylesheets>
+            </TableView>
+            <Label text="Depleated sequences in cluster:">
+               <font>
+                  <Font name="System Bold" size="12.0" />
+               </font>
+               <VBox.margin>
+                  <Insets left="5.0" top="5.0" />
+               </VBox.margin>
+            </Label>
+            <TableView fx:id="depleatedTableView" fixedCellSize="25.0" stylesheets="@style.css">
+               <columns>
+                  <TableColumn fx:id="depleatedIDTableColumn" prefWidth="75.0" text="ID" />
+                  <TableColumn fx:id="depleatedSequenceTableColumn" prefWidth="75.0" text="Sequence" />
+                  <TableColumn fx:id="depleatedFrequency1TableColumn" prefWidth="75.0" text="Frequency" />
+                  <TableColumn fx:id="depleatedFrequency2TableColumn" prefWidth="75.0" text="Frequency" />
+                  <TableColumn fx:id="depleatedEnrichmentTableColumn" prefWidth="75.0" text="Enrichment" />
+                  <TableColumn fx:id="depleatedScoreTableColumn" prefWidth="75.0" text="Score" />
+               </columns>
+            </TableView>
+         </children>
+      </VBox>
+   </center>
+   <top>
+      <HBox maxWidth="1.7976931348623157E308" minWidth="-Infinity">
+         <children>
+            <GridPane>
+              <columnConstraints>
+                <ColumnConstraints hgrow="SOMETIMES" />
+                <ColumnConstraints hgrow="SOMETIMES" />
+                  <ColumnConstraints hgrow="SOMETIMES" />
+              </columnConstraints>
+              <rowConstraints>
+                <RowConstraints fillHeight="false" maxHeight="-Infinity" minHeight="-Infinity" vgrow="SOMETIMES" />
+                <RowConstraints fillHeight="false" maxHeight="-Infinity" minHeight="25.0" vgrow="SOMETIMES" />
+                <RowConstraints fillHeight="false" maxHeight="-Infinity" minHeight="25.0" vgrow="SOMETIMES" />
+              </rowConstraints>
+               <children>
+                  <Label text="AptaMut Table Options" GridPane.columnSpan="3">
+                     <font>
+                        <Font name="System Bold" size="12.0" />
+                     </font>
+                  </Label>
+                  <RadioButton fx:id="showPrimersRadioButton" minWidth="-Infinity" mnemonicParsing="false" onAction="#refreshTables" text="Show" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                     <font>
+                        <Font size="12.0" />
+                     </font>
+                     <GridPane.margin>
+                        <Insets right="10.0" />
+                     </GridPane.margin>
+                     <toggleGroup>
+                        <ToggleGroup fx:id="showPrimersToggleGroup" />
+                     </toggleGroup>
+                  </RadioButton>
+                  <RadioButton minWidth="-Infinity" mnemonicParsing="false" onAction="#refreshTables" selected="true" text="Hide" toggleGroup="$showPrimersToggleGroup" GridPane.columnIndex="2" GridPane.rowIndex="1">
+                     <font>
+                        <Font size="12.0" />
+                     </font>
+                  </RadioButton>
+                  <RadioButton fx:id="cmpRadioButton" minWidth="-Infinity" mnemonicParsing="false" onAction="#refreshTables" selected="true" text="CPM" GridPane.columnIndex="1" GridPane.rowIndex="2">
+                     <font>
+                        <Font size="12.0" />
+                     </font>
+                     <toggleGroup>
+                        <ToggleGroup fx:id="cardinalityToggleGroup" />
+                     </toggleGroup>
+                  </RadioButton>
+                  <RadioButton minWidth="-Infinity" mnemonicParsing="false" onAction="#refreshTables" text="Raw Counts" toggleGroup="$cardinalityToggleGroup" GridPane.columnIndex="2" GridPane.rowIndex="2">
+                     <font>
+                        <Font size="12.0" />
+                     </font>
+                  </RadioButton>
+                  <Label minWidth="-Infinity" text="Primers:" GridPane.rowIndex="1">
+                     <font>
+                        <Font size="12.0" />
+                     </font>
+                  </Label>
+                  <Label minWidth="-Infinity" text="Cardinality:" GridPane.rowIndex="2">
+                     <font>
+                        <Font size="12.0" />
+                     </font>
+                     <GridPane.margin>
+                        <Insets right="10.0" />
+                     </GridPane.margin>
+                  </Label>
+               </children>
+               <HBox.margin>
+                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+               </HBox.margin>
+            </GridPane>
+            <Separator orientation="VERTICAL">
+               <HBox.margin>
+                  <Insets bottom="5.0" left="10.0" right="10.0" top="5.0" />
+               </HBox.margin>
+            </Separator>
+            <Label prefWidth="470.0" text="AptaMut aims at estimating the significance of enrichment of mutant sequences between consecutive selection rounds. A log score near zero indicates a neutral mutant while significantly positive (respectively negative) log scores indicate a possibility of beneficial (respectively detrimental) mutants." wrapText="true" HBox.hgrow="ALWAYS">
+               <font>
+                  <Font size="12.0" />
+               </font>
+               <HBox.margin>
+                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+               </HBox.margin>
+            </Label>
+            <Region HBox.hgrow="ALWAYS" />
+            <ProgressIndicator fx:id="progressIndicator">
+               <padding>
+                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+               </padding>
+            </ProgressIndicator>
+         </children>
+      </HBox>
+   </top>
+   <bottom>
+      <HBox alignment="CENTER_RIGHT" prefHeight="30.0" BorderPane.alignment="CENTER">
+         <children>
+            <Button mnemonicParsing="false" onAction="#close" text="Close">
+               <font>
+                  <Font size="12.0" />
+               </font>
+            </Button>
+         </children>
+         <BorderPane.margin>
+            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+         </BorderPane.margin>
+      </HBox>
+   </bottom>
+</BorderPane>

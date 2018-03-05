@@ -95,6 +95,7 @@ import lib.aptatrace.AptaTraceMotif;
 import utilities.AptaColors;
 import utilities.AptaLogger;
 import utilities.Configuration;
+import utilities.GUIUtilities;
 import utilities.QSComparator;
 import utilities.QSDoubleComparator;
 import utilities.Quicksort;
@@ -809,7 +810,7 @@ public class MotifAnalysisRootController implements Initializable{
 		title.setWrapText(false);
 		title.setPadding(header_padding);
 		count_column.setGraphic(title);
-	    double textwidth = fontMetrics.computeStringWidth(title.getText());
+	    double textwidth = GUIUtilities.computeStringWidth(title.getText(), table_font);
 		
 		count_column.setCellValueFactory(param -> param.getValue().getCount( cycle ));
 		count_column.setStyle( "-fx-alignment: CENTER-LEFT;");
@@ -824,7 +825,7 @@ public class MotifAnalysisRootController implements Initializable{
 		title2.setWrapText(false);
 		title2.setPadding(header_padding);
 		frequency_column.setGraphic(title2);
-	    textwidth = fontMetrics.computeStringWidth(title2.getText());
+	    textwidth = GUIUtilities.computeStringWidth(title2.getText(), table_font);
 		
 		frequency_column.setCellValueFactory(param -> param.getValue().getFrequency( cycle ));
 		frequency_column.setStyle( "-fx-alignment: CENTER-LEFT;");
@@ -845,7 +846,7 @@ public class MotifAnalysisRootController implements Initializable{
 			title3.setWrapText(false);
 			title3.setPadding(header_padding);
 			enrichment_column.setGraphic(title3);
-		    textwidth = fontMetrics.computeStringWidth(title3.getText());
+		    textwidth = GUIUtilities.computeStringWidth(title3.getText(), table_font);
 		    
 			enrichment_column.setCellValueFactory(param -> param.getValue().getEnrichment( cycle ));
 			enrichment_column.setStyle( "-fx-alignment: CENTER-LEFT;");

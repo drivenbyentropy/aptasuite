@@ -193,49 +193,49 @@ public class RootLayoutController {
 		});
 		
 		
-//////		BEGIN TEMP AUTO LOAD DATASET
-//		File cfp = Paths.get("C://Users/hoinkaj/temp/aptasuite_SGP_16_REVERSE_SAMPLED/configuration.aptasuite").toFile();
-//		
-//		// Read config file and set defaults
-//		Configuration.setConfiguration(cfp.getAbsolutePath());
-//		
-//		ProgressPaneController pp = ProgressPaneController.getProgressPane(new Runnable() {
-//    			
-//			@Override
-//			public void run() {
-//				
-//				//AptaLogger.log(Level.INFO, Configuration.class, "Using the following parameters: " + "\n" +  Configuration.printParameters());
-//				
-//				// Make sure the project folder exists and create it if not
-//				Path projectPath = Paths.get(Configuration.getParameters().getString("Experiment.projectPath"));
-//				if (Files.notExists(projectPath)){
-//						AptaLogger.log(Level.INFO, this.getClass(), "The project path does not exist on the file system. Creating folder " + projectPath);
-//						try {
-//							Files.createDirectories(Paths.get(projectPath.toString()));
-//						} catch (IOException e) {
-//							// TODO Auto-generated catch block
-//							e.printStackTrace();
-//						}
-//				}
-//				
-//				// Initialize the experiment
-//				experiment.set(new Experiment(cfp.getAbsolutePath(), false));
-//				preferencesMenu.setDisable(false);
-//				
-//				// Initialize the GUI elements
-//				Platform.runLater(() -> {
-//					
-//					AptaLogger.log(Level.INFO, this.getClass(), "Initializing GUI elements");
-//					showInitialTabs();
-//					
-//                });
-//				
-//			}
-//		
-//		}, this.rootStackPane);
-//		
-//		pp.run();
-////		// END TEMP AUTOLOAD DATASET
+////		BEGIN TEMP AUTO LOAD DATASET
+		File cfp = Paths.get("C:/Users/hoinkaj/temp/AptaSim/configuration.aptasuite").toFile();
+		
+		// Read config file and set defaults
+		Configuration.setConfiguration(cfp.getAbsolutePath());
+		
+		ProgressPaneController pp = ProgressPaneController.getProgressPane(new Runnable() {
+    			
+			@Override
+			public void run() {
+				
+				//AptaLogger.log(Level.INFO, Configuration.class, "Using the following parameters: " + "\n" +  Configuration.printParameters());
+				
+				// Make sure the project folder exists and create it if not
+				Path projectPath = Paths.get(Configuration.getParameters().getString("Experiment.projectPath"));
+				if (Files.notExists(projectPath)){
+						AptaLogger.log(Level.INFO, this.getClass(), "The project path does not exist on the file system. Creating folder " + projectPath);
+						try {
+							Files.createDirectories(Paths.get(projectPath.toString()));
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+				}
+				
+				// Initialize the experiment
+				experiment.set(new Experiment(cfp.getAbsolutePath(), false));
+				preferencesMenu.setDisable(false);
+				
+				// Initialize the GUI elements
+				Platform.runLater(() -> {
+					
+					AptaLogger.log(Level.INFO, this.getClass(), "Initializing GUI elements");
+					showInitialTabs();
+					
+                });
+				
+			}
+		
+		}, this.rootStackPane);
+		
+		pp.run();
+//		// END TEMP AUTOLOAD DATASET
 		
 	}
 	
@@ -246,6 +246,9 @@ public class RootLayoutController {
 		// Default
 		int default_cores = Math.min(Configuration.getParameters().getInt("Performance.maxNumberOfCores"), Runtime.getRuntime().availableProcessors());
 	
+		// If we have more than one core, we leave one core for other operations
+		if (default_cores > 2) default_cores--;
+		
 		for (int x=1; x<=Runtime.getRuntime().availableProcessors(); x++) {
 			
 			CheckMenuItem core = new CheckMenuItem(""+x);
@@ -842,7 +845,7 @@ public class RootLayoutController {
     			"AptaPLEX - A dedicated, multithreaded demultiplexer for HT-SELEX data.\n" + 
     			"Methods. http://doi.org/10.1016/j.ymeth.2016.04.011\n\n" +
     			
-    			"AptaSIM \n" +
+    			"AptaSIM and AptaMUT\n" +
 				"Hoinka, J., Berezhnoy, A., Dao, P., Sauna, Z. E., Gilboa, E., & Przytycka, T. M. (2015). \n" +
 				"Large scale analysis of the mutational landscape in HT-SELEX improves aptamer discovery. \n" +
 				"Nucleic Acids Research, 43(12), 5699–5707. http://doi.org/10.1093/nar/gkv308\n\n" +

@@ -546,7 +546,7 @@ public class AptaSimParser implements Parser, Runnable{
 						if(mut <= mutation_probability)
 						{
 							//Create mutant
-							int pos = rand.nextInt(randomized_region_size);
+							int pos = rand.nextInt(primer5.length()+randomized_region_size);
 							byte[] mutant = entry.getKey().clone();
 							mutant[pos] = base_mutation_rates[rand.nextInt(base_mutation_rates.length)];
 													

@@ -34,7 +34,7 @@
          <children>
             <BorderPane>
                <top>
-                  <HBox prefWidth="150.0" BorderPane.alignment="CENTER">
+                  <HBox BorderPane.alignment="CENTER">
                      <children>
                         <VBox maxWidth="200.0" minWidth="200.0">
                            <children>
@@ -70,7 +70,7 @@
                               <Insets left="10.0" right="10.0" />
                            </HBox.margin>
                         </Separator>
-                        <VBox maxWidth="200.0" minWidth="200.0" HBox.hgrow="ALWAYS">
+                        <VBox maxWidth="175.0" minWidth="175.0" HBox.hgrow="ALWAYS">
                            <children>
                               <Label text="To toggle between raw counts and counts per million (CPM), select the corresponding option" wrapText="true">
                                  <font>
@@ -104,9 +104,9 @@
                               <Insets left="10.0" right="10.0" />
                            </HBox.margin>
                         </Separator>
-                        <VBox maxWidth="200.0" minWidth="200.0">
+                        <VBox maxWidth="150.0" minWidth="150.0">
                            <children>
-                              <Label text="To change the number of items to show per page, change the value below to the desired value" wrapText="true">
+                              <Label text="To change the number of items to show per page, adjust the value below" wrapText="true">
                                  <font>
                                     <Font size="12.0" />
                                  </font>
@@ -165,7 +165,7 @@
                               <Insets left="10.0" right="10.0" />
                            </HBox.margin>
                         </Separator>
-                        <VBox maxWidth="400.0" minWidth="400.0">
+                        <VBox maxWidth="350.0" minWidth="350.0">
                            <children>
                               <Label text="To modify the order of the aptamers in the table, adopt the contraints by selecting a sorting critera as well a reference cycle&#10; " wrapText="true">
                                  <font>

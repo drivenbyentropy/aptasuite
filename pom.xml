@@ -54,6 +54,13 @@
 			</resource>
 		</resources>
 		<plugins>
+		
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.7.0</version>
+			</plugin>
+		
 			<!-- The build scheme was adopted from https://ath3nd.wordpress.com/2013/12/25/packaging-a-multimodule-maven-spring-app-in-a-standalone-jar/ -->
 			<plugin>
 				<!-- This plugin is used to just copy all the dependency jars 
@@ -291,6 +298,12 @@
 			<version>1.7.12</version>
 		</dependency>
 		<!-- DEEP LEARNING FOR JAVA END -->
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<version>1.16.20</version>
+			<scope>provided</scope>
+		</dependency>
 	</dependencies>
 	
 	
