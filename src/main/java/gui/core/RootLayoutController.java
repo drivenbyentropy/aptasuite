@@ -17,21 +17,14 @@ import java.util.logging.Level;
 import javax.annotation.PostConstruct;
 
 import gui.activity.ProgressPaneController;
-import gui.charts.logo.LogoChartPanelController;
-import gui.charts.logo.Scale;
 import gui.core.aptamer.family.analysis.AptamerFamilyAnalysisRootController;
 import gui.core.aptamer.pool.AptamerPoolRootController;
 import gui.core.motifs.MotifAnalysisRootController;
 import gui.core.sequencing.data.SequencingDataRootController;
 import gui.wizards.aptasim.AptaSimWizardController;
 import gui.wizards.export.ExportWizardController;
+import gui.wizards.newexperiment.DataModel;
 import gui.wizards.newexperiment.WizardStartController;
-import gui.wizards.structureprofileprediction.StructureProfilePredictionWizardController;
-import io.datafx.controller.context.ApplicationContext;
-import io.datafx.controller.context.FXMLApplicationContext;
-import io.datafx.controller.flow.Flow;
-import io.datafx.controller.flow.FlowException;
-import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleObjectProperty;
@@ -108,12 +101,6 @@ public class RootLayoutController {
     
     @FXML
     private Menu numberOfCoresMenu;
-    
-    
-    @FXMLApplicationContext
-    private ApplicationContext context;
-    
-    
     
     /**
      * Contains all currently opened tabs
@@ -285,6 +272,8 @@ public class RootLayoutController {
 			
 			this.numberOfCoresMenu.getItems().add(core);	
 		}
+		
+		preferencesMenu.setDisable(false);
 		
 	}
 	
@@ -466,22 +455,38 @@ public class RootLayoutController {
     		
     	}
 
-    	// Create a context with the main class as content so that we can initialize the 
-    	// main GUI after parsing is completed
-    	context = ApplicationContext.getInstance();
-    	
+   	
     	// Run the wizard
-    	Flow wizard = null;
-    	try {
+    	Parent root;
+        try {
+        																				
+        	FXMLLoader loader = new FXMLLoader(getClass().getClassLoader().getResource("gui/wizards/newexperiment/wizardStart.fxml"));
+        	
+            root = loader.load();
+            WizardStartController controller = (WizardStartController) loader.getController();
+            
+            Stage stage = new Stage();
+            stage.setTitle("Create a New Experiment");
+            stage.setScene(new Scene(root, Control.USE_COMPUTED_SIZE, Control.USE_COMPUTED_SIZE));
+    		stage.setOnCloseRequest((e) -> { e.consume(); });
     		
-			wizard = new Flow(WizardStartController.class);
-			context.register("RootLayoutController", this);
-			
-			wizard.startInStage(new Stage());
-			
-		} catch (FlowException e) {
-			e.printStackTrace();
-		}
+    		// The datamodel to be passed from scene to scene
+    		controller.setDataModel(new DataModel());
+    		// We need this to initialize the controller when the window gets closed
+            controller.setRootLayoutController(this);
+            // And this to change between different Scenes
+            controller.setStage(stage);
+            
+            // Initialize the controller
+            controller.init();
+            
+            // And show the wizard
+            stage.show();
+            
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
     	
     }
     
@@ -510,10 +515,6 @@ public class RootLayoutController {
     		
     	}
 
-    	// Create a context with the main class as content so that we can inistialize the 
-    	// main GUI after parsing is completed
-    	context = ApplicationContext.getInstance();
-    	
     	// Run the wizard
     	Parent root;
         try {
@@ -532,11 +533,6 @@ public class RootLayoutController {
             stage.setScene(new Scene(root, 800, 730));
     		stage.setOnCloseRequest((e) -> { e.consume(); });
             stage.show();
-            
-            //controller.setInterrupted(interrupted);
-            //controller.setCompleted(prediction_done);
-            //controller.start();
-            
             
         }
         catch (IOException e) {

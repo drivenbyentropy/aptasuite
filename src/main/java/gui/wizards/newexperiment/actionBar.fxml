@@ -7,7 +7,7 @@
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.text.Font?>
 
-<HBox alignment="CENTER_RIGHT" maxHeight="-Infinity" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" prefHeight="-1.0" prefWidth="-1.0" spacing="10.0" style="-fx-background-color: darkgray;" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml">
+<HBox alignment="CENTER_RIGHT" maxHeight="-Infinity" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" prefHeight="-1.0" prefWidth="-1.0" spacing="10.0" style="-fx-background-color: darkgray;" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.wizards.newexperiment.ActionBarController">
 <children>
       <Label fx:id="errorLabel" minHeight="-Infinity" minWidth="-Infinity" text="Errors were encountered while setting up this experiment. Please &#10;correct the field(s) indicated in red before clicking Next again." textFill="#e80000" visible="false" wrapText="true" HBox.hgrow="ALWAYS">
          <font>

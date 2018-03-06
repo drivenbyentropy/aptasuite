@@ -1,59 +1,32 @@
 package gui.wizards.newexperiment;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
 
-import javax.annotation.PostConstruct;
-
 import gui.core.RootLayoutController;
-import io.datafx.controller.ViewController;
-import io.datafx.controller.context.ApplicationContext;
-import io.datafx.controller.context.FXMLApplicationContext;
-import io.datafx.controller.flow.Flow;
-import io.datafx.controller.flow.FlowHandler;
-import io.datafx.controller.flow.action.ActionMethod;
-import io.datafx.controller.flow.action.ActionTrigger;
-import io.datafx.controller.flow.action.LinkAction;
-import io.datafx.controller.flow.context.FXMLViewFlowContext;
-import io.datafx.controller.flow.context.ViewFlowContext;
 import javafx.application.Platform;
-import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TitledPane;
-import javafx.stage.FileChooser;
+import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 import lib.aptamer.datastructures.Experiment;
-import lib.aptamer.datastructures.SelectionCycle;
 import lib.parser.aptaplex.AptaPlexParser;
 import lib.parser.aptaplex.AptaPlexProgress;
 import utilities.AptaLogger;
 import utilities.Configuration;
 
-/**
- * This is a view controller for one of the steps in the wizard. The "back" and "finish" buttons of the action-bar that
- * is shown on each view of the wizard are defined in the AbstractWizardController class. So this class only needs to
- * define the "next" button. By using the @LinkAction annotation this button will link on the next step of the
- * wizard. This annotation was already described in tutorial 2.
- *
- * When looking at the @FXMLController annotation of the class you can find a new feature. next to the fxml files that
- * defines the view of the wizard step a "title" is added. This defines the title of the view. Because the wizard is
- * added to a Stage by using the Flow.startInStage() method the title of the flow is automatically bound to the window
- * title of the Stage. So whenever the view in the flow changes the title of the application window will change to the
- * defined title of the view. As you will learn in future tutorial you can easily change the title of a view in code.
- * In addition to the title other metadata like a icon can be defined for a view or flow.
- */
-@ViewController(value="wizard2.fxml", title = "Wizard: Step 2")
-public class Wizard2Controller extends AbstractWizardController {
+public class Wizard2Controller{
 
 	@FXML
 	private TitledPane importStatisticsGridPane;
@@ -85,16 +58,6 @@ public class Wizard2Controller extends AbstractWizardController {
 	@FXML
 	private Label parsingCompletedLabel;
 	
-    @FXML
-    @LinkAction(WizardAdvancedOptionsController.class)
-    private Button nextButton;
-    
-    @FXML
-    private Button backButton;
-    
-    @FXML
-    @ActionTrigger("closeWizard")
-    private Button finishButton;
     
     @FXML
     private Button importDataButton;
@@ -108,8 +71,11 @@ public class Wizard2Controller extends AbstractWizardController {
     @FXML
     private Label loggerLabel3;
     
-    @FXMLApplicationContext
-    private ApplicationContext context;
+	@FXML
+	private HBox actionBar;
+	
+	@FXML
+	private ActionBarController actionBarController;
     
     /**
      * Hook to the experiment instance. 
@@ -126,18 +92,33 @@ public class Wizard2Controller extends AbstractWizardController {
     
     private AptaPlexProgress progress = null;
     
+    /**
+     * Buttons from the included XFML file
+     */
+    private Button backButton;
+    private Button nextButton;
+    private Button finishButton;
+    
+    /**
+     * Reference to the root layout controller. will be passed from scene to scene
+     */
     private RootLayoutController rootLayoutController;
     
+    /**
+     * Reference to the stage, will be passed from scene to scene
+     */
+    private Stage stage;
     
-    @PostConstruct
+    /**
+     * The datamodel storing all the information from the wizard. will be passed from scene to scene
+     */
+    private DataModel dataModel;
+    
     public void init() {
     	
-    	// Get the main GUI controller form the DataFX context so that we initiate the tabs once parsing completes
-    	context = ApplicationContext.getInstance();
-    	rootLayoutController = (RootLayoutController) context.getRegisteredObject("RootLayoutController");
+    	setButtonActions();
     	
     }
-    
 
     
     /**
@@ -289,7 +270,6 @@ public class Wizard2Controller extends AbstractWizardController {
     /**
      * Closes the wizard
      */
-    @ActionMethod("closeWizard")
     public void closeWizard() {
     	
     	// We need to set the experiment in the main controller
@@ -299,12 +279,88 @@ public class Wizard2Controller extends AbstractWizardController {
     	rootLayoutController.showInitialTabs();
     	
     	// Get a handle to the stage
-        Stage stage = (Stage) getFinishButton().getScene().getWindow();
+        Stage stage = (Stage) this.finishButton.getScene().getWindow();
 
         // Close it
         stage.close();
     	
     }
+    
+    /**
+     * Defines the actions to be taken when any of the three buttons is pressed
+     */
+    private void setButtonActions() {
+    	
+    	// Inject buttons from included controller
+    	this.backButton = this.actionBarController.getBackButton();
+    	this.nextButton = this.actionBarController.getNextButton();
+    	this.finishButton = this.actionBarController.getFinishButton();
+    	
+    	this.nextButton.setDisable(true);
+    	this.finishButton.setDisable(true);
+    	
+    	// Back Action
+        this.backButton.setOnAction( (event)->{
+        	
+        	// Load the advanced option controller
+        	Parent root;
+            try {
+            																				
+            	FXMLLoader loader = new FXMLLoader(getClass().getClassLoader().getResource("gui/wizards/newexperiment/wizard1.fxml"));
+            	
+                root = loader.load();
+                Wizard1Controller controller = (Wizard1Controller) loader.getController();
+                
+        		// Pass instances and initialize
+                controller.setRootLayoutController(this.rootLayoutController);
+                controller.setStage(this.stage);
+                controller.setDataModel(this.dataModel);
+                controller.init();
+                
+                stage.setScene(new Scene(root, Control.USE_COMPUTED_SIZE, Control.USE_COMPUTED_SIZE));
+                
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+            }
+        	
+        });
+        
+        
+    	// Finish Action
+        this.finishButton.setOnAction( (event)->{
+        	
+        	this.closeWizard();
+        	
+        });
+        
+    	
+    }
+    
+    private DataModel getDataModel() {
+    	
+    	return this.dataModel;
+    	
+    }
+    
+    public void setRootLayoutController( RootLayoutController rlc) {
+    	
+    	this.rootLayoutController = rlc;
+    	
+    }
+    
+    public void setDataModel( DataModel datamodel ) {
+    	
+    	this.dataModel = datamodel;
+    	
+    }
+    
+    public void setStage( Stage s) {
+    	
+    	this.stage = s;
+    	
+    }
+    
     
     
 }

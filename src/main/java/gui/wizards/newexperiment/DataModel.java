@@ -7,9 +7,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.configuration2.PropertiesConfiguration;
-
-import io.datafx.controller.injection.scopes.FlowScoped;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -25,7 +22,6 @@ import utilities.Configuration;
  * DataModel for storing and retrieving the information 
  * set by the user while navigating the wizard.
  */
-@FlowScoped
 public class DataModel {
 
 	private StringProperty experimentName = new SimpleStringProperty();

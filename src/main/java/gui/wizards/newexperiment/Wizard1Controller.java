@@ -2,12 +2,10 @@ package gui.wizards.newexperiment;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,49 +14,34 @@ import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
-import javax.annotation.PostConstruct;
-
 import org.controlsfx.validation.ValidationSupport;
 import org.controlsfx.validation.Validator;
 
+import gui.core.RootLayoutController;
 import gui.misc.ControlFXValidatorFactory;
-import io.datafx.controller.ViewController;
-import io.datafx.controller.flow.action.ActionMethod;
-import io.datafx.controller.flow.action.ActionTrigger;
-import io.datafx.controller.flow.context.ActionHandler;
-import io.datafx.controller.flow.context.FlowActionHandler;
 import javafx.beans.binding.Bindings;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.Spinner;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TitledPane;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 import utilities.AptaLogger;
 
-/**
- * This is a view controller for one of the steps in the wizard. The "back" and "finish" buttons of the action-bar that
- * is shown on each view of the wizard are defined in the AbstractWizardController class. So this class only needs to
- * define the "next" button. By using the @LinkAction annotation this button will link on the next step of the
- * wizard. This annotation was already described in tutorial 2.
- *
- * When looking at the @FXMLController annotation of the class you can find a new feature. next to the fxml files that
- * defines the view of the wizard step a "title" is added. This defines the title of the view. Because the wizard is
- * added to a Stage by using the Flow.startInStage() method the title of the flow is automatically bound to the window
- * title of the Stage. So whenever the view in the flow changes the title of the application window will change to the
- * defined title of the view. As you will learn in future tutorial you can easily change the title of a view in code.
- * In addition to the title other metadata like a icon can be defined for a view or flow.
- */
-@ViewController(value="wizard1.fxml", title = "Wizard: Step 1")
-public class Wizard1Controller extends AbstractWizardController {
+public class Wizard1Controller{
 
 	@FXML
 	private BorderPane rootBorderPane;
@@ -96,29 +79,47 @@ public class Wizard1Controller extends AbstractWizardController {
 	@FXML
 	private Spinner<Integer> randomizedRegionSizeSpinner;
     
-    @FXML
-    private Label errorLabel;
-    
-    @FXML
-    @ActionTrigger("validateData") //Calls method with corresponding @ActionMethod
-    private Button nextButton;
-    
+	@FXML
+	private HBox actionBar;
+	
+	@FXML
+	private ActionBarController actionBarController;
+	
+	
     private List<SelectionCycleDetailsController> selectionCycleDetailsControllers = new ArrayList<SelectionCycleDetailsController>();
-    
-    /**
-     * Provides access to DataFX's flow action handler
-     */
-    @ActionHandler
-    protected FlowActionHandler actionHandler;
     
     /**
      * Validation Support to ensure correct user input
      */
     private ValidationSupport validationSupport = new ValidationSupport();
+
+    /**
+     * Buttons from the included XFML file
+     */
+    private Button backButton;
+    private Button nextButton;
+    private Button finishButton;
+   
     
-    @PostConstruct
+    /**
+     * Reference to the root layout controller. will be passed from scene to scene
+     */
+    private RootLayoutController rootLayoutController;
+    
+    /**
+     * Reference to the stage, will be passed from scene to scene
+     */
+    private Stage stage;
+    
+    /**
+     * The datamodel storing all the information from the wizard. will be passed from scene to scene
+     */
+    private DataModel dataModel;
+    
     public void init() {
     
+    	setButtonActions();
+    	
     	// Bind the data to the content
     	primer5TextField.textProperty().bindBidirectional(getDataModel().getPrimer5());
     	primer3TextField.textProperty().bindBidirectional(getDataModel().getPrimer3());
@@ -166,16 +167,13 @@ public class Wizard1Controller extends AbstractWizardController {
 			}
 		}
 		
-		// Bind the validator to the next button so that it is only available if all fields have been filled
-        // nextButton.disableProperty().bind(validationSupport.invalidProperty()); 
     }
     
    
     /**
      * Makes sure that all data fields are correct and valid
      */
-    @ActionMethod("validateData")
-    public void validateData() {
+    public boolean validateData() {
     	
     	boolean is_valid = true;
     	
@@ -462,7 +460,7 @@ public class Wizard1Controller extends AbstractWizardController {
 		    		}
 		    		else { // Return to the previous screen
 		    			
-		    			return;
+		    			return false;
 		    			
 		    		}
 					
@@ -659,18 +657,13 @@ public class Wizard1Controller extends AbstractWizardController {
     		// Save to file 
     		utilities.Configuration.writeConfiguration();
     		
-    		try {
-				actionHandler.navigate(Wizard2Controller.class);
-			} catch (Exception e) {
-				
-				e.printStackTrace();
-				AptaLogger.log(Level.SEVERE, this.getClass(), e);
-				
-			}
+			return true;
     	}
     	else { // Else inform the user to correct the mistakes before clicking next again
     		
-    		errorLabel.setVisible(true);
+    		this.actionBarController.getErrorLabel().setVisible(true);
+    		
+    		return false;
     		
     	}
     	
@@ -794,7 +787,6 @@ public class Wizard1Controller extends AbstractWizardController {
     		target.setText(cfp.getAbsolutePath());
     		getDataModel().setLastSelectedDirectory(cfp.getParentFile());
     		
-    		
     	}
     }
 
@@ -821,5 +813,104 @@ public class Wizard1Controller extends AbstractWizardController {
         	file.delete();
         }
     }
+    
+    /**
+     * Defines the actions to be taken when any of the three buttons is pressed
+     */
+    private void setButtonActions() {
+    	
+    	// Inject buttons from included controller
+    	this.backButton = this.actionBarController.getBackButton();
+    	this.nextButton = this.actionBarController.getNextButton();
+    	this.finishButton = this.actionBarController.getFinishButton();
+    	
+    	this.finishButton.setDisable(true);
+        
+    	// Next Action
+        this.nextButton.setOnAction( (event)->{
+        	
+        	//make sure we are validated
+        	if( validateData() ) {
+	        	
+	        	// Load the advanced option controller
+	        	Parent root;
+	            try {
+	            																				
+	            	FXMLLoader loader = new FXMLLoader(getClass().getClassLoader().getResource("gui/wizards/newexperiment/wizard2.fxml"));
+	            	
+	                root = loader.load();
+	                Wizard2Controller controller = (Wizard2Controller) loader.getController();
+	                
+	        		// Pass instances and initialize
+	                controller.setRootLayoutController(this.rootLayoutController);
+	                controller.setStage(this.stage);
+	                controller.setDataModel(this.dataModel);
+	                controller.init();
+	                
+	                stage.setScene(new Scene(root, Control.USE_COMPUTED_SIZE, Control.USE_COMPUTED_SIZE));
+	                
+	            }
+	            catch (IOException e) {
+	                e.printStackTrace();
+	            }
+	            
+        	}
+        	
+        });
+    	
+    	// Back Action
+        this.backButton.setOnAction( (event)->{
+        	
+        	// Load the advanced option controller
+        	Parent root;
+            try {
+            																				
+            	FXMLLoader loader = new FXMLLoader(getClass().getClassLoader().getResource("gui/wizards/newexperiment/wizardStart.fxml"));
+            	
+                root = loader.load();
+                WizardStartController controller = (WizardStartController) loader.getController();
+                
+        		// Pass instances and initialize
+                controller.setRootLayoutController(this.rootLayoutController);
+                controller.setStage(this.stage);
+                controller.setDataModel(this.dataModel);
+                controller.init();
+                
+                stage.setScene(new Scene(root, Control.USE_COMPUTED_SIZE, Control.USE_COMPUTED_SIZE));
+                
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+            }
+        	
+        });
+    	
+    }
+    
+    private DataModel getDataModel() {
+    	
+    	return this.dataModel;
+    	
+    }
+    
+    public void setRootLayoutController( RootLayoutController rlc) {
+    	
+    	this.rootLayoutController = rlc;
+    	
+    }
+    
+    public void setDataModel( DataModel datamodel ) {
+    	
+    	this.dataModel = datamodel;
+    	
+    }
+    
+    public void setStage( Stage s) {
+    	
+    	this.stage = s;
+    	
+    }
+    
+    
     
 }

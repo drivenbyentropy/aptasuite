@@ -3,7 +3,6 @@
  */
 package gui.wizards.newexperiment;
 
-import io.datafx.controller.injection.scopes.FlowScoped;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -16,7 +15,6 @@ import javafx.beans.property.StringProperty;
  * DataModel storing the information for each selection cycle
  * using bindable properties
  */
-@FlowScoped
 public class SelectionCycleDataModel {
 
 	private ObjectProperty<Integer> roundNumber = new SimpleObjectProperty<Integer>(); 
