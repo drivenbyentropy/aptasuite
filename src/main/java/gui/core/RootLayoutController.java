@@ -468,7 +468,6 @@ public class RootLayoutController {
             Stage stage = new Stage();
             stage.setTitle("Create a New Experiment");
             stage.setScene(new Scene(root, Control.USE_COMPUTED_SIZE, Control.USE_COMPUTED_SIZE));
-    		stage.setOnCloseRequest((e) -> { e.consume(); });
     		
     		// The datamodel to be passed from scene to scene
     		controller.setDataModel(new DataModel());
