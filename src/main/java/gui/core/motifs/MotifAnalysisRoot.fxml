@@ -34,19 +34,20 @@
          <children>
             <BorderPane>
                <top>
-                  <ScrollPane fitToHeight="true" maxHeight="125.0" minHeight="125.0" BorderPane.alignment="CENTER">
+                  <ScrollPane fitToHeight="true" maxHeight="120.0" minHeight="120.0" vbarPolicy="NEVER" BorderPane.alignment="CENTER">
                      <BorderPane.margin>
                         <Insets />
                      </BorderPane.margin>
                      <content>
                         <HBox>
                            <children>
-                              <GridPane>
+                              <GridPane maxHeight="100.0" minHeight="100.0">
                                 <columnConstraints>
                                   <ColumnConstraints hgrow="SOMETIMES" />
                                   <ColumnConstraints hgrow="NEVER" />
                                     <ColumnConstraints />
                                     <ColumnConstraints />
+                                    <ColumnConstraints minWidth="10.0" />
                                 </columnConstraints>
                                 <rowConstraints>
                                   <RowConstraints vgrow="NEVER" />
@@ -116,34 +117,24 @@
                                           <Insets right="20.0" />
                                        </GridPane.margin>
                                     </TextField>
-                                 </children>
-                              </GridPane>
-                              <VBox>
-                                 <HBox.margin>
-                                    <Insets left="20.0" />
-                                 </HBox.margin>
-                                 <children>
-                                    <Label minWidth="-Infinity" text="&#10;To cluster or re-cluster the pool,&#10;adjust the cluster option parameters&#10;and press &quot;Run AptaCluster&quot; below.">
+                                    <Label alignment="TOP_LEFT" maxWidth="250.0" minWidth="200.0" text="To cluster or re-cluster the pool, adjust the cluster option parameters and press &quot;Run AptaCluster&quot; below." wrapText="true" GridPane.columnIndex="4" GridPane.rowIndex="1" GridPane.rowSpan="2">
                                        <font>
                                           <Font size="12.0" />
                                        </font>
-                                       <VBox.margin>
-                                          <Insets bottom="6.0" />
-                                       </VBox.margin>
                                     </Label>
-                                    <Button mnemonicParsing="false" onAction="#runAptaTrace" text="Run AptaTrace" VBox.vgrow="ALWAYS">
+                                    <Button mnemonicParsing="false" onAction="#runAptaTrace" text="Run AptaTrace" GridPane.columnIndex="4" GridPane.rowIndex="3">
                                        <font>
                                           <Font size="12.0" />
                                        </font>
                                     </Button>
                                  </children>
-                              </VBox>
+                              </GridPane>
                               <Separator orientation="VERTICAL">
                                  <HBox.margin>
                                     <Insets left="20.0" right="20.0" />
                                  </HBox.margin>
                               </Separator>
-                              <GridPane>
+                              <GridPane maxHeight="100.0" minHeight="100.0">
                                 <columnConstraints>
                                   <ColumnConstraints hgrow="SOMETIMES" />
                                   <ColumnConstraints hgrow="SOMETIMES" />

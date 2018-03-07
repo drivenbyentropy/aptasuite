@@ -169,6 +169,15 @@ public class AptamerPoolRootController implements Initializable{
 	@FXML
 	private CheckBox searchIDsCheckBox;
 	
+	@FXML
+	private HBox structureContextsNotAvailableHBox;
+	
+	@FXML
+	private HBox bppmNotAvailableHBox;
+	
+	@FXML
+	private HBox secondaryStructureNotAvailableHBox;
+	
 	/**
 	 * Instance of the pagination for the table
 	 */
@@ -454,7 +463,12 @@ public class AptamerPoolRootController implements Initializable{
 					
 				}
 				
-				Platform.runLater(() -> cardinalityLineChart.getData().setAll(series) );
+				Platform.runLater(() -> { 
+				
+					cardinalityLineChart.getData().clear();
+					cardinalityLineChart.getData().setAll(series); 
+					
+				});
 				
 			}
 			
@@ -515,6 +529,8 @@ public class AptamerPoolRootController implements Initializable{
 					// Visualize
 					Platform.runLater(() -> {
 						
+						structureContextsNotAvailableHBox.setVisible(false);
+						
 						try {
 							FXMLLoader loader = new FXMLLoader(getClass().getResource("/gui/charts/logo/LogoChartPanel.fxml"));
 							AnchorPane logo = loader.load();
@@ -534,6 +550,12 @@ public class AptamerPoolRootController implements Initializable{
 							e.printStackTrace();
 						}
 						
+					});
+					
+				} else {
+					
+					Platform.runLater(() -> {
+						structureContextsNotAvailableHBox.setVisible(true);
 					});
 					
 				}
@@ -569,6 +591,10 @@ public class AptamerPoolRootController implements Initializable{
 				});
 				
 				if (row_index != null) {
+					
+					Platform.runLater(() -> {
+						bppmNotAvailableHBox.setVisible(false);
+					});
 					
 					// Get the sequence
 					TableRowData rowdata = poolTableView.getItems().get(row_index);
@@ -656,6 +682,12 @@ public class AptamerPoolRootController implements Initializable{
 			        sentinel.widthProperty().addListener( event -> changeFontSize(labels, squarel));
 			        sentinel.heightProperty().addListener( event -> changeFontSize(labels, squarel));
 			        
+				} else {
+					
+					Platform.runLater(() -> {
+						bppmNotAvailableHBox.setVisible(true);
+					});
+					
 				}
 					
 			}
@@ -704,12 +736,14 @@ public class AptamerPoolRootController implements Initializable{
 				varnaSequenceLabel.setText("");
 				varnaStructureLabel.setText("");
 				varnaMFELabel.setText("");
+				secondaryStructureNotAvailableHBox.setVisible(true);
 			});
 			
 			SwingUtilities.invokeLater( () -> {
 	            	
 	            	try {
 						vp.drawRNA("", "");
+						vp.setVisible(false);
 						
 					} catch (ExceptionNonEqualLength e) {
 						e.printStackTrace();
@@ -740,6 +774,8 @@ public class AptamerPoolRootController implements Initializable{
 	        });
 			
 			Platform.runLater(() -> {
+				secondaryStructureNotAvailableHBox.setVisible(false);
+				vp.setVisible(true);
 				varnaSequenceLabel.setText(row.getSequence().get());
 				varnaStructureLabel.setText(new String(result.structure));
 				varnaMFELabel.setText("Binding Free Energy: " + result.mfe + " kcal/mol");
@@ -1536,6 +1572,12 @@ public class AptamerPoolRootController implements Initializable{
 			
 			for (int x=0; x<tokens.length; x++) {
 				
+				System.out.println(tokens[x]);
+				
+			}
+			
+			for (int x=0; x<tokens.length; x++) {
+				
 				String token = tokens[x];
 				
 				try {
@@ -1588,10 +1630,10 @@ public class AptamerPoolRootController implements Initializable{
 				} catch (InterruptedException ie) {
 				}
 			}
-
+			
 			// Last Update
 			pp.setProgress(1.0);
-			pp.setProgressLabel(String.format("%.2f%% Completed. Found %s matches", 100, number_of_matches.get()));
+			pp.setProgressLabel(String.format("%.2f%% Completed. Found %s matches", 100.0, number_of_matches.get()));
 			
 		} else {
 		

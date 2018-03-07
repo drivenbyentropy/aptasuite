@@ -67,9 +67,9 @@ import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.CornerRadii;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
@@ -181,7 +181,7 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 	private RadioButton clusterEnrichmentScaleLogarithmicRadioButton;
 	
 	@FXML
-	private VBox aptaMutVBox;
+	private GridPane aptaMutGridPane;
 	
 	@FXML
 	private ComboBox<SelectionCycle> aptaMutReferenceCycleComboBox;
@@ -480,7 +480,7 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 					
 					// Make AptaMUT available once the user has selected a cluster
 					// Disable AptaMut if user has not selected any cluster
-					this.aptaMutVBox.disableProperty().bind( 
+					this.aptaMutGridPane.disableProperty().bind( 
 							Bindings.size(this.clusterTableView.getSelectionModel().getSelectedIndices()).isNotEqualTo(1)
 							.or(Bindings.equal(this.referenceSelectionCycleComboBox.getSelectionModel().selectedIndexProperty(), 0) )
 					);
@@ -770,7 +770,13 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 			
 			@Override
 			public void run() {
-		
+				
+				// Clear any previous content from the Cardinality Chart and Cluster Enrichment
+				Platform.runLater( () -> {
+					cardinalityLineChart.getData().clear();
+					clusterComparisonScatterChart.getData().clear();				
+				});
+				
 				// Get the selected cluster index
 				ClusterTableRowData row = clusterTableView.getSelectionModel().getSelectedItem();
 				
@@ -1608,7 +1614,10 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 				}
 				
 				Platform.runLater(() -> {
+					
+					cardinalityLineChart.getData().clear();
 		        	cardinalityLineChart.getData().setAll(series);
+		        	
 		        });
 				
 			}

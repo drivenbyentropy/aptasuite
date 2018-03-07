@@ -34,16 +34,16 @@
          <children>
             <BorderPane>
                <top>
-                  <ScrollPane fitToHeight="true" maxHeight="110.0" minHeight="110.0" BorderPane.alignment="CENTER">
+                  <ScrollPane fitToHeight="true" maxHeight="110.0" minHeight="110.0" vbarPolicy="NEVER" BorderPane.alignment="CENTER">
                      <BorderPane.margin>
                         <Insets />
                      </BorderPane.margin>
                      <content>
                         <HBox>
                            <children>
-                              <VBox maxWidth="200.0" minWidth="200.0">
+                              <VBox>
                                  <children>
-                                    <Label text="To show or hide the primer regions in the table, select one of the options below" wrapText="true">
+                                    <Label alignment="TOP_LEFT" maxHeight="45.0" maxWidth="225.0" minHeight="45.0" minWidth="200.0" text="To show or hide the primer regions in the table, select one of the options below" wrapText="true">
                                        <font>
                                           <Font size="12.0" />
                                        </font>
@@ -75,9 +75,9 @@
                                     <Insets left="10.0" right="10.0" />
                                  </HBox.margin>
                               </Separator>
-                              <VBox maxWidth="175.0" minWidth="175.0" HBox.hgrow="ALWAYS">
+                              <VBox HBox.hgrow="ALWAYS">
                                  <children>
-                                    <Label text="To toggle between raw counts and counts per million (CPM), select the corresponding option" wrapText="true">
+                                    <Label alignment="TOP_LEFT" maxHeight="45.0" maxWidth="225.0" minHeight="45.0" minWidth="200.0" text="To toggle between raw counts and counts per million (CPM), select the corresponding option" wrapText="true">
                                        <font>
                                           <Font size="12.0" />
                                        </font>
@@ -109,9 +109,9 @@
                                     <Insets left="10.0" right="10.0" />
                                  </HBox.margin>
                               </Separator>
-                              <VBox maxWidth="150.0" minWidth="150.0">
+                              <VBox>
                                  <children>
-                                    <Label text="To change the number of items to show per page, adjust the value below" wrapText="true">
+                                    <Label alignment="TOP_LEFT" maxHeight="45.0" maxWidth="225.0" minHeight="45.0" minWidth="150.0" text="To change the number of items to show per page, adjust the value below" wrapText="true">
                                        <font>
                                           <Font size="12.0" />
                                        </font>
@@ -136,9 +136,9 @@
                                     <Insets left="10.0" right="10.0" />
                                  </HBox.margin>
                               </Separator>
-                              <VBox maxWidth="325.0" minWidth="325.0">
+                              <VBox>
                                  <children>
-                                    <Label text="To display only a subset of the aptamer pool (in compliance with the sorting/searching criteria), select the threshold below. This may speed up sorting and searching operations" wrapText="true">
+                                    <Label alignment="TOP_LEFT" maxHeight="45.0" maxWidth="425.0" minHeight="45.0" minWidth="325.0" text="To display only a subset of the aptamer pool (in compliance with the sorting and searching criteria), select the threshold below. This may speed up sorting and searching operations" wrapText="true">
                                        <font>
                                           <Font size="12.0" />
                                        </font>
@@ -170,9 +170,9 @@
                                     <Insets left="10.0" right="10.0" />
                                  </HBox.margin>
                               </Separator>
-                              <VBox maxWidth="350.0" minWidth="350.0">
+                              <VBox>
                                  <children>
-                                    <Label text="To modify the order of the aptamers in the table, adopt the contraints by selecting a sorting critera as well a reference cycle&#10; " wrapText="true">
+                                    <Label alignment="TOP_LEFT" maxHeight="45.0" maxWidth="325.0" minHeight="45.0" minWidth="250.0" text="To modify the order of the aptamers in the table, adopt the contraints by selecting a sorting critera as well a reference cycle&#10;" wrapText="true">
                                        <font>
                                           <Font size="12.0" />
                                        </font>
@@ -193,7 +193,7 @@
                                                 <Font size="12.0" />
                                              </font>
                                           </Label>
-                                          <ComboBox fx:id="onCycleComboBox" HBox.hgrow="ALWAYS" />
+                                          <ComboBox fx:id="onCycleComboBox" minWidth="-Infinity" HBox.hgrow="ALWAYS" />
                                           <Button minWidth="-Infinity" mnemonicParsing="false" onAction="#recomputeAptamerIds" text="GO">
                                              <font>
                                                 <Font size="12.0" />
@@ -208,9 +208,9 @@
                                     <Insets left="10.0" right="10.0" />
                                  </HBox.margin>
                               </Separator>
-                              <VBox maxWidth="350.0" minWidth="350.0">
+                              <VBox maxWidth="1.7976931348623157E308">
                                  <children>
-                                    <Label text="Search for any sub-sequence in the pool. Regular expressions are supported. To find a set of aptamers by ID, enter a comma separated list. Refine your search using multiple queries.&#10;" wrapText="true">
+                                    <Label alignment="TOP_LEFT" maxHeight="45.0" maxWidth="400.0" minHeight="45.0" minWidth="350.0" text="Search for any sub-sequence in the pool. Regular expressions are supported. To find a set of aptamers by ID, enter a comma separated list. Refine your search using multiple queries.&#10;" wrapText="true">
                                        <font>
                                           <Font size="12.0" />
                                        </font>
@@ -340,6 +340,15 @@
                                                             <SwingNode fx:id="varnaSwingNode" VBox.vgrow="ALWAYS" />
                                                          </children>
                                                       </VBox>
+                                                      <HBox fx:id="secondaryStructureNotAvailableHBox" alignment="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308">
+                                                         <children>
+                                                            <Label text="Structure Prediction &#10;not Available in &#10;Multiselection Mode" textAlignment="CENTER">
+                                                               <font>
+                                                                  <Font size="14.0" />
+                                                               </font>
+                                                            </Label>
+                                                         </children>
+                                                      </HBox>
                                                    </children>
                                                 </StackPane>
                                             </content>
@@ -360,6 +369,15 @@
                                                                 <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                                                               </rowConstraints>
                                                             </GridPane>
+                                                            <HBox fx:id="bppmNotAvailableHBox" alignment="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308">
+                                                               <children>
+                                                                  <Label text="BPPM not Available in &#10;Multiselection Mode" textAlignment="CENTER">
+                                                                     <font>
+                                                                        <Font size="14.0" />
+                                                                     </font>
+                                                                  </Label>
+                                                               </children>
+                                                            </HBox>
                                                          </children>
                                                       </StackPane>
                                                    </children>
@@ -435,6 +453,15 @@
                                                                   </ScrollPane>
                                                                </children>
                                                             </VBox>
+                                                            <HBox fx:id="structureContextsNotAvailableHBox" alignment="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308">
+                                                               <children>
+                                                                  <Label text="Structure Contexts&#10;not Available in &#10;Multiselection Mode" textAlignment="CENTER">
+                                                                     <font>
+                                                                        <Font size="14.0" />
+                                                                     </font>
+                                                                  </Label>
+                                                               </children>
+                                                            </HBox>
                                                          </children>
                                                       </StackPane>
                                                    </children>

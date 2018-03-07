@@ -528,8 +528,8 @@ public class AptaMutRootController {
 		this.seed_id = seed_id;
 		this.cluster_membership = cluster_membership;
 		
-		this.seedFrequency1TableColumn.setText("Freq. " + this.scxp1.getName());
-		this.seedFrequency2TableColumn.setText("Freq. " + this.scx.getName());
+		this.seedFrequency1TableColumn.setText((this.cmpRadioButton.isSelected() ? "CMP " : "RAW Counts ") +  this.scx.getName());
+		this.seedFrequency2TableColumn.setText((this.cmpRadioButton.isSelected() ? "CMP " : "RAW Counts ") +  this.scxp1.getName());
 		
 	    // Bind Scrollbars
 	    ScrollBar enriched_scrollbar = getScrollBar(this.enrichedTableView, Orientation.HORIZONTAL);

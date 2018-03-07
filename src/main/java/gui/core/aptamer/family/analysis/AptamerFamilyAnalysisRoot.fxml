@@ -33,19 +33,20 @@
          <children>
             <BorderPane>
                <top>
-                  <ScrollPane fitToHeight="true" maxHeight="130.0" minHeight="130.0" BorderPane.alignment="CENTER">
+                  <ScrollPane maxHeight="120.0" minHeight="120.0" vbarPolicy="NEVER" BorderPane.alignment="CENTER">
                      <BorderPane.margin>
                         <Insets />
                      </BorderPane.margin>
                      <content>
                         <HBox>
                            <children>
-                              <GridPane>
+                              <GridPane maxHeight="100.0" minHeight="100.0">
                                 <columnConstraints>
                                   <ColumnConstraints hgrow="SOMETIMES" />
                                   <ColumnConstraints hgrow="NEVER" />
                                     <ColumnConstraints hgrow="SOMETIMES" />
                                     <ColumnConstraints hgrow="NEVER" />
+                                    <ColumnConstraints hgrow="NEVER" minWidth="10.0" />
                                 </columnConstraints>
                                 <rowConstraints>
                                   <RowConstraints vgrow="NEVER" />
@@ -137,9 +138,18 @@
                                           <Insets right="10.0" />
                                        </GridPane.margin>
                                     </Label>
-                                    <TextField fx:id="editDistanceTextField" minWidth="100.0" GridPane.columnIndex="3" GridPane.rowIndex="1" />
-                                    <TextField fx:id="kmerSizeTextField" minWidth="100.0" GridPane.columnIndex="3" GridPane.rowIndex="2" />
-                                    <TextField fx:id="kmerCutoffIterationsTextField" minWidth="100.0" GridPane.columnIndex="3" GridPane.rowIndex="3" />
+                                    <TextField fx:id="editDistanceTextField" minWidth="100.0" GridPane.columnIndex="3" GridPane.rowIndex="1">
+                                       <GridPane.margin>
+                                          <Insets right="20.0" />
+                                       </GridPane.margin></TextField>
+                                    <TextField fx:id="kmerSizeTextField" minWidth="100.0" GridPane.columnIndex="3" GridPane.rowIndex="2">
+                                       <GridPane.margin>
+                                          <Insets right="20.0" />
+                                       </GridPane.margin></TextField>
+                                    <TextField fx:id="kmerCutoffIterationsTextField" minWidth="100.0" GridPane.columnIndex="3" GridPane.rowIndex="3">
+                                       <GridPane.margin>
+                                          <Insets right="20.0" />
+                                       </GridPane.margin></TextField>
                                     <ComboBox fx:id="randomizedRegionSizeComboBox" minWidth="100.0" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
                                        <GridPane.margin>
                                           <Insets right="20.0" />
@@ -155,34 +165,24 @@
                                           <Insets right="20.0" />
                                        </GridPane.margin>
                                     </ComboBox>
-                                 </children>
-                              </GridPane>
-                              <VBox>
-                                 <HBox.margin>
-                                    <Insets left="20.0" />
-                                 </HBox.margin>
-                                 <children>
-                                    <Label minWidth="-Infinity" text="&#10;To cluster or re-cluster the pool,&#10;adjust the cluster option parameters&#10;and press &quot;Run AptaCluster&quot; below.">
+                                    <Label alignment="TOP_LEFT" minWidth="-Infinity" text="To cluster or re-cluster the pool,&#10;adjust the cluster option parameters&#10;and press &quot;Run AptaCluster&quot; below." GridPane.columnIndex="4" GridPane.rowIndex="1" GridPane.rowSpan="2">
                                        <font>
                                           <Font size="12.0" />
                                        </font>
-                                       <VBox.margin>
-                                          <Insets bottom="6.0" />
-                                       </VBox.margin>
                                     </Label>
-                                    <Button mnemonicParsing="false" onAction="#runAptaCluster" text="Run AptaCluster" VBox.vgrow="ALWAYS">
+                                    <Button mnemonicParsing="false" onAction="#runAptaCluster" text="Run AptaCluster" GridPane.columnIndex="4" GridPane.rowIndex="3">
                                        <font>
                                           <Font size="12.0" />
                                        </font>
                                     </Button>
                                  </children>
-                              </VBox>
+                              </GridPane>
                               <Separator orientation="VERTICAL">
                                  <HBox.margin>
                                     <Insets left="20.0" right="20.0" />
                                  </HBox.margin>
                               </Separator>
-                              <GridPane minWidth="-Infinity">
+                              <GridPane maxHeight="100.0" minHeight="100.0" minWidth="-Infinity">
                                 <columnConstraints>
                                   <ColumnConstraints hgrow="SOMETIMES" />
                                   <ColumnConstraints hgrow="SOMETIMES" />
@@ -194,7 +194,7 @@
                                   <RowConstraints minHeight="25.0" vgrow="NEVER" />
                                 </rowConstraints>
                                  <children>
-                                    <Label text="Sequence Table Options" GridPane.columnSpan="2">
+                                    <Label minWidth="-Infinity" text="Sequence Table Options" GridPane.columnSpan="3">
                                        <font>
                                           <Font name="System Bold" size="12.0" />
                                        </font>
@@ -220,7 +220,7 @@
                                           <Insets right="5.0" />
                                        </GridPane.margin>
                                     </Label>
-                                    <RadioButton fx:id="rawCountsRadionButton" mnemonicParsing="false" onAction="#redrawTableContent" text="Raw Counts" GridPane.columnIndex="2" GridPane.rowIndex="2">
+                                    <RadioButton fx:id="rawCountsRadionButton" minWidth="-Infinity" mnemonicParsing="false" onAction="#redrawTableContent" text="Raw Counts" GridPane.columnIndex="2" GridPane.rowIndex="2">
                                        <font>
                                           <Font size="12.0" />
                                        </font>
@@ -231,13 +231,16 @@
                                           <ToggleGroup fx:id="cardinalityToggleGroup" />
                                        </toggleGroup>
                                     </RadioButton>
-                                    <RadioButton fx:id="cmpRadioButton" mnemonicParsing="false" onAction="#redrawTableContent" selected="true" text="CMP" toggleGroup="$cardinalityToggleGroup" GridPane.columnIndex="1" GridPane.rowIndex="2">
+                                    <RadioButton fx:id="cmpRadioButton" minWidth="-Infinity" mnemonicParsing="false" onAction="#redrawTableContent" selected="true" text="CMP" toggleGroup="$cardinalityToggleGroup" GridPane.columnIndex="1" GridPane.rowIndex="2">
                                        <font>
                                           <Font size="12.0" />
                                        </font>
                                        <tooltip>
                                           <Tooltip text="Counts per Million" />
                                        </tooltip>
+                                       <GridPane.margin>
+                                          <Insets right="10.0" />
+                                       </GridPane.margin>
                                     </RadioButton>
                                     <RadioButton minWidth="-Infinity" mnemonicParsing="false" onAction="#redrawTableContent" selected="true" text="Hide" toggleGroup="$showPrimersToggleGroup" GridPane.columnIndex="1" GridPane.rowIndex="1">
                                        <font>
@@ -251,24 +254,31 @@
                                     <Insets left="20.0" right="20.0" />
                                  </HBox.margin>
                               </Separator>
-      						<VBox fx:id="aptaMutVBox" disable="true" prefWidth="200.0">
+                              <GridPane fx:id="aptaMutGridPane" maxHeight="100.0" minHeight="100.0">
+                                <columnConstraints>
+                                  <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
+                                  <ColumnConstraints hgrow="SOMETIMES" minWidth="-Infinity" />
+                                    <ColumnConstraints hgrow="SOMETIMES" maxWidth="150.0" />
+                                </columnConstraints>
+                                <rowConstraints>
+                                  <RowConstraints maxHeight="-Infinity" vgrow="SOMETIMES" />
+                                  <RowConstraints fx:id="aptaMutGridRow1" maxHeight="-Infinity" vgrow="SOMETIMES" />
+                                  <RowConstraints maxHeight="-Infinity" vgrow="SOMETIMES" />
+                                </rowConstraints>
                                  <children>
-                                    <Label text="Mutation Scoring (AptaMUT)">
+                                    <Label minWidth="-Infinity" text="Mutation Scoring (AptaMUT)" GridPane.columnSpan="2">
                                        <font>
                                           <Font name="System Bold" size="12.0" />
                                        </font>
-                                       <VBox.margin>
-                                          <Insets />
-                                       </VBox.margin>
                                     </Label>
-                                    <Label minWidth="-Infinity" text="To run AptaMUT on the selected cluster, select &#10;a reference cycle and click &quot;Run AptaMUT&quot;.">
+                                    <Label maxWidth="350.0" minWidth="325.0" text="To run AptaMUT on the selected cluster, select a reference cycle and click &quot;Run AptaMUT&quot;." wrapText="true" GridPane.columnSpan="2" GridPane.rowIndex="1">
                                        <font>
                                           <Font size="12.0" />
                                        </font>
                                     </Label>
-                                    <HBox alignment="CENTER_LEFT">
+                                    <HBox alignment="CENTER_LEFT" GridPane.hgrow="ALWAYS" GridPane.rowIndex="2">
                                        <children>
-                                          <Label text="Reference Cycle:">
+                                          <Label minWidth="-Infinity" text="Reference Cycle:">
                                              <font>
                                                 <Font size="12.0" />
                                              </font>
@@ -276,23 +286,19 @@
                                                 <Insets right="10.0" />
                                              </HBox.margin>
                                           </Label>
-                                          <ComboBox fx:id="aptaMutReferenceCycleComboBox" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" />
-                                       </children>
-                                       <VBox.margin>
-                                          <Insets bottom="5.0" />
-                                       </VBox.margin>
-                                    </HBox>
-                                    <HBox alignment="CENTER_LEFT">
-                                       <children>
-                                          <Button mnemonicParsing="false" onAction="#runAptaMutButtonAction" text="Run AptaMUT">
-                                             <font>
-                                                <Font size="12.0" />
-                                             </font>
-                                          </Button>
+                                          <ComboBox fx:id="aptaMutReferenceCycleComboBox" maxWidth="1.7976931348623157E308" minWidth="-Infinity" HBox.hgrow="ALWAYS" />
                                        </children>
                                     </HBox>
+                                    <Button fx:id="runAptaMutButton" mnemonicParsing="false" onAction="#runAptaMutButtonAction" text="Run AptaMUT" textAlignment="CENTER" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="2">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                       <GridPane.margin>
+                                          <Insets left="10.0" />
+                                       </GridPane.margin>
+                                    </Button>
                                  </children>
-                              </VBox>
+                              </GridPane>
                            </children>
                            <padding>
                               <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />

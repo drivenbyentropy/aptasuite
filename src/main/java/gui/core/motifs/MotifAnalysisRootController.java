@@ -12,6 +12,7 @@ import java.util.BitSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.Map.Entry;
@@ -21,6 +22,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import com.itextpdf.text.log.SysoCounter;
 
 import exceptions.InformationNotFoundException;
 import gui.activity.ProgressPaneController;
@@ -983,7 +986,8 @@ public class MotifAnalysisRootController implements Initializable{
 		SelectionCycle reference_cycle = this.motifCoverageCycleComboBox.getValue();
 		
 		// Key=Index, Value=Counts
-		HashMap<Integer,Double> occurences = new HashMap<Integer,Double>();
+		Map<Integer,Double> occurences = new HashMap<Integer,Double>();
+		final AtomicInteger max_rand_size = new AtomicInteger(0);
 
 		// Create one pattern per kmer
 		Pattern[] patterns = new Pattern[query_strings.length];
@@ -1015,6 +1019,7 @@ public class MotifAnalysisRootController implements Initializable{
 				int[] bounds = bounds_entry.getValue();
 				String sequence = new String(pool_entry.getValue()).substring(bounds[0], bounds[1]);
 				
+				max_rand_size.set( Math.max(max_rand_size.get(), bounds[1]-bounds[0]) );
 				
 				// Search for matches
 				for ( Pattern p : patterns) {
@@ -1140,6 +1145,12 @@ public class MotifAnalysisRootController implements Initializable{
 		pp.setProgress(1.0);
 		pp.setProgressLabel(String.format("%.2f%%", 100.0));
 		
+		// Add zero values to non-matching indices
+		for (int x=0; x<max_rand_size.get(); x++) {
+			
+			occurences.putIfAbsent(x, 0.0);
+			
+		}
 		
 		// Get primitive arrays of keys and values
 		int[] indexes = occurences.keySet().stream().mapToInt(i->i).toArray();

@@ -230,6 +230,8 @@ public class RootLayoutController {
 		
 	    
 		// Set the number of cores in the menu
+		numberOfCoresMenu.getItems().clear();
+		
 		// Default
 		int default_cores = Math.min(Configuration.getParameters().getInt("Performance.maxNumberOfCores"), Runtime.getRuntime().availableProcessors());
 	

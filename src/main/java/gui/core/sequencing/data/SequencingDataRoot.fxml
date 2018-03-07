@@ -27,7 +27,7 @@
                   </ScrollPane>
                </center>
                <top>
-                  <ScrollPane fitToHeight="true" maxHeight="115.0" minHeight="115.0" BorderPane.alignment="CENTER">
+                  <ScrollPane fitToHeight="true" maxHeight="110.0" minHeight="110.0" vbarPolicy="NEVER" BorderPane.alignment="CENTER">
                      <BorderPane.margin>
                         <Insets />
                      </BorderPane.margin>
@@ -36,7 +36,7 @@
                            <children>
                               <VBox>
                                  <children>
-                                    <Label prefWidth="150.0" text="To change the default units of the Number Axis, select one of the options below:" wrapText="true">
+                                    <Label alignment="TOP_LEFT" maxHeight="45.0" maxWidth="250.0" minHeight="45.0" minWidth="150.0" text="To change the default units of the Number Axis, select one of the options below:" wrapText="true">
                                        <font>
                                           <Font size="12.0" />
                                        </font>
@@ -70,7 +70,7 @@
                               </Separator>
                               <VBox>
                                  <children>
-                                    <Label prefWidth="330.0" text="To view the randomized region size distribution for different lenghts, select the desired value below. By default, the randomized region size with the most reads is shown." wrapText="true">
+                                    <Label alignment="TOP_LEFT" maxHeight="45.0" maxWidth="430.0" minHeight="45.0" minWidth="330.0" text="To view the randomized region size distribution for different lenghts, select the desired value below. By default, the randomized region size with the most reads is shown." wrapText="true">
                                        <font>
                                           <Font size="12.0" />
                                        </font>
@@ -88,7 +88,7 @@
                                                 <Insets right="10.0" />
                                              </HBox.margin>
                                           </Label>
-                                          <ComboBox fx:id="randomizedRegionSizeComboBox" onAction="#updateAcceptedReadsFrequencyCharts" prefWidth="150.0" />
+                                          <ComboBox fx:id="randomizedRegionSizeComboBox" minWidth="-Infinity" onAction="#updateAcceptedReadsFrequencyCharts" />
                                        </children>
                                     </HBox>
                                  </children>
@@ -100,7 +100,7 @@
                               </Separator>
                               <VBox>
                                  <children>
-                                    <Label prefWidth="200.0" text="To change the default scale of the randomized region size bar chart, select one of the options below:" wrapText="true">
+                                    <Label alignment="TOP_LEFT" maxHeight="45.0" maxWidth="300.0" minHeight="45.0" minWidth="200.0" text="To change the default scale of the randomized region size bar chart, select one of the options below:" wrapText="true">
                                        <font>
                                           <Font size="12.0" />
                                        </font>
