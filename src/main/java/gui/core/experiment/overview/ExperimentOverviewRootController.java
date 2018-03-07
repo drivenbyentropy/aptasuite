@@ -12,6 +12,7 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.scene.chart.PieChart;
+import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
 import javafx.scene.text.Font;
@@ -115,10 +116,12 @@ public class ExperimentOverviewRootController {
 			Label name = new Label(cycle.getName()+":");
 			name.setPadding(new Insets(0,10,0,0));
 			name.setFont(Font.font("System", 12));
+			name.minWidth(Control.USE_PREF_SIZE);
 			
 			Label size = new Label(String.format("%.2f%%", ((double)cycle.getSize() / experiment.getMetadata().parserStatistics.get("accepted_reads").doubleValue())*100.0  ));
 			size.setPadding(new Insets(0,20,0,0));
 			size.setFont(Font.font("System", 12));
+			size.minWidth(Control.USE_PREF_SIZE);
 			
 			selectionCyclePercentagesGridPane.add(name, col, row);
 			selectionCyclePercentagesGridPane.add(size, col+1, row);

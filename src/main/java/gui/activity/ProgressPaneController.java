@@ -3,8 +3,6 @@ package gui.activity;
 import java.io.IOException;
 import java.util.logging.Level;
 
-import javax.annotation.PostConstruct;
-
 import gui.misc.FXConcurrent;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
@@ -106,13 +104,6 @@ public class ProgressPaneController {
 		}
 		
 		return progressPaneController;
-		
-	}
-	
-	@PostConstruct
-	public void initialize() {
-		
-
 		
 	}
 

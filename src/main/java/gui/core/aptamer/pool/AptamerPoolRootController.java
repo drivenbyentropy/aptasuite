@@ -3,15 +3,8 @@
  */
 package gui.core.aptamer.pool;
 
-import java.awt.Dimension;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.BitSet;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -21,21 +14,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.StreamSupport;
-
-import javax.annotation.PostConstruct;
 import javax.swing.SwingUtilities;
-
-import org.jfree.chart.ChartPanel;
-
-import com.itextpdf.text.log.SysoCounter;
-import com.sun.javafx.tk.FontMetrics;
-import com.sun.javafx.tk.Toolkit;
 
 import fr.orsay.lri.varna.VARNAPanel;
 import fr.orsay.lri.varna.exceptions.ExceptionNonEqualLength;
 import gui.activity.ProgressPaneController;
-import gui.aptatrace.logo.Logo;
 import gui.charts.logo.Alphabet;
 import gui.charts.logo.LogoChartPanelController;
 import gui.charts.logo.Scale;
@@ -43,8 +26,6 @@ import gui.core.Initializable;
 import javafx.application.Platform;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -56,7 +37,6 @@ import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.VPos;
-import javafx.scene.CacheHint;
 import javafx.scene.Node;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.XYChart;
@@ -89,10 +69,8 @@ import javafx.scene.layout.RowConstraints;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
-import javafx.scene.text.Text;
 import javafx.util.converter.NumberStringConverter;
 import lib.aptamer.datastructures.AptamerBounds;
 import lib.aptamer.datastructures.AptamerPool;
@@ -289,11 +267,6 @@ public class AptamerPoolRootController implements Initializable{
 	private Font table_font = Font.font("monospace", FontWeight.BOLD, 14);
 	
 	/**
-	 * Used to estimate the width on certain elements
-	 */
-	private FontMetrics fontMetrics = Toolkit.getToolkit().getFontLoader().getFontMetrics(table_font);
-	
-	/**
 	 * The local capr instance
 	 */
 	private CapR capr = new CapR();
@@ -311,7 +284,6 @@ public class AptamerPoolRootController implements Initializable{
 		
 	}
 	
-	//@PostConstruct
 	public void initializeContent() {
 		
 		initializeControlElements();

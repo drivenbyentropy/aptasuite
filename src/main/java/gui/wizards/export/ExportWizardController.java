@@ -13,7 +13,6 @@ import java.util.logging.Level;
 import javax.annotation.PostConstruct;
 
 import exceptions.InformationNotFoundException;
-import exceptions.InvalidConfigurationException;
 import gui.activity.ProgressPaneController;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;

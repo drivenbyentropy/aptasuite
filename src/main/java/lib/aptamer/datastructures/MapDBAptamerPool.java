@@ -1100,10 +1100,11 @@ public class MapDBAptamerPool implements AptamerPool {
 			    .allocateIncrement( this.allocateIncrement )
 			    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
 			    .fileMmapPreclearDisable() // Make mmap file faster
-			    .cleanerHackEnable() // Unmap (release resources) file when its closed.
+			    //.cleanerHackEnable() 	// Unmap (release resources) file when its closed. 
+			    						//Note that this is not compatible with MacOS and Java 9...
 			    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
 			    .executorEnable()
-			    .fileChannelEnable() // not supported on MacOS?
+			    .fileChannelEnable() 
 			    .make();
 		}
 		
@@ -1114,7 +1115,8 @@ public class MapDBAptamerPool implements AptamerPool {
 			    .allocateIncrement( this.allocateIncrement )
 			    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
 			    .fileMmapPreclearDisable() // Make mmap file faster
-			    .cleanerHackEnable() // Unmap (release resources) file when its closed.
+			    //.cleanerHackEnable() 	// Unmap (release resources) file when its closed. 
+										//Note that this is not compatible with MacOS and Java 9...
 			    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
 			    .executorEnable()
 			    .fileChannelEnable()

@@ -3,23 +3,11 @@
  */
 package gui.charts.logo;
 
-import javax.annotation.PostConstruct;
-
-import org.controlsfx.glyphfont.Glyph;
-
-import javafx.application.Platform;
-import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.fxml.FXML;
-import javafx.geometry.Bounds;
-import javafx.geometry.Insets;
 import javafx.scene.control.Control;
 import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
-import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.StackPane;
-import javafx.scene.paint.Color;
 import javafx.scene.shape.SVGPath;
 
 /**

@@ -59,6 +59,10 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.7.0</version>
+				<configuration>
+ 				 	<source>1.8</source>
+					<target>1.8</target>
+                 </configuration>				
 			</plugin>
 		
 			<!-- The build scheme was adopted from https://ath3nd.wordpress.com/2013/12/25/packaging-a-multimodule-maven-spring-app-in-a-standalone-jar/ -->
@@ -294,6 +298,11 @@
 			<version>1.16.20</version>
 			<scope>provided</scope>
 		</dependency>
+		<dependency>
+			<groupId>javax.annotation</groupId>
+			<artifactId>javax.annotation-api</artifactId>
+			<version>1.3.2</version>
+		</dependency>
 	</dependencies>
 	
 	
@@ -321,8 +330,8 @@
 		<!-- <nd4j.backend>nd4j-cuda-8.0-platform</nd4j.backend> -->
 		<nd4j.backend>nd4j-native-platform</nd4j.backend>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<maven.compiler.source>1.8</maven.compiler.source>
-		<maven.compiler.target>1.8</maven.compiler.target>
+		<!-- <maven.compiler.source>1.8</maven.compiler.source> -->
+		<!-- <maven.compiler.target>1.8</maven.compiler.target> -->
 		<nd4j.version>0.9.1</nd4j.version>
 		<deeplearning4j-ui.version>0.6.0</deeplearning4j-ui.version>
 	</properties>

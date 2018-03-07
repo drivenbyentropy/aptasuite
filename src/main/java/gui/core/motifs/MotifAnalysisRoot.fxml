@@ -34,176 +34,183 @@
          <children>
             <BorderPane>
                <top>
-                  <HBox BorderPane.alignment="CENTER">
-                     <children>
-                        <GridPane>
-                          <columnConstraints>
-                            <ColumnConstraints hgrow="SOMETIMES" />
-                            <ColumnConstraints hgrow="NEVER" />
-                              <ColumnConstraints />
-                              <ColumnConstraints />
-                          </columnConstraints>
-                          <rowConstraints>
-                            <RowConstraints vgrow="NEVER" />
-                            <RowConstraints minHeight="25.0" vgrow="NEVER" />
-                            <RowConstraints minHeight="25.0" vgrow="NEVER" />
-                              <RowConstraints minHeight="25.0" vgrow="NEVER" />
-                          </rowConstraints>
-                           <children>
-                              <Label minHeight="-Infinity" minWidth="-Infinity" text="Motif Identification Options (AptaTRACE)" GridPane.columnSpan="4">
-                                 <font>
-                                    <Font name="System Bold" size="12.0" />
-                                 </font>
-                              </Label>
-                              <Label minHeight="-Infinity" minWidth="-Infinity" text="K-mer Size:" GridPane.rowIndex="1">
-                                 <font>
-                                    <Font size="12.0" />
-                                 </font>
-                                 <tooltip>
-                                    <Tooltip text="Defines the size of the k-mers that will be used during the &#10;motif extraction procedure of AptaTRACE. In other words, &#10;it defines the initial motif size.">
-                                       <font>
-                                          <Font size="12.0" />
-                                       </font>
-                                    </Tooltip>
-                                 </tooltip>
-                                 <padding>
-                                    <Insets right="10.0" />
-                                 </padding>
-                              </Label>
-                              <Label minHeight="-Infinity" minWidth="-Infinity" text="Alpha:" GridPane.rowIndex="2">
-                                 <font>
-                                    <Font size="12.0" />
-                                 </font>
-                                 <tooltip>
-                                    <Tooltip text="AptaTRACE uses a background model to identify statistically significant changes &#10;in secondary structure contexts. This model is generated from aptamers which do &#10;not undergo selection and are therefore present in small numbers in the pools. &#10;The parameter alpha specifies which sequences should be included in the background &#10;model, i.e. all sequences whose number of occurrences is smaller than, or equal &#10;to this value are taken into account.">
-                                       <font>
-                                          <Font size="12.0" />
-                                       </font>
-                                    </Tooltip>
-                                 </tooltip>
-                                 <GridPane.margin>
-                                    <Insets right="10.0" />
-                                 </GridPane.margin>
-                              </Label>
-                              <Label minHeight="-Infinity" minWidth="-Infinity" text="Filter Clusters:" GridPane.rowIndex="3">
-                                 <font>
-                                    <Font size="12.0" />
-                                 </font>
-                                 <tooltip>
-                                    <Tooltip text="Occasionally, motifs might co-occur within the same aptamer or aptamer family. &#10;In order to better understand this relationship, we have developed a post-processing &#10;add-on that uncovers these relationships. To activate this option, the this parameter&#10;has to be set to True.">
-                                       <font>
-                                          <Font size="12.0" />
-                                       </font>
-                                    </Tooltip>
-                                 </tooltip>
-                                 <GridPane.margin>
-                                    <Insets right="10.0" />
-                                 </GridPane.margin>
-                              </Label>
-                              <ComboBox fx:id="kmerSizeComboBox" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
-                                 <GridPane.margin>
-                                    <Insets right="20.0" />
-                                 </GridPane.margin>
-                              </ComboBox>
-                              <ComboBox fx:id="filterClusterComboBox" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-                              <TextField fx:id="alphaTextField" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="2">
-                                 <GridPane.margin>
-                                    <Insets right="20.0" />
-                                 </GridPane.margin>
-                              </TextField>
-                           </children>
-                        </GridPane>
-                        <VBox>
-                           <HBox.margin>
-                              <Insets left="20.0" />
-                           </HBox.margin>
-                           <children>
-                              <Label minWidth="-Infinity" text="&#10;To cluster or re-cluster the pool,&#10;adjust the cluster option parameters&#10;and press &quot;Run AptaCluster&quot; below.">
-                                 <font>
-                                    <Font size="12.0" />
-                                 </font>
-                                 <VBox.margin>
-                                    <Insets bottom="6.0" />
-                                 </VBox.margin>
-                              </Label>
-                              <Button mnemonicParsing="false" onAction="#runAptaTrace" text="Run AptaTrace" VBox.vgrow="ALWAYS">
-                                 <font>
-                                    <Font size="12.0" />
-                                 </font>
-                              </Button>
-                           </children>
-                        </VBox>
-                        <Separator orientation="VERTICAL">
-                           <HBox.margin>
-                              <Insets left="20.0" right="20.0" />
-                           </HBox.margin>
-                        </Separator>
-                        <GridPane>
-                          <columnConstraints>
-                            <ColumnConstraints hgrow="SOMETIMES" />
-                            <ColumnConstraints hgrow="SOMETIMES" />
-                              <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-                          </columnConstraints>
-                          <rowConstraints>
-                            <RowConstraints vgrow="NEVER" />
-                            <RowConstraints minHeight="25.0" vgrow="NEVER" />
-                            <RowConstraints minHeight="25.0" vgrow="NEVER" />
-                          </rowConstraints>
-                           <children>
-                              <Label text="Sequence Table Options" GridPane.columnSpan="2">
-                                 <font>
-                                    <Font name="System Bold" size="12.0" />
-                                 </font>
-                              </Label>
-                              <Label minWidth="-Infinity" text="Primers: " GridPane.rowIndex="1">
-                                 <font>
-                                    <Font size="12.0" />
-                                 </font>
-                              </Label>
-                              <RadioButton fx:id="showPrimersRadioButton" minWidth="-Infinity" mnemonicParsing="false" onAction="#redrawTableContent" selected="true" text="Show" GridPane.columnIndex="2" GridPane.rowIndex="1">
-                                 <font>
-                                    <Font size="12.0" />
-                                 </font>
-                                 <toggleGroup>
-                                    <ToggleGroup fx:id="showPrimersToggleGroup" />
-                                 </toggleGroup>
-                              </RadioButton>
-                              <Label text="Cardinality:" GridPane.rowIndex="2">
-                                 <font>
-                                    <Font size="12.0" />
-                                 </font>
-                                 <GridPane.margin>
-                                    <Insets right="5.0" />
-                                 </GridPane.margin>
-                              </Label>
-                              <RadioButton fx:id="rawCountsRadionButton" mnemonicParsing="false" onAction="#redrawTableAndPlotContent" text="Raw Counts" GridPane.columnIndex="2" GridPane.rowIndex="2">
-                                 <font>
-                                    <Font size="12.0" />
-                                 </font>
-                                 <padding>
-                                    <Insets right="5.0" />
-                                 </padding>
-                                 <toggleGroup>
-                                    <ToggleGroup fx:id="cardinalityToggleGroup" />
-                                 </toggleGroup>
-                              </RadioButton>
-                              <RadioButton fx:id="cmpRadioButton" mnemonicParsing="false" onAction="#redrawTableAndPlotContent" selected="true" text="CMP" toggleGroup="$cardinalityToggleGroup" GridPane.columnIndex="1" GridPane.rowIndex="2">
-                                 <font>
-                                    <Font size="12.0" />
-                                 </font>
-                              </RadioButton>
-                              <RadioButton minWidth="-Infinity" mnemonicParsing="false" onAction="#redrawTableContent" selected="true" text="Hide" toggleGroup="$showPrimersToggleGroup" GridPane.columnIndex="1" GridPane.rowIndex="1">
-                                 <font>
-                                    <Font size="12.0" />
-                                 </font>
-                              </RadioButton>
-                           </children>
-                        </GridPane>
-                     </children>
+                  <ScrollPane fitToHeight="true" maxHeight="125.0" minHeight="125.0" BorderPane.alignment="CENTER">
                      <BorderPane.margin>
-                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                        <Insets />
                      </BorderPane.margin>
-                  </HBox>
+                     <content>
+                        <HBox>
+                           <children>
+                              <GridPane>
+                                <columnConstraints>
+                                  <ColumnConstraints hgrow="SOMETIMES" />
+                                  <ColumnConstraints hgrow="NEVER" />
+                                    <ColumnConstraints />
+                                    <ColumnConstraints />
+                                </columnConstraints>
+                                <rowConstraints>
+                                  <RowConstraints vgrow="NEVER" />
+                                  <RowConstraints minHeight="25.0" vgrow="NEVER" />
+                                  <RowConstraints minHeight="25.0" vgrow="NEVER" />
+                                    <RowConstraints minHeight="25.0" vgrow="NEVER" />
+                                </rowConstraints>
+                                 <children>
+                                    <Label minHeight="-Infinity" minWidth="-Infinity" text="Motif Identification Options (AptaTRACE)" GridPane.columnSpan="4">
+                                       <font>
+                                          <Font name="System Bold" size="12.0" />
+                                       </font>
+                                    </Label>
+                                    <Label minHeight="-Infinity" minWidth="-Infinity" text="K-mer Size:" GridPane.rowIndex="1">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                       <tooltip>
+                                          <Tooltip text="Defines the size of the k-mers that will be used during the &#10;motif extraction procedure of AptaTRACE. In other words, &#10;it defines the initial motif size.">
+                                             <font>
+                                                <Font size="12.0" />
+                                             </font>
+                                          </Tooltip>
+                                       </tooltip>
+                                       <padding>
+                                          <Insets right="10.0" />
+                                       </padding>
+                                    </Label>
+                                    <Label minHeight="-Infinity" minWidth="-Infinity" text="Alpha:" GridPane.rowIndex="2">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                       <tooltip>
+                                          <Tooltip text="AptaTRACE uses a background model to identify statistically significant changes &#10;in secondary structure contexts. This model is generated from aptamers which do &#10;not undergo selection and are therefore present in small numbers in the pools. &#10;The parameter alpha specifies which sequences should be included in the background &#10;model, i.e. all sequences whose number of occurrences is smaller than, or equal &#10;to this value are taken into account.">
+                                             <font>
+                                                <Font size="12.0" />
+                                             </font>
+                                          </Tooltip>
+                                       </tooltip>
+                                       <GridPane.margin>
+                                          <Insets right="10.0" />
+                                       </GridPane.margin>
+                                    </Label>
+                                    <Label minHeight="-Infinity" minWidth="-Infinity" text="Filter Clusters:" GridPane.rowIndex="3">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                       <tooltip>
+                                          <Tooltip text="Occasionally, motifs might co-occur within the same aptamer or aptamer family. &#10;In order to better understand this relationship, we have developed a post-processing &#10;add-on that uncovers these relationships. To activate this option, the this parameter&#10;has to be set to True.">
+                                             <font>
+                                                <Font size="12.0" />
+                                             </font>
+                                          </Tooltip>
+                                       </tooltip>
+                                       <GridPane.margin>
+                                          <Insets right="10.0" />
+                                       </GridPane.margin>
+                                    </Label>
+                                    <ComboBox fx:id="kmerSizeComboBox" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                                       <GridPane.margin>
+                                          <Insets right="20.0" />
+                                       </GridPane.margin>
+                                    </ComboBox>
+                                    <ComboBox fx:id="filterClusterComboBox" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                                    <TextField fx:id="alphaTextField" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="2">
+                                       <GridPane.margin>
+                                          <Insets right="20.0" />
+                                       </GridPane.margin>
+                                    </TextField>
+                                 </children>
+                              </GridPane>
+                              <VBox>
+                                 <HBox.margin>
+                                    <Insets left="20.0" />
+                                 </HBox.margin>
+                                 <children>
+                                    <Label minWidth="-Infinity" text="&#10;To cluster or re-cluster the pool,&#10;adjust the cluster option parameters&#10;and press &quot;Run AptaCluster&quot; below.">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                       <VBox.margin>
+                                          <Insets bottom="6.0" />
+                                       </VBox.margin>
+                                    </Label>
+                                    <Button mnemonicParsing="false" onAction="#runAptaTrace" text="Run AptaTrace" VBox.vgrow="ALWAYS">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                    </Button>
+                                 </children>
+                              </VBox>
+                              <Separator orientation="VERTICAL">
+                                 <HBox.margin>
+                                    <Insets left="20.0" right="20.0" />
+                                 </HBox.margin>
+                              </Separator>
+                              <GridPane>
+                                <columnConstraints>
+                                  <ColumnConstraints hgrow="SOMETIMES" />
+                                  <ColumnConstraints hgrow="SOMETIMES" />
+                                    <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                                </columnConstraints>
+                                <rowConstraints>
+                                  <RowConstraints vgrow="NEVER" />
+                                  <RowConstraints minHeight="25.0" vgrow="NEVER" />
+                                  <RowConstraints minHeight="25.0" vgrow="NEVER" />
+                                </rowConstraints>
+                                 <children>
+                                    <Label text="Sequence Table Options" GridPane.columnSpan="2">
+                                       <font>
+                                          <Font name="System Bold" size="12.0" />
+                                       </font>
+                                    </Label>
+                                    <Label minWidth="-Infinity" text="Primers: " GridPane.rowIndex="1">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                    </Label>
+                                    <RadioButton fx:id="showPrimersRadioButton" minWidth="-Infinity" mnemonicParsing="false" onAction="#redrawTableContent" selected="true" text="Show" GridPane.columnIndex="2" GridPane.rowIndex="1">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                       <toggleGroup>
+                                          <ToggleGroup fx:id="showPrimersToggleGroup" />
+                                       </toggleGroup>
+                                    </RadioButton>
+                                    <Label text="Cardinality:" GridPane.rowIndex="2">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                       <GridPane.margin>
+                                          <Insets right="5.0" />
+                                       </GridPane.margin>
+                                    </Label>
+                                    <RadioButton fx:id="rawCountsRadionButton" mnemonicParsing="false" onAction="#redrawTableAndPlotContent" text="Raw Counts" GridPane.columnIndex="2" GridPane.rowIndex="2">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                       <padding>
+                                          <Insets right="5.0" />
+                                       </padding>
+                                       <toggleGroup>
+                                          <ToggleGroup fx:id="cardinalityToggleGroup" />
+                                       </toggleGroup>
+                                    </RadioButton>
+                                    <RadioButton fx:id="cmpRadioButton" mnemonicParsing="false" onAction="#redrawTableAndPlotContent" selected="true" text="CMP" toggleGroup="$cardinalityToggleGroup" GridPane.columnIndex="1" GridPane.rowIndex="2">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                    </RadioButton>
+                                    <RadioButton minWidth="-Infinity" mnemonicParsing="false" onAction="#redrawTableContent" selected="true" text="Hide" toggleGroup="$showPrimersToggleGroup" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                    </RadioButton>
+                                 </children>
+                              </GridPane>
+                           </children>
+                           <padding>
+                              <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                           </padding>
+                        </HBox>
+                     </content>
+                  </ScrollPane>
                </top>
                <center>
                   <AnchorPane BorderPane.alignment="CENTER">

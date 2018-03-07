@@ -101,15 +101,6 @@ public class SequencingDataCycleController {
 	
 	private Experiment experiment = Configuration.getExperiment();
 	
-	
-	@PostConstruct
-	public void initialize() {
-		
-		System.out.println("SequencingDataCycleController Initialized");
-		
-	}
-	
-	
 	/**
 	 * Loads the cycle specific information into the view
 	 */
@@ -369,10 +360,7 @@ public class SequencingDataCycleController {
 	 */
 	private void updateRandomizedRegionSizeDistribution() {
 		
-		// Collect the data
-		XYChart.Series<String,Number> chart_data_raw = new XYChart.Series(); 
-		Integer total = 0;
-		//chart_data.setName("Randomized Region Sizes in the Aptamer Pool");
+		HashMap<Integer, Integer> totals = new HashMap<Integer, Integer>();
 		for ( Entry<Integer, ConcurrentHashMap<Integer, ConcurrentHashMap<Byte, Integer>>> rand_size : experiment.getMetadata().nucleotideDistributionAccepted.get(cycle.getName()).entrySet() ) {
 			
 			// Take position 0 and sum up the counts of the nucleotides
@@ -384,11 +372,35 @@ public class SequencingDataCycleController {
 				
 			}
 			
-			// Add it to charet data
-			chart_data_raw.getData().add(new XYChart.Data<String,Number>(rand_size.getKey().toString(), sum));
-			total += sum;
+			totals.put(rand_size.getKey(), sum);
 			
 		}
+		
+		// Get the largest size (but at least 10) and pad with zeros and 5 to the right
+		int maximum = Math.max( 10, totals.keySet().stream().max( (x,y) -> Integer.compare(x, y) ).get() ) + 5; 
+		
+		for (int x=0; x<maximum; x++) {
+			
+			if (!totals.containsKey(x)) {
+				
+				totals.put(x, 0);
+				
+			}
+			
+		}
+		
+		
+		// Collect the data
+		XYChart.Series<String,Number> chart_data_raw = new XYChart.Series(); 
+		Integer total = 0;
+		for ( int x=0; x<maximum; x++) {
+			
+			// Add it to chart data
+			chart_data_raw.getData().add(new XYChart.Data<String,Number>(x+"", totals.get(x)));
+			total += totals.get(x);
+			
+		}
+		
 		
 		// Iterate over the original data and adjust
 		XYChart.Series<String,Number> chart_data = new XYChart.Series(); 

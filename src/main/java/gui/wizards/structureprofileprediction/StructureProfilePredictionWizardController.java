@@ -10,8 +10,6 @@ import java.util.Queue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 
-import javax.annotation.PostConstruct;
-
 import org.apache.commons.io.FileUtils;
 
 import com.google.common.collect.EvictingQueue;

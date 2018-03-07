@@ -5,8 +5,6 @@ package gui.charts.logo;
 
 import java.io.IOException;
 
-import javax.annotation.PostConstruct;
-
 import gui.core.sequencing.data.SequencingDataCycleController;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -75,11 +73,6 @@ public class LogoChartPanelController {
 	 * The scale for the y axis 
 	 */
 	private Scale scale = Scale.FREQUENCY;
-	
-	@PostConstruct
-	public void initialize() {
-
-	}
 
 	public void createChart() {
 		

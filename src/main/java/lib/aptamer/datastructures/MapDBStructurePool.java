@@ -168,7 +168,8 @@ public class MapDBStructurePool implements StructurePool {
 	    						    .allocateIncrement( this.allocateIncrement )
 	    						    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
 	    						    .fileMmapPreclearDisable() // Make mmap file faster
-	    						    .cleanerHackEnable() // Unmap (release resources) file when its closed.
+	    						  //.cleanerHackEnable() 	// Unmap (release resources) file when its closed. 
+															//Note that this is not compatible with MacOS and Java 9...
 	    						    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
 	    						    .executorEnable()
 	    						    .make();
@@ -242,7 +243,8 @@ public class MapDBStructurePool implements StructurePool {
 				    .allocateIncrement( this.allocateIncrement )
 				    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
 				    .fileMmapPreclearDisable() // Make mmap file faster
-				    .cleanerHackEnable() // Unmap (release resources) file when its closed.
+				  //.cleanerHackEnable() 	// Unmap (release resources) file when its closed. 
+											//Note that this is not compatible with MacOS and Java 9...
 				    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
 				    .executorEnable()
 				    .make();
@@ -296,7 +298,8 @@ public class MapDBStructurePool implements StructurePool {
 				    .allocateStartSize( this.allocateStartSize )
 				    .allocateIncrement( this.allocateIncrement )
 				    .fileMmapPreclearDisable() // Make mmap file faster
-				    .cleanerHackEnable() // Unmap (release resources) file when its closed.
+				  //.cleanerHackEnable() 	// Unmap (release resources) file when its closed. 
+											//Note that this is not compatible with MacOS and Java 9...
 				    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
 				    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
 				    .executorEnable()
@@ -403,7 +406,8 @@ public class MapDBStructurePool implements StructurePool {
 					    .allocateIncrement( this.allocateIncrement )
 					    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
 					    .fileMmapPreclearDisable() // Make mmap file faster
-					    .cleanerHackEnable() // Unmap (release resources) file when its closed.
+					  //.cleanerHackEnable() 	// Unmap (release resources) file when its closed. 
+												//Note that this is not compatible with MacOS and Java 9...
 					    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
 					    .executorEnable()
 					    .readOnly()
@@ -448,7 +452,8 @@ public class MapDBStructurePool implements StructurePool {
 					    .allocateIncrement( this.allocateIncrement )
 					    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
 					    .fileMmapPreclearDisable() // Make mmap file faster
-					    .cleanerHackEnable() // Unmap (release resources) file when its closed.
+					  //.cleanerHackEnable() 	// Unmap (release resources) file when its closed. 
+												//Note that this is not compatible with MacOS and Java 9...
 					    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
 					    .executorEnable()
 					    .make();

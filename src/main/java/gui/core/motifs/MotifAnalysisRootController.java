@@ -8,13 +8,10 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.BitSet;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.Map.Entry;
@@ -25,19 +22,10 @@ import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.annotation.PostConstruct;
-
-import com.sun.javafx.tk.FontMetrics;
-import com.sun.javafx.tk.Toolkit;
-
 import exceptions.InformationNotFoundException;
 import gui.activity.ProgressPaneController;
-import gui.charts.logo.Alphabet;
 import gui.charts.logo.LogoChartPanelController;
-import gui.charts.logo.Scale;
 import gui.core.Initializable;
-import gui.core.aptamer.family.analysis.SequenceTableRowData;
-import gui.wizards.newexperiment.WizardAdvancedOptionsController.YesNoStringConverter;
 import gui.wizards.structureprofileprediction.StructureProfilePredictionWizardController;
 import javafx.application.Platform;
 import javafx.beans.property.IntegerProperty;
@@ -66,7 +54,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.Pagination;
 import javafx.scene.control.RadioButton;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
@@ -85,7 +72,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
-import javafx.stage.StageStyle;
 import javafx.util.StringConverter;
 import lib.aptamer.datastructures.AptamerBounds;
 import lib.aptamer.datastructures.AptamerPool;
@@ -96,8 +82,6 @@ import utilities.AptaColors;
 import utilities.AptaLogger;
 import utilities.Configuration;
 import utilities.GUIUtilities;
-import utilities.QSComparator;
-import utilities.QSDoubleComparator;
 import utilities.Quicksort;
 
 /**
@@ -227,11 +211,6 @@ public class MotifAnalysisRootController implements Initializable{
 	 */
 	private Font table_font = Font.font("monospace", FontWeight.BOLD, 14);
 	
-	/**
-	 * Used to estimate the width on certain elements
-	 */
-	private FontMetrics fontMetrics = Toolkit.getToolkit().getFontLoader().getFontMetrics(table_font);
-	
 	private Experiment experiment = Configuration.getExperiment();
 	
 	private AptamerPool pool = experiment.getAptamerPool();
@@ -250,7 +229,6 @@ public class MotifAnalysisRootController implements Initializable{
 		
 	}
 	
-	//@PostConstruct
 	public void initializeContent() {
 		
 		AptaLogger.log(Level.INFO,  this.getClass(), "Initializing Motif Analysis Content");

@@ -15,11 +15,11 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" fx:controller="gui.core.experiment.overview.ExperimentOverviewRandomizedRegionSizeDistributionController">
+<AnchorPane xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.core.experiment.overview.ExperimentOverviewRandomizedRegionSizeDistributionController">
    <children>
       <HBox alignment="CENTER_LEFT" spacing="10.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
-            <VBox alignment="CENTER_LEFT" HBox.hgrow="NEVER">
+            <VBox alignment="CENTER_LEFT" minWidth="150.0" HBox.hgrow="NEVER">
                <children>
                   <Region VBox.vgrow="ALWAYS" />
                   <Label prefWidth="150.0" text="Histogram of the sizes of all randomized regions identified during parsing. &#10;&#10;The sizes are computed by matching both, 3'' and 5'' primers to the sequence and extracting the region between them. &#10;" wrapText="true">
