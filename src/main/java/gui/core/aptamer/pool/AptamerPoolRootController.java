@@ -30,6 +30,7 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.embed.swing.SwingNode;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -420,15 +421,15 @@ public class AptamerPoolRootController implements Initializable{
 	 */
 	private void showCardinalityPlots(ObservableList<Integer> selected_indices) {
 		
-		Thread t = new Thread(new Runnable() {
+		// Iterate over the selected indices, get the aptamer information and plot
+		ArrayList<XYChart.Series<String,Double>> series = new ArrayList<XYChart.Series<String,Double>>();
+		
+		Task<Void> task = new Task<Void>() {
 
 			@Override
-			public void run() {
+			protected Void call() throws Exception {
 				
 				ArrayList<SelectionCycle> selectionCycles = experiment.getSelectionCycles();
-				
-				// Iterate over the selected indices, get the aptamer information and plot
-				ArrayList<XYChart.Series<String,Double>> series = new ArrayList<XYChart.Series<String,Double>>();
 				
 				for (Integer index : selected_indices) {
 					
@@ -460,24 +461,28 @@ public class AptamerPoolRootController implements Initializable{
 			        }
 			        
 		        	series.add(dataSeries);
-					
+				
+				
 				}
 				
-				Platform.runLater(() -> { 
-				
-					cardinalityLineChart.getData().clear();
-					cardinalityLineChart.getData().setAll(series); 
-					
-				});
-				
+				return null;
+			
 			}
+		
+		};
+		
+		task.setOnSucceeded( event -> {
+			
+			cardinalityLineChart.getData().clear();
+			cardinalityLineChart.getData().setAll(series); 
 			
 		});
 		
+		Thread t = new Thread(task);
 		t.setName("chartThread");
-		//t.setDaemon(true);
 		t.start();
 		
+
 	}
 	
 	/**
@@ -1411,8 +1416,7 @@ public class AptamerPoolRootController implements Initializable{
 				
 				for (int x=m.start(); x<m.end(); x++) { 
 				
-					
-					matches.set(with_primers ? bounds.startIndex + x : x); 
+					matches.set(bounds.startIndex + x);
 					
 				}
 				

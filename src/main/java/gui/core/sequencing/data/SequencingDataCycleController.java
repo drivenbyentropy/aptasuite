@@ -246,7 +246,7 @@ public class SequencingDataCycleController {
 		
 		// Needs to be in this order because the color choice will be determined based on this order and the CSS file 
 		this.forwardReadsLineChart.getData().clear();
-		this.forwardReadsLineChart.getData().addAll(seriesA, seriesC, seriesG, seriesT);
+		this.forwardReadsLineChart.getData().setAll(seriesA, seriesC, seriesG, seriesT);
 		
 	}
 	
@@ -299,7 +299,7 @@ public class SequencingDataCycleController {
 			
 			// Needs to be in this order because the color choice will be determined based on this order and the CSS file 
 			this.reverseReadsLineChart.getData().clear();
-			this.reverseReadsLineChart.getData().addAll(seriesA, seriesC, seriesG, seriesT);
+			this.reverseReadsLineChart.getData().setAll(seriesA, seriesC, seriesG, seriesT);
 		
 		}
 	}	
@@ -351,7 +351,7 @@ public class SequencingDataCycleController {
 		
 		// Needs to be in this order because the color choice will be determined based on this order and the CSS file 
 		this.randomizedRegionLineChart.getData().clear();
-		this.randomizedRegionLineChart.getData().addAll(seriesA, seriesC, seriesG, seriesT);
+		this.randomizedRegionLineChart.getData().setAll(seriesA, seriesC, seriesG, seriesT);
 		
 	}	
 	

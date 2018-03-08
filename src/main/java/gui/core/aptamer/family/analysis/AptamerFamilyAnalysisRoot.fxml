@@ -408,7 +408,7 @@
                                                                                           </RadioButton>
                                                                                        </children>
                                                                                     </HBox>
-                                                                                    <LineChart fx:id="cardinalityLineChart" legendSide="RIGHT" stylesheets="@style_cardinality.css">
+                                                                                    <LineChart fx:id="cardinalityLineChart" animated="false" legendSide="RIGHT" stylesheets="@style_cardinality.css">
                                                                                       <xAxis>
                                                                                         <CategoryAxis side="BOTTOM" />
                                                                                       </xAxis>
@@ -489,7 +489,7 @@
                                                                                           </HBox>
                                                                                        </children>
                                                                                     </VBox>
-                                                                                    <ScatterChart fx:id="clusterComparisonScatterChart" legendVisible="false" maxHeight="1.7976931348623157E308" stylesheets="@style_cluster_enrichment.css">
+                                                                                    <ScatterChart fx:id="clusterComparisonScatterChart" animated="false" legendVisible="false" maxHeight="1.7976931348623157E308" stylesheets="@style_cluster_enrichment.css">
                                                                                       <xAxis>
                                                                                         <NumberAxis side="BOTTOM" />
                                                                                       </xAxis>

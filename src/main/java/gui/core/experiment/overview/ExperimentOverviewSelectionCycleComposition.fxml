@@ -53,7 +53,7 @@
                   </Separator>
                   <StackPane HBox.hgrow="ALWAYS">
                      <children>
-                        <BarChart fx:id="positiveSelectionCyclesBarChart" barGap="5.0" categoryGap="20.0" minHeight="-Infinity" title="Positive Selection Cycles">
+                        <BarChart fx:id="positiveSelectionCyclesBarChart" animated="false" barGap="5.0" categoryGap="20.0" minHeight="-Infinity" title="Positive Selection Cycles">
                           <xAxis>
                             <CategoryAxis label="Cycle Number/Name" side="BOTTOM" />
                           </xAxis>
@@ -65,7 +65,7 @@
                   </StackPane>
                   <StackPane HBox.hgrow="ALWAYS">
                      <children>
-                        <BarChart fx:id="negativeSelectionCyclesBarChart" barGap="5.0" categoryGap="25.0" minHeight="-Infinity" title="Negative Selection Cycles">
+                        <BarChart fx:id="negativeSelectionCyclesBarChart" animated="false" barGap="5.0" categoryGap="25.0" minHeight="-Infinity" title="Negative Selection Cycles">
                            <xAxis>
                               <CategoryAxis label="Cycle Number/Name" side="BOTTOM" />
                            </xAxis>
@@ -77,7 +77,7 @@
                   </StackPane>
                   <StackPane HBox.hgrow="ALWAYS">
                      <children>
-                        <BarChart fx:id="controlSelectionCyclesBarChart" barGap="5.0" categoryGap="25.0" minHeight="-Infinity" title="Control Cycles">
+                        <BarChart fx:id="controlSelectionCyclesBarChart" animated="false" barGap="5.0" categoryGap="25.0" minHeight="-Infinity" title="Control Cycles">
                            <xAxis>
                               <CategoryAxis label="Cycle Number/Name" side="BOTTOM" />
                            </xAxis>

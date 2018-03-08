@@ -92,7 +92,7 @@ public class MapDBAptamerPool implements AptamerPool {
 	 * The bloom filter is used in order to provide atomic and space efficient checks on 
 	 * whether a sequence is already contained in the pool.
 	 */
-	private transient BloomFilter<String> bloomFilter = new FilterBuilder(bloomFilterCapacity, bloomFilterCollisionProbability).buildBloomFilter(); //TODO: make parameters class vars and implement getters and setters
+	private transient BloomFilter<String> bloomFilter = new FilterBuilder(bloomFilterCapacity, bloomFilterCollisionProbability).buildBloomFilter(); 
 	
 	
 	/**
@@ -238,8 +238,8 @@ public class MapDBAptamerPool implements AptamerPool {
     				final AtomicInteger currentDBmapSize = new AtomicInteger(0);
     				inverse_dbmap.forEach((key,value) -> {
     					
-    					bloomFilter.add(value);
-    					localBloomFilter.add(value);
+    					bloomFilter.addRaw(value);
+    					localBloomFilter.addRaw(value);
     					
     					this.poolDataInverseFilter.set(key);
     					localBitSet.set(key);
@@ -417,8 +417,8 @@ public class MapDBAptamerPool implements AptamerPool {
 		// Now insert the sequence
 		poolData.get(poolData.size()-1).put(a, ++poolSize);
 		currentTreeMapSize++;
-		bloomFilter.add(a);
-		poolDataBloomFilter.get(poolData.size()-1).add(a);
+		bloomFilter.addRaw(a);
+		poolDataBloomFilter.get(poolData.size()-1).addRaw(a);
 		
 		poolDataInverse.get(poolDataInverse.size()-1).put(poolSize, a);
 		poolDataInverseFilter.set(poolSize);

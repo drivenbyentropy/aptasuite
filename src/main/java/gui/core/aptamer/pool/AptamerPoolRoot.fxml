@@ -297,7 +297,7 @@
                                                                         <Insets top="10.0" />
                                                                      </VBox.margin>
                                                                   </HBox>
-                                                                  <LineChart fx:id="cardinalityLineChart" legendSide="RIGHT" stylesheets="@style.css">
+                                                                  <LineChart fx:id="cardinalityLineChart" animated="false" legendSide="RIGHT" stylesheets="@style.css">
                                                                     <xAxis>
                                                                       <CategoryAxis side="BOTTOM" />
                                                                     </xAxis>
