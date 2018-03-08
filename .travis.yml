@@ -5,3 +5,4 @@ matrix:
     - os: linux
       sudo: false
       jdk: oraclejdk9
+      script: mvn install
