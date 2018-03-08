@@ -41,6 +41,8 @@ public class MotifFileHook {
 	
 	private double motif_frequency;
 	
+	private boolean is_dummy = false;
+	
 	public MotifFileHook(Integer id) {
 		
 		this.motif_id = id;
@@ -265,6 +267,8 @@ public class MotifFileHook {
 	@Override
 	public String toString() {
 		
+		if (is_dummy) return "No motifs were found.";
+		
 		// Lazy load motif info
 		if (kmers == null) {
 			
@@ -421,6 +425,16 @@ public class MotifFileHook {
 	 */
 	public void setMotif_frequency(double motif_frequency) {
 		this.motif_frequency = motif_frequency;
+	}
+	
+	public void setIsDummy(boolean dummy) {
+		
+		this.is_dummy = dummy;
+		
+	}
+	
+	public boolean isDummy() {
+		return this.is_dummy;
 	}
 	
 }

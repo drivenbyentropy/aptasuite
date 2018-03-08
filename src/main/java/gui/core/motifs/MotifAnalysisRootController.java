@@ -306,8 +306,15 @@ public class MotifAnalysisRootController implements Initializable{
 
 			    if (selectedItem != null && selectedItem.isLeaf()) {
 			    	
-			    	// Update the UI if the user has selected a leaf
-			    	updateMotifInformation(selectedItem);
+			    	// Make sure this is not a dummy 
+			    	MotifFileHook item = ((MotifFileHook) selectedItem.getValue());
+			    	
+			    	if (!item.isDummy()) {
+			    	
+			    		// Update the UI if the user has selected a leaf
+			    		updateMotifInformation(selectedItem);
+			    	
+			    	}
 			    	
 			    }
 			    
@@ -380,6 +387,14 @@ public class MotifAnalysisRootController implements Initializable{
 
 			@Override
 			public void run() {
+				
+				// reset the cardinality chart
+				Platform.runLater( ()->{ 
+					
+					cardinalityLineChart.getData().clear();
+					
+				});
+				
 				
 				AptaLogger.log(Level.INFO,  this.getClass(), "Retrieving Motif Information");
 				
@@ -468,6 +483,7 @@ public class MotifAnalysisRootController implements Initializable{
 					String name = String.format("AptaTrace k=%s alpha=%s", matches.get(0), matches.get(1));
 					
 					TreeItem<MotifFileHook> item = new TreeItem(name);
+					item.setExpanded(true);
 					
 					// Add to list 
 					parameter_combinations.add(item);
@@ -528,6 +544,13 @@ public class MotifAnalysisRootController implements Initializable{
 					    
 					    // Finally add to the TreeView
 					    item.getChildren().addAll(motifs.values());
+					    
+					    // Add a dummy if no motifs were found
+					    if (motifs.isEmpty()) {
+					    	MotifFileHook dummy_hook = new MotifFileHook(0);
+					    	dummy_hook.setIsDummy(true);
+					    	item.getChildren().add(new TreeItem(dummy_hook));
+					    }
 					    
 					} catch (IOException e) {
 						// TODO Auto-generated catch block
