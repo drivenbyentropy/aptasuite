@@ -1,3 +1,5 @@
+[![Github All Releases](https://img.shields.io/github/downloads/drivenbyentropy/aptasuite/total.svg)]()
+
 # AptaSUITE
 A full-featured aptamer bioinformatics software collection for the comprehensive analysis of HT-SELEX experiments providing both, command line and graphical user interfaces.
 
