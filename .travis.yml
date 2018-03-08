@@ -1,2 +1,7 @@
 language: java
-script: mvn install
+
+matrix:
+  include:
+    - os: linux
+      sudo: false
+      jdk: oraclejdk9
