@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/drivenbyentropy/aptasuite.svg?branch=master)](https://travis-ci.org/drivenbyentropy/aptasuite)
 [![Github All Releases](https://img.shields.io/github/downloads/drivenbyentropy/aptasuite/total.svg)](https://github.com/drivenbyentropy/aptasuite/releases)
 [![HitCount](http://hits.dwyl.io/drivenbyentropy/aptasuite.svg)](http://hits.dwyl.io/drivenbyentropy/aptasuite)
 [![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/drivenbyentropy/aptasuite/issues)
