@@ -12,6 +12,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
@@ -42,11 +43,13 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.chart.BarChart;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.ScatterChart;
 import javafx.scene.chart.StackedBarChart;
 import javafx.scene.chart.XYChart;
+import javafx.scene.chart.XYChart.Series;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
@@ -192,6 +195,12 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 	 */
 	private TableView<ClusterTableRowData> clusterTableView;
 	
+	@FXML
+	private BarChart<String, Number> clusterCardinalityBarChart;
+	
+	@FXML
+	private StackPane clusterCardinalityBarChartStackPane;
+	
 	/**
 	 * Instance of the pagination for the cluster table
 	 */
@@ -289,7 +298,7 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 		
 	}
 	
-	//@PostConstruct
+	
 	public void initializeContent() {
 		
 		initializeControlBars();
@@ -814,6 +823,28 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 				});
 				thread.start();
 				
+				// Compute the cardinality bar charts
+				Thread thread2 = new Thread(new Runnable() {
+
+					@Override
+					public void run() {
+						
+						
+						ProgressPaneController ppl = ProgressPaneController.getProgressPane(new Runnable() {
+							
+							@Override
+							public void run() {
+								createClusterCardinalityPanel();
+							}
+						
+						}, clusterCardinalityBarChartStackPane);
+						
+						ppl.setShowLogs(false);
+						ppl.run();
+						
+					}
+				});
+				thread2.start();
 				
 			}
 			
@@ -1144,6 +1175,59 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 	        this.sequenceTableStackPane.getChildren().add(sequencePagination);			
 			
 		});
+		
+	}
+	
+	/**
+	 * Creates the plots for the cluster cardinality panel
+	 */
+	private void createClusterCardinalityPanel() {
+		
+		List<SelectionCycle> cycles = experiment.getAllSelectionCycles();
+		
+		Series<String, Number> cluster_sizes = new XYChart.Series();
+		cluster_sizes.setName("Cluster Sizes (CPM)");
+		
+		Series<String, Number> cluster_diversities = new XYChart.Series();
+		cluster_diversities.setName("Cluster Diversities (CPM)");
+				
+		for (SelectionCycle cycle : cycles) {
+			
+			// Skip non-existing cycles
+			if (cycle == null) continue;
+			
+			Iterable<Entry<Integer, Integer>> cycle_it = cycle.iterator();
+			Integer raw_size = 0;
+			Integer raw_diversity = 0;
+			
+			for (Entry<Integer,Integer> item : cycle_it) {
+				
+				if (this.cluster_membership.get(item.getKey())) {
+					
+					raw_size += item.getValue();
+					raw_diversity++;
+					
+				}
+				
+			}
+			
+			String cycle_label = String.format("Round %s (%s)", cycle.getRound(), cycle.getName()); 
+
+			Number cluster_size_value = (raw_size.intValue() / (double) cycle.getUniqueSize()) * 1000000;
+			cluster_sizes.getData().add(new XYChart.Data<String,Number>( cycle_label , cluster_size_value));
+			
+			Number enriched_count_value = (raw_diversity.intValue() / (double) cycle.getUniqueSize()) * 1000000;
+			cluster_diversities.getData().add(new XYChart.Data<String,Number>( cycle_label , enriched_count_value));
+			
+		}
+		
+		Platform.runLater( ()-> {
+			
+			clusterCardinalityBarChart.getData().clear();
+			clusterCardinalityBarChart.getData().addAll(cluster_sizes, cluster_diversities);
+			
+		});
+		
 		
 	}
 	

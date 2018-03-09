@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.chart.BarChart?>
 <?import javafx.scene.chart.CategoryAxis?>
 <?import javafx.scene.chart.LineChart?>
 <?import javafx.scene.chart.NumberAxis?>
@@ -321,7 +322,7 @@
                                              <children>
                                                 <ScrollPane fitToWidth="true">
                                                    <content>
-                                                      <SplitPane dividerPositions="0.3111888111888112, 0.5, 0.5" maxHeight="1.7976931348623157E308" orientation="VERTICAL">
+                                                      <SplitPane dividerPositions="0.3111888111888112, 0.5, 0.5, 0.5" maxHeight="1.7976931348623157E308" orientation="VERTICAL">
                                                         <items>
                                                             <TitledPane text="Cluster Sequence Logo">
                                                                <content>
@@ -427,7 +428,31 @@
                                                                   <Font size="12.0" />
                                                                </font>
                                                             </TitledPane>
-                                                            <TitledPane maxHeight="1.7976931348623157E308" text="Cluster Enrichment">
+                                                            <TitledPane maxHeight="1.7976931348623157E308" text="Cluster Cardinality Chart">
+                                                              <content>
+                                                                <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                                                                     <children>
+                                                                        <StackPane fx:id="clusterCardinalityBarChartStackPane" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                                                           <children>
+                                                                              <VBox>
+                                                                                 <children>
+                                                                                    <BarChart fx:id="clusterCardinalityBarChart" animated="false">
+                                                                                      <xAxis>
+                                                                                        <CategoryAxis side="BOTTOM" />
+                                                                                      </xAxis>
+                                                                                      <yAxis>
+                                                                                        <NumberAxis side="LEFT" />
+                                                                                      </yAxis>
+                                                                                    </BarChart>
+                                                                                 </children>
+                                                                              </VBox>
+                                                                           </children>
+                                                                        </StackPane>
+                                                                     </children>
+                                                                  </AnchorPane>
+                                                              </content>
+                                                            </TitledPane>
+                                                            <TitledPane text="Cluster Enrichment">
                                                               <content>
                                                                 <AnchorPane>
                                                                      <children>
