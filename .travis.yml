@@ -5,10 +5,26 @@ matrix:
     - os: linux
       sudo: false
       jdk: oraclejdk9
-      script: mvn install
+      
+    - os: linux
+      sudo: false
+      jdk: oraclejdk8
+
+    - os: osx
+      sudo: false
+      jdk: oraclejdk9
+      
+    - os: osx
+      sudo: false
+      jdk: oraclejdk8
 
 cache:
   directories:
     - $HOME/.m2
+
+notifications:
+  email:
+    on_success: never
+
 
 install: mvn install -DskipTests=true -Dmaven.javadoc.skip=true --batch-mode --show-version --settings .travis.settings.xml
