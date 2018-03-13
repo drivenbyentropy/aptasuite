@@ -104,12 +104,16 @@ public class DataMatrix<T>{
 	public DataMatrix<T> reshape(int rows, int cols){
 		
 		// resize data if required
-		if (this.rows*this.cols < rows*cols){
-			for (int x=0; x<(rows*cols)-(this.rows*this.cols); x++){
+		int target_size = rows*cols;
+		
+		if ( data.size() < (rows*cols) ){
+			while (data.size() < target_size) {
+				
 				data.add(null);
+				
 			}
 		}
-		
+	
 		this.rows = rows;
 		this.cols = cols;
 		

@@ -128,10 +128,11 @@ public class CapR {
 		_int_sequence.ensureCapacity(_seq_length + 1);
 		
 		for (int x = 0; x < _seq_length + 1; x++) {
-			_int_sequence.add(0);
 			
+			_int_sequence.add(0);
 			_Alpha_outer.add(0.0);
 			_Beta_outer.add(0.0);
+			
 		}
 		
 		for (int i = 0; i < _seq_length; i++) {
