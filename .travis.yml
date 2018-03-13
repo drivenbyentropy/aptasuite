@@ -27,7 +27,8 @@ notifications:
     on_success: never
 
 # will be executed before maven is called
-before_script: 
- - echo "THIS IS A TEST!"
-
+before_install: 
+ - sed -i -e 's/<format>dir</format>/<format>zip</format>/g' src/main/resources/assembly.xml
+ - cat src/main/resources/assembly.xml
+ 
 install: mvn install -DskipTests=true -Dmaven.javadoc.skip=true --batch-mode --show-version --settings .travis.settings.xml
