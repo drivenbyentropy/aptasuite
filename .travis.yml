@@ -26,5 +26,8 @@ notifications:
   email:
     on_success: never
 
+# will be executed before maven is called
+before_script: 
+ - echo "THIS IS A TEST!"
 
 install: mvn install -DskipTests=true -Dmaven.javadoc.skip=true --batch-mode --show-version --settings .travis.settings.xml
