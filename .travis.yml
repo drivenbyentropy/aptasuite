@@ -28,7 +28,11 @@ notifications:
 
 # will be executed before maven is called
 before_install: 
+ # no matter what format we have locally, travis should always generate the zip file
  - sed -i -e 's/<format>dir<\/format>/<format>zip<\/format>/g' src/main/resources/assembly.xml
- - cat src/main/resources/assembly.xml
+ 
+ # make sure we have a clean target folder
+ - rm -rf target/*
+ - ls -lah target/
  
 install: mvn install -DskipTests=true -Dmaven.javadoc.skip=true --batch-mode --show-version --settings .travis.settings.xml
