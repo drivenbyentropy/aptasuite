@@ -1,15 +1,27 @@
 language: java
 
 
-matrix:
+jobs:
   include:
-  - os: linux
-    sudo: false
-    jdk: oraclejdk9
-  - os: linux
-    sudo: false
-    jdk: oraclejdk8
-
+  - stage Compile
+   - os: linux
+     sudo: false
+     jdk: oraclejdk9
+   - os: linux
+     sudo: false
+     jdk: oraclejdk8
+  - stage GitHub Release
+      script: echo "Deploying to GitHub releases ..."
+      deploy:
+        provider: releases
+        api_key:
+          secure: ZVPKbJvQvQWzV3oQDgsm8Csyamd6uKbDNYY2JEXDz+VHRQ0XVTmuJQi4FsvU+7nJoTIDG7hgxPKGZidBgi7rfyWB6fXj0LgdXPyAps4HDc7G0tWQgZDLpmdHCADgwduK3eqVDLliM6W/MiQfCyjrNVZ7HYkeowjDs3UByWtqH1M16tafP7j0ZHZO35/AUi75zocxZz+N9SrPnR6Qap3eO4SnEcLu++JFRLB5NwdgREPtrzpSaoOIIlJ/ZjCcqBZLfy8RPgRJrXE0HYigQ9nlvekNBwG+RdBkz0tzgnplPGYNq0L//HoeIFMIShCWpXAnpsh75QW5Vp92m4gzp7iyNXtpfpR0D+M/lCxSQi/rE3RtJOrBgkQzf4xgyH+TmF94dhjMJpLMKUNVP8NPI74zQjSDGi/39G42ulopT73CBXMB5r2FpoYsUkcoXlkCrba5lQ1asOp2AyKdQ17dccalbVGf/TvfMaWv/ZywG8XdRqT3nF4gTIqFVrWO3zh9kjC+woa7kHvO3acWDxyOjKAHSqW1o6Zq550NqMSTMxldX78JbX03Q4IVYyalTIBo1Cz+4resIOLE9tojCcjY8KbVFFhh3O9V6KfW2zJteFazOk5O2atuV0SGbYMtO3WhLPyPwzAySVHfzU3yUtFZBaAgjPLslTT3zj2TIeArnZ6QCZE=
+        skip_cleanup: true
+        file: "${DEPLOY_FILE}"
+        overwrite: true
+        on:
+          repo: drivenbyentropy/aptasuite
+          tags: true
 
 cache:
   directories:
@@ -20,7 +32,7 @@ notifications:
   email:
     on_success: never
 
-
+# will be executed before maven is called
 before_install:
 # no matter what format we have locally, travis should always generate the zip file
 - sed -i -e 's/<format>dir<\/format>/<format>zip<\/format>/g' src/main/resources/assembly.xml
@@ -36,13 +48,4 @@ before_deploy:
 - export DEPLOY_FILE=$(ls target/aptasuite*.zip)
 
 
-deploy:
-  provider: releases
-  api_key:
-    secure: ZVPKbJvQvQWzV3oQDgsm8Csyamd6uKbDNYY2JEXDz+VHRQ0XVTmuJQi4FsvU+7nJoTIDG7hgxPKGZidBgi7rfyWB6fXj0LgdXPyAps4HDc7G0tWQgZDLpmdHCADgwduK3eqVDLliM6W/MiQfCyjrNVZ7HYkeowjDs3UByWtqH1M16tafP7j0ZHZO35/AUi75zocxZz+N9SrPnR6Qap3eO4SnEcLu++JFRLB5NwdgREPtrzpSaoOIIlJ/ZjCcqBZLfy8RPgRJrXE0HYigQ9nlvekNBwG+RdBkz0tzgnplPGYNq0L//HoeIFMIShCWpXAnpsh75QW5Vp92m4gzp7iyNXtpfpR0D+M/lCxSQi/rE3RtJOrBgkQzf4xgyH+TmF94dhjMJpLMKUNVP8NPI74zQjSDGi/39G42ulopT73CBXMB5r2FpoYsUkcoXlkCrba5lQ1asOp2AyKdQ17dccalbVGf/TvfMaWv/ZywG8XdRqT3nF4gTIqFVrWO3zh9kjC+woa7kHvO3acWDxyOjKAHSqW1o6Zq550NqMSTMxldX78JbX03Q4IVYyalTIBo1Cz+4resIOLE9tojCcjY8KbVFFhh3O9V6KfW2zJteFazOk5O2atuV0SGbYMtO3WhLPyPwzAySVHfzU3yUtFZBaAgjPLslTT3zj2TIeArnZ6QCZE=
-  skip_cleanup: true
-  file: "${DEPLOY_FILE}"
-  overwrite: true
-  on:
-    repo: drivenbyentropy/aptasuite
-    tags: true
+
