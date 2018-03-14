@@ -42,3 +42,4 @@ deploy:
   on:
     repo: drivenbyentropy/aptasuite
     tags: true
+	jdk: oraclejdk9
