@@ -46,6 +46,6 @@ install: mvn install -DskipTests=true -Dmaven.javadoc.skip=true --batch-mode --s
 
 before_deploy:
 - export DEPLOY_FILE=$(ls target/aptasuite*.zip)
-
+ 
 
 
