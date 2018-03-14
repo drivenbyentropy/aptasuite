@@ -201,10 +201,14 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 	@FXML
 	private StackPane clusterCardinalityBarChartStackPane;
 	
+	@FXML
+	private RadioButton showClusterSizesRadioButton;
+	
 	/**
 	 * Instance of the pagination for the cluster table
 	 */
 	private Pagination clusterPagination;
+	
 	
 	
 	/**
@@ -254,9 +258,14 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 	private int[] aptamer_ids;
 	
 	/**
-	 * Bitset representation of the cluster members 
+	 * Bitset representation of the cluster members in the selected reference cycle
 	 */
 	BitSet cluster_membership = new BitSet(experiment.getAptamerPool().size());
+
+	/**
+	 * Bitset representation of the cluster members for the entire pool
+	 */
+	BitSet pool_cluster_membership = new BitSet(experiment.getAptamerPool().size());
 	
 	/**
 	 * the total number of items to display in the cluster table
@@ -1202,7 +1211,7 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 			
 			for (Entry<Integer,Integer> item : cycle_it) {
 				
-				if (this.cluster_membership.get(item.getKey())) {
+				if (this.pool_cluster_membership.get(item.getKey())) {
 					
 					raw_size += item.getValue();
 					raw_diversity++;
@@ -1223,9 +1232,24 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 		
 		Platform.runLater( ()-> {
 			
-			clusterCardinalityBarChart.getData().clear();
-			clusterCardinalityBarChart.getData().addAll(cluster_sizes, cluster_diversities);
+			if (this.showClusterSizesRadioButton.isSelected()) {
+				
+				clusterCardinalityBarChart.getData().clear();
+				clusterCardinalityBarChart.getData().addAll(cluster_sizes);
+				clusterCardinalityBarChart.getYAxis().setLabel("Cluster Sizes (CPM)");
+				
+			}
+			else {
 			
+				clusterCardinalityBarChart.getData().clear();
+				clusterCardinalityBarChart.getData().addAll(cluster_diversities);
+				clusterCardinalityBarChart.getYAxis().setLabel("Cluster Diversities (CPM)");
+				
+			}
+			
+			
+			
+		
 		});
 		
 		
@@ -1390,6 +1414,7 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 		
 		// Use a bitset to store if an aptamer belongs to the cluster and the reference cycle for fast lookup
 		cluster_membership.clear();
+		pool_cluster_membership.clear();
 
 		AtomicInteger progress = new AtomicInteger(0);
 		AtomicInteger total = new AtomicInteger(Math.max( clusters.getSize(), reference_cycle.getUniqueSize() ));
@@ -1451,6 +1476,13 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 				for ( Entry<Integer, Integer> member : clusters.iterator()) {
 					
 					progress.incrementAndGet();
+					
+					// Make use of this loop to fill out the cluster membership for the entire pool
+					if (member.getValue() == cluster_id) {
+						
+						pool_cluster_membership.set(member.getKey());
+						
+					}
 					
 					// Skip other clusters and aptamers which are not part of this cluster in the selected cycle
 					if (!cluster_membership.get(member.getKey())) continue;
@@ -1879,7 +1911,7 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
             controller.setInputData(
             		this.aptaMutReferenceCycleComboBox.getSelectionModel().getSelectedItem(), 
             		this.referenceSelectionCycleComboBox.getSelectionModel().getSelectedItem(),
-            		this.cluster_membership, 
+            		this.pool_cluster_membership, 
             		this.aptamer_ids[0]
             		);
             controller.populateTableData();
@@ -1888,6 +1920,34 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
         catch (IOException e) {
             e.printStackTrace();
         }
+		
+	}
+	
+	@FXML
+	private void updateClusterCardinalityChart() {
+		
+		// Compute the cardinality bar charts
+		Thread thread2 = new Thread(new Runnable() {
+
+			@Override
+			public void run() {
+				
+				
+				ProgressPaneController ppl = ProgressPaneController.getProgressPane(new Runnable() {
+					
+					@Override
+					public void run() {
+						createClusterCardinalityPanel();
+					}
+				
+				}, clusterCardinalityBarChartStackPane);
+				
+				ppl.setShowLogs(false);
+				ppl.run();
+				
+			}
+		});
+		thread2.start();
 		
 	}
 

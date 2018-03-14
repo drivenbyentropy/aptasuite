@@ -436,7 +436,37 @@
                                                                            <children>
                                                                               <VBox>
                                                                                  <children>
-                                                                                    <BarChart fx:id="clusterCardinalityBarChart" animated="false">
+                                                                                    <HBox alignment="CENTER_LEFT">
+                                                                                       <children>
+                                                                                          <RadioButton fx:id="showClusterSizesRadioButton" mnemonicParsing="false" onAction="#updateClusterCardinalityChart" selected="true" text="Show Cluster Sizes">
+                                                                                             <font>
+                                                                                                <Font size="12.0" />
+                                                                                             </font>
+                                                                                             <HBox.margin>
+                                                                                                <Insets right="10.0" />
+                                                                                             </HBox.margin>
+                                                                                             <toggleGroup>
+                                                                                                <ToggleGroup fx:id="clusterCardinalitiesToggleGroup" />
+                                                                                             </toggleGroup>
+                                                                                             <tooltip>
+                                                                                                <Tooltip text="The cluster size corresponds to the sum over aptamer caradinalities in that cluster.">
+                                                                                                   <font>
+                                                                                                      <Font size="12.0" />
+                                                                                                   </font>
+                                                                                                </Tooltip>
+                                                                                             </tooltip>
+                                                                                          </RadioButton>
+                                                                                          <RadioButton mnemonicParsing="false" onAction="#updateClusterCardinalityChart" text="Show Cluster Diversities" toggleGroup="$clusterCardinalitiesToggleGroup">
+                                                                                             <font>
+                                                                                                <Font size="12.0" />
+                                                                                             </font>
+                                                                                             <tooltip>
+                                                                                                <Tooltip text="The cluster diversity corresponds to the number of unique sequences in that cluster." />
+                                                                                             </tooltip>
+                                                                                          </RadioButton>
+                                                                                       </children>
+                                                                                    </HBox>
+                                                                                    <BarChart fx:id="clusterCardinalityBarChart" animated="false" legendVisible="false" VBox.vgrow="ALWAYS">
                                                                                       <xAxis>
                                                                                         <CategoryAxis side="BOTTOM" />
                                                                                       </xAxis>
@@ -451,6 +481,9 @@
                                                                      </children>
                                                                   </AnchorPane>
                                                               </content>
+                                                               <font>
+                                                                  <Font size="12.0" />
+                                                               </font>
                                                             </TitledPane>
                                                             <TitledPane text="Cluster Enrichment">
                                                               <content>
@@ -615,7 +648,7 @@
                                                 <Button minHeight="44.0" minWidth="44.0" mnemonicParsing="false" onAction="#clusterTableGOButtonAction" text="GO" HBox.hgrow="NEVER" />
                                              </children>
                                              <VBox.margin>
-                                                <Insets bottom="10.0" left="10.0" right="10.0" />
+                                                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                                              </VBox.margin>
                                           </HBox>
                                           <StackPane fx:id="clusterTableStackPane" VBox.vgrow="ALWAYS" />

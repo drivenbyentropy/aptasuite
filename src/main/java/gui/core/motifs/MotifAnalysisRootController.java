@@ -409,7 +409,8 @@ public class MotifAnalysisRootController implements Initializable{
 					motifFrequencyLabel.setText("N/A");
 					
 					// Add aligned kmers
-					kmerListView.getItems().addAll(item.getKmers_aligned());
+					
+					kmerListView.getItems().setAll(item.getKmers_aligned());
 				});
 				
 				// Plot the PWM
