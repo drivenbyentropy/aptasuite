@@ -131,7 +131,7 @@ public class SequenceTableRowData {
 		Number count_n = sc.getAptamerCardinality(this.id.getValue());
 		Number count_nmo = sc.getPreviousSelectionCycle().getAptamerCardinality(this.id.getValue());
 		
-		if (count_nmo.intValue() == 0) { return null; }
+		if (count_nmo.intValue() == 0) { return getCount(sc); }
 		
 		Number enrichment = ( count_n.doubleValue() / sc.getSize() ) / ( count_nmo.doubleValue() / sc.getPreviousSelectionCycle().getSize() );
 		

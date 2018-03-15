@@ -16,6 +16,7 @@ notifications:
   email:
     on_success: never
 
+
 # will be executed before maven is called
 before_install:
 # no matter what format we have locally, travis should always generate the zip file
