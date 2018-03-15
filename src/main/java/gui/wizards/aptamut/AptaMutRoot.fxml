@@ -11,6 +11,7 @@
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.control.Tooltip?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
@@ -181,6 +182,21 @@
    <bottom>
       <HBox alignment="CENTER_RIGHT" prefHeight="30.0" BorderPane.alignment="CENTER">
          <children>
+            <Button fx:id="exportButton" mnemonicParsing="false" onAction="#exportButtonAction" text="Export">
+               <HBox.margin>
+                  <Insets right="10.0" />
+               </HBox.margin>
+               <font>
+                  <Font size="12.0" />
+               </font>
+               <tooltip>
+                  <Tooltip text="Exports the above tables to text file.">
+                     <font>
+                        <Font size="12.0" />
+                     </font>
+                  </Tooltip>
+               </tooltip>
+            </Button>
             <Button mnemonicParsing="false" onAction="#close" text="Close">
                <font>
                   <Font size="12.0" />

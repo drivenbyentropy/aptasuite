@@ -188,4 +188,11 @@ public class TableRowData {
 	}
 	
 	
+	@Override
+	public String toString() {
+		
+		return this.getId().getValue()  + "\t" + this.getSequence().getValue() + "\t" + this.getCount1().getValue() + "\t" + this.getCount2().getValue()  + "\t" + this.getEnrichment().getValue()  + "\t" + this.scoreProperty().getValue();
+		
+	}
+	
 }

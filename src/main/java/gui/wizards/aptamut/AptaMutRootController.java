@@ -3,6 +3,10 @@
  */
 package gui.wizards.aptamut;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Iterator;
@@ -25,6 +29,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.control.Button;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
@@ -36,6 +41,7 @@ import javafx.scene.control.TableView;
 import javafx.scene.layout.HBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import lib.aptamer.datastructures.AptamerBounds;
 import lib.aptamer.datastructures.SelectionCycle;
@@ -124,6 +130,9 @@ public class AptaMutRootController {
 	@FXML
 	private ProgressIndicator progressIndicator;
 	
+	@FXML
+	private Button exportButton;
+	
     TableColumn[] seed_columns;
     TableColumn[] enriched_columns;
     TableColumn[] depleated_columns;
@@ -154,6 +163,9 @@ public class AptaMutRootController {
 	public void initialize() {
 		
 		AptaLogger.log(Level.INFO,  this.getClass(), "Initializing AptaMUT content");
+		
+		// Bind the export button to the progress indicator
+		this.exportButton.disableProperty().bind(this.progressIndicator.progressProperty().isNotEqualTo(1));
 		
 		// Creating Producer and Consumer Threads using the ExecutorService to manage them
 		es = Executors.newFixedThreadPool(Configuration.getParameters().getInteger("Performance.maxNumberOfCores", Runtime.getRuntime().availableProcessors()));
@@ -635,6 +647,59 @@ public class AptaMutRootController {
 		    seedSequenceTableColumn.setPrefWidth( textwidth + 150 );
 			
 		});
+		
+	}
+	
+	/**
+	 * Exports the tables to text file
+	 */
+	@FXML
+	public void exportButtonAction() {
+		
+		FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Choose file to export AptaMUT data");
+        FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("TEXT files (*.txt)", "*.txt");
+        fileChooser.getExtensionFilters().add(extFilter);
+        File file = fileChooser.showSaveDialog(null);
+        if (file != null) {
+            try {
+
+            	String str = "Hello";
+                BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+                
+                // Header
+                writer.write("TYPE\tID\tSEQUENCE\tCOUNTS " + this.scx.getName() + "\tCOUTNS " + this.scxp1.getName() + "\tENRICHMENT\tLOGSCORE\n");
+                
+                // Seed first
+                for ( TableRowData row : this.seedTableView.getItems()) {
+                	
+                	writer.write("SEED\t" + row.toString() +"\n");
+                	
+                }
+                
+                // Seed first
+                for ( TableRowData row : this.enrichedTableView.getItems()) {
+                	
+                	writer.write("ENRICHED\t" + row.toString() +"\n");
+                	
+                }
+                
+                // Seed first
+                for ( TableRowData row : this.depleatedTableView.getItems()) {
+                	
+                	writer.write("DEPLEATED\t" + row.toString() +"\n");
+                	
+                }
+                
+                writer.close();
+            	
+            } catch (IOException ex) {
+
+            	AptaLogger.log(Level.WARNING, this.getClass(), "AptaMUT Export Failed");
+            	AptaLogger.log(Level.WARNING, this.getClass(), ex);
+
+            }
+        }
 		
 	}
 	
