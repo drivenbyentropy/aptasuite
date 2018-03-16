@@ -256,7 +256,7 @@ public class SequencingDataCycleController {
 	private void updateReverseReadNucleotideDistribution() {
 		
 		// Determine if we have paired end data
-		if (Configuration.getParameters().getStringArray("AptaplexParser.reverseFiles").length == 0) {
+		if (experiment.getMetadata().nucleotideDistributionReverse.get(cycle.getName()).size() == 0) {
 			
 			//this.reverseReadsLineChart.setDisable(true);
 			chartGridPane.getChildren().remove(this.reverseReadsStackPane);

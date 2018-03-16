@@ -1,6 +1,8 @@
 package utilities;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.Format;
 import java.text.SimpleDateFormat;
@@ -31,8 +33,24 @@ public class AptaLogger {
 
     private AptaLogger() throws IOException{
       
+    	
+  		// Make sure the log folder exists and create it if not
+      	String projectPath = Configuration.getParameters().getString("Experiment.projectPath");
+      	
+    	if ( projectPath == null ) {
+    		
+    		throw new IOException("The Experiment.projectPath variable is not set yet.");
+    		
+    	}
+
+  		Path logPath = Paths.get(projectPath, "logs");
+  		
+  		if (Files.notExists(logPath)){
+  				Files.createDirectories(logPath);
+  		}    	
+    	
         //instance the file handler
-        filepath = Paths.get(Configuration.getParameters().getString("Experiment.projectPath"), "log_" + formatter.format(new Date()) + ".txt").toString();
+        filepath = Paths.get(logPath.toString(), "log_" + formatter.format(new Date()) + ".txt").toString();
         fileHandler = new FileHandler(filepath,true);
         fileHandler.setLevel(Level.ALL); // We want everything logged on file
         

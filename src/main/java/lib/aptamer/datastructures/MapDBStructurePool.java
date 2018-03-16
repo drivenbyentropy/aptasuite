@@ -21,7 +21,6 @@ import org.mapdb.BTreeMap;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.mapdb.Serializer;
-import org.mapdb.DBException.WrongConfiguration;
 import org.mapdb.serializer.SerializerCompressionWrapper;
 
 import orestes.bloomfilter.BloomFilter;
@@ -282,9 +281,6 @@ public class MapDBStructurePool implements StructurePool {
 		// Compute the structureData id into which this item would go into
 		int structureDataIndex = id / maxTreeMapCapacity;
 		
-		AptaLogger.log(Level.CONFIG, this.getClass(), String.format("%s    %s   %s   %s", maxTreeMapCapacity, id, structureDataIndex, structureData.size()));
-		
-			
 		// Create as many new maps as required
 		while (structureDataIndex >= structureData.size() ) {
 			
