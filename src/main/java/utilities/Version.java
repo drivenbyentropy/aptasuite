@@ -119,12 +119,19 @@ public class Version {
 		// now extract mayor minor and patch 
 		String[] tokens = tag.trim().substring(1).split("\\.");
 		
-		Integer remote_mayor = Integer.parseInt(tokens[0]);
-		Integer remote_minor = Integer.parseInt(tokens[1]);
-		Integer remote_patch = Integer.parseInt(tokens[2]);
+		int remote_mayor = Integer.parseInt(tokens[0]);
+		int remote_minor = Integer.parseInt(tokens[1]);
+		int remote_patch = Integer.parseInt(tokens[2]);
 		
 		// we have a new version if at least one of the remote versions is larger than the local one
-		return (remote_mayor.compareTo(mayor) > 0 || remote_minor.compareTo(minor) > 0 || remote_patch.compareTo(patch) > 0);
+		if ( remote_mayor > mayor.intValue() ) return true;
+		if ( remote_mayor < mayor.intValue() ) return false;
+		
+		if ( remote_minor > minor.intValue() ) return true; 
+		if ( remote_minor < minor.intValue() ) return false;
+		
+		if ( remote_patch > patch.intValue() ) return true;
+		if ( remote_patch < patch.intValue() ) return false;
 		
 		}
 		catch (Exception e) {
@@ -135,6 +142,8 @@ public class Version {
         	return false;
         	
 		}
+		
+		return false;
 		
 	}
 }
