@@ -103,6 +103,8 @@ public class CLI {
 		// Read config file and set defaults
 		Configuration.setConfiguration(line.getOptionValue("config"));
 		
+		System.out.println( Configuration.getParameters().getString("Experiment.projectPath") );
+		
 		AptaLogger.log(Level.INFO, Configuration.class, "Using the following parameters: " + "\n" +  Configuration.printParameters());
 		
 		// Make sure the project folder exists and create it if not

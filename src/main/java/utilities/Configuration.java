@@ -209,9 +209,8 @@ public class Configuration {
 			parameters = cc;
 			
 			// Store the configuration path
-			configurationPath = Paths.get(fileName);
+			configurationPath = Paths.get(fileName).toAbsolutePath();
 			
-
 			// Make sure the project path exists on disk. If not, attempt to guess the pass by using the 
 			// path of the configuration file
 			Path projectPath;
