@@ -24,6 +24,7 @@ import gui.charts.logo.LogoChartPanelController;
 import gui.charts.logo.Scale;
 import gui.core.Initializable;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.value.ChangeListener;
@@ -178,6 +179,9 @@ public class AptamerPoolRootController implements Initializable{
 	
 	@FXML
 	private HBox secondaryStructureNotAvailableHBox;
+	
+	@FXML 
+	private CheckBox plotIncludeNegativeSelectionsCheckBox;
 	
 	/**
 	 * Instance of the pagination for the table
@@ -429,7 +433,7 @@ public class AptamerPoolRootController implements Initializable{
 			@Override
 			protected Void call() throws Exception {
 				
-				ArrayList<SelectionCycle> selectionCycles = experiment.getSelectionCycles();
+				ArrayList<SelectionCycle> selectionCycles = plotIncludeNegativeSelectionsCheckBox.isSelected() ? experiment.getAllSelectionCycles() : experiment.getSelectionCycles();
 				
 				for (Integer index : selected_indices) {
 					
@@ -930,6 +934,15 @@ public class AptamerPoolRootController implements Initializable{
 		
 		// With primers
 		showPrimersRadioButton.selectedProperty().addListener( (e) -> this.with_primers = this.showPrimersRadioButton.selectedProperty().get());
+		
+		// Bind disabled property of the counter selection box to whether it is available
+		if (experiment.getCounterSelectionCycles().stream().filter( (item) -> item != null ).count() == 0 & experiment.getControlSelectionCycles().stream().filter( (item) -> item != null ).count() == 0 ) {
+			
+			plotIncludeNegativeSelectionsCheckBox.setDisable(true);
+			
+		}			
+			
+		
 		
 	}
 	

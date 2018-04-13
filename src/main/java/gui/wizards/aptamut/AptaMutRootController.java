@@ -324,6 +324,12 @@ public class AptaMutRootController {
 			
 		}
 		
+		if ( depleated_data.size() == 0 ) {
+			
+			this.setProgressDone();
+			
+		}
+		
 	}
 
 	

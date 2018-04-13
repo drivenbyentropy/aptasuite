@@ -6,6 +6,7 @@
 <?import javafx.scene.chart.LineChart?>
 <?import javafx.scene.chart.NumberAxis?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
@@ -396,7 +397,15 @@
                                                                                              <font>
                                                                                                 <Font size="12.0" />
                                                                                              </font>
+                                                                                             <HBox.margin>
+                                                                                                <Insets right="10.0" />
+                                                                                             </HBox.margin>
                                                                                           </RadioButton>
+                                                                                          <CheckBox fx:id="plotIncludeNegativeSelectionsCheckBox" mnemonicParsing="false" onAction="#showCardinalityPlots" text="Counter/Negative Selections">
+                                                                                             <font>
+                                                                                                <Font size="12.0" />
+                                                                                             </font>
+                                                                                          </CheckBox>
                                                                                        </children>
                                                                                     </HBox>
                                                                                     <LineChart fx:id="cardinalityLineChart" animated="false" legendSide="RIGHT" stylesheets="@../aptamer/family/analysis/style_cardinality.css">

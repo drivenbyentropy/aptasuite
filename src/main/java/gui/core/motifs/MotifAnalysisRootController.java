@@ -50,6 +50,7 @@ import javafx.scene.chart.XYChart;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Control;
@@ -158,6 +159,9 @@ public class MotifAnalysisRootController implements Initializable{
 	
 	@FXML
 	private StackPane motifCoverageStackPane;
+	
+	@FXML
+	private CheckBox plotIncludeNegativeSelectionsCheckBox;
 	
 	/**
 	 * Instance of the pagination for the table
@@ -373,6 +377,13 @@ public class MotifAnalysisRootController implements Initializable{
 		// Add the cycles to the combobox in the motif coverage section
 		this.motifCoverageCycleComboBox.getItems().addAll(experiment.getAllSelectionCycles());
 		this.motifCoverageCycleComboBox.getSelectionModel().select(experiment.getSelectionCycles().get(experiment.getSelectionCycles().size()-1));
+		
+		// Bind disabled property of the counter selection box to whether it is available
+		if (experiment.getCounterSelectionCycles().stream().filter( (item) -> item != null ).count() == 0 & experiment.getControlSelectionCycles().stream().filter( (item) -> item != null ).count() == 0 ) {
+			
+			plotIncludeNegativeSelectionsCheckBox.setDisable(true);
+			
+		}	
 		
 	}
 	
@@ -739,7 +750,7 @@ public class MotifAnalysisRootController implements Initializable{
 			@Override
 			public void run() {
 				
-				ArrayList<SelectionCycle> selectionCycles = experiment.getSelectionCycles();
+				ArrayList<SelectionCycle> selectionCycles = plotIncludeNegativeSelectionsCheckBox.isSelected() ? experiment.getAllSelectionCycles() : experiment.getSelectionCycles();
 				
 				// Iterate over the selected indices, get the aptamer information and plot
 				ObservableList<XYChart.Series<String,Double>> series = FXCollections.observableList(new ArrayList<XYChart.Series<String,Double>>());

@@ -11,7 +11,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<StackPane fx:id="rootStackPane" minHeight="600.0" minWidth="800.0" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" fx:controller="gui.core.RootLayoutController">
+<StackPane fx:id="rootStackPane" minHeight="600.0" minWidth="800.0" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.core.RootLayoutController">
    <children>
       <BorderPane fx:id="rootLayout">
          <top>

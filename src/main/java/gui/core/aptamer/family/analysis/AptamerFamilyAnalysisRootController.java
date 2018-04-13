@@ -54,6 +54,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Control;
@@ -203,6 +204,9 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 	
 	@FXML
 	private RadioButton showClusterSizesRadioButton;
+	
+	@FXML
+	private CheckBox plotIncludeNegativeSelectionsCheckBox;
 	
 	/**
 	 * Instance of the pagination for the cluster table
@@ -404,6 +408,13 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 		
 		// Make sure the user selects a comparison cycle before being able to press GO
 		this.clusterComparisonGoButton.disableProperty().bind(this.clusterEnrichmentCompareToCycleComboBox.valueProperty().isNull());
+		
+		// Bind disabled property of the counter selection box to whether it is available
+		if (experiment.getCounterSelectionCycles().stream().filter( (item) -> item != null ).count() == 0 & experiment.getControlSelectionCycles().stream().filter( (item) -> item != null ).count() == 0 ) {
+			
+			plotIncludeNegativeSelectionsCheckBox.setDisable(true);
+			
+		}	
 		
 	}
 	
@@ -1692,7 +1703,7 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 			public void run() {
 				
 								
-				ArrayList<SelectionCycle> selectionCycles = experiment.getSelectionCycles();
+				ArrayList<SelectionCycle> selectionCycles = plotIncludeNegativeSelectionsCheckBox.isSelected() ? experiment.getAllSelectionCycles() : experiment.getSelectionCycles();
 				
 				// Iterate over the selected indices, get the aptamer information and plot
 				ObservableList<XYChart.Series<String,Double>> series = FXCollections.observableList(new ArrayList<XYChart.Series<String,Double>>());

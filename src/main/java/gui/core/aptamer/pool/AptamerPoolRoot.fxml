@@ -87,7 +87,7 @@
                                     </Label>
                                     <HBox alignment="CENTER_LEFT" spacing="10.0">
                                        <children>
-                                          <RadioButton fx:id="cmpRadioButton" minWidth="-Infinity" mnemonicParsing="false" onAction="#redrawTableContent" selected="true" text="CMP">
+                                          <RadioButton fx:id="cmpRadioButton" minWidth="-Infinity" mnemonicParsing="false" onAction="#redrawTableContent" selected="true" text="CPM">
                                              <font>
                                                 <Font size="12.0" />
                                              </font>
@@ -291,7 +291,15 @@
                                                                            <font>
                                                                               <Font size="12.0" />
                                                                            </font>
+                                                                           <HBox.margin>
+                                                                              <Insets right="10.0" />
+                                                                           </HBox.margin>
                                                                         </RadioButton>
+                                                                        <CheckBox fx:id="plotIncludeNegativeSelectionsCheckBox" mnemonicParsing="false" onAction="#showCardinalityPlots" text="Counter/Negative Selections">
+                                                                           <font>
+                                                                              <Font size="12.0" />
+                                                                           </font>
+                                                                        </CheckBox>
                                                                      </children>
                                                                      <VBox.margin>
                                                                         <Insets top="10.0" />
