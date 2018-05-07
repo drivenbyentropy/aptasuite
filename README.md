@@ -15,7 +15,7 @@ In its core, AptaSUITE consists of a collection of APIs and corresponding implem
 If you have any issues or recommendations, please feel free to open a [ticket](https://github.com/drivenbyentropy/aptasuite/issues).
 
 ## Installation
-Download the latest precompiled version from the [release page](https://github.com/drivenbyentropy/aptasuite/releases) or [build the project from source](https://github.com/drivenbyentropy/aptasuite/wiki/Compiling-from-source).
+Download the latest precompiled version from the [release page](https://github.com/drivenbyentropy/aptasuite/releases) or [build the project from source](https://github.com/drivenbyentropy/aptasuite/wiki/Compiling-from-source). Click [here](https://github.com/drivenbyentropy/aptasuite/wiki/System-Requirements) for a list of system requirments for different platforms.
 
 ## Usage
 To open the GUI, either double-click on the executable jar file called ``aptasuite-x.y.z.jar`` or call the jar file from command line without parameters (``x.y.z`` corresponds to the version you downloaded):
