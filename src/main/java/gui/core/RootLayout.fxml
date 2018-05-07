@@ -41,7 +41,10 @@
                 </Menu>
                   <Menu mnemonicParsing="false" text="Experiment">
                     <items>
-                      <MenuItem fx:id="exportDataMenuItem" mnemonicParsing="false" onAction="#experimentExportDataButtonAction" text="Export Data" />
+                      <MenuItem fx:id="exportDataMenuItem" mnemonicParsing="false" onAction="#experimentExportDataButtonAction" text="Export Data">
+                           <accelerator>
+                              <KeyCodeCombination alt="UP" code="E" control="ANY" meta="UP" shift="UP" shortcut="UP" />
+                           </accelerator></MenuItem>
                     </items>
                   </Menu>
                   <Menu mnemonicParsing="false" text="View">

@@ -3,9 +3,24 @@
  */
 package lib.export;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Writer;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 
 import org.eclipse.collections.api.iterator.MutableIntIterator;
@@ -21,6 +36,7 @@ import lib.aptacluster.Buckets;
 import lib.aptamer.datastructures.AptamerBounds;
 import lib.aptamer.datastructures.AptamerPool;
 import lib.aptamer.datastructures.ClusterContainer;
+import lib.aptamer.datastructures.Experiment;
 import lib.aptamer.datastructures.SelectionCycle;
 import lib.aptamer.datastructures.StructurePool;
 import utilities.AptaLogger;
@@ -602,5 +618,350 @@ public class Export {
 			writer.close();
 			
 		}
+	
+	/**
+	 * Export a table of all clusters sorted by cluster size of the highest selection 
+	 * round including Cluster ID, Seed Sequence and ID, and Size, Diverseriy and CMP 
+	 * for each round.
+	 * 
+	 * Note, this function assumes that cluster information is present, i.e. that <code>experiment.getClusterContainer() != null </code>
+	 * 
+	 * @param export_folder the folder into which <code>filename</code> will be stored in
+	 * @param experiment 
+	 * @param filename the name of the file that will be created to contain the final table
+	 */
+	public void ClusterTable(Experiment experiment, Path export_folder, String filename) {
+		
+		
+		AptaLogger.log(Level.INFO, this.getClass(), "Initializing cluster data for export");
+		
+		ClusterContainer clusters = experiment.getClusterContainer(); 
+		
+		// Set the total number of clusters
+		int numberOfClusters = clusters.getNumberOfClusters();
+		
+		// Create initial cluster ids
+		int[] cluster_ids = new int[numberOfClusters];
+		int[] cluster_ids_argsort = new int[numberOfClusters];
+
+		// We need a secondary array to store the counts
+		int[] cardinalities = new int[numberOfClusters];
+		
+		// We also need to store diversity
+		int[] diversities = new int[numberOfClusters];
+		
+		// And a reference to the seed
+		int[] seed_ids = new int[numberOfClusters];
+		int[] seed_sizes = new int[numberOfClusters];
+		
+		// Initialize
+		for (int x=0; x<numberOfClusters; x++) {
+			
+			cardinalities[x] = 0;
+			diversities[x] =   0;
+			seed_ids[x] =      -1;
+			seed_sizes[x] =    0;
+			cluster_ids[x] =   x;
+			cluster_ids_argsort[x] = x;
+			
+		}
+		
+		SelectionCycle reference_cycle = experiment.getAllSelectionCycles().get(experiment.getAllSelectionCycles().size()-1);
+		
+		// Fill cardinality array by size
+		Iterator<Entry<Integer, Integer>> cluster_it = clusters.iterator().iterator();
+		Iterator<Entry<Integer, Integer>> cardinality_it = reference_cycle.iterator().iterator();
+		Entry<Integer, Integer> cluster_entry = cluster_it.next();
+		Entry<Integer, Integer> cardinality_entry = cardinality_it.next();
+		
+		while ( cluster_it.hasNext() && cardinality_it.hasNext() ) { // Ids are sorted in both cases
+
+			if (cluster_entry.getKey() < cardinality_entry.getKey()) {
+				
+				cluster_entry = cluster_it.next();
+				
+			}
+			else if (cluster_entry.getKey() > cardinality_entry.getKey()){
+				
+				cardinality_entry = cardinality_it.next();
+				
+			}
+			
+			// Process
+			else {
+
+				cardinalities[cluster_entry.getValue()] += cardinality_entry.getValue(); 
+				diversities[cluster_entry.getValue()] += 1;
+				
+				// is this our seed? 
+				if ( cardinality_entry.getValue() >= seed_sizes[cluster_entry.getValue()] ) {
+					
+					seed_ids[cluster_entry.getValue()] = cardinality_entry.getKey();
+					seed_sizes[cluster_entry.getValue()] = cardinality_entry.getValue();
+					
+				}
+				
+				cluster_entry = cluster_it.next();
+				
+			}
+
+		}	
+		
+		AptaLogger.log(Level.INFO, this.getClass(), String.format("Sorting clusters by size in round %s" , reference_cycle.getName()));
+		
+		// Sort the cluster id array according to the cardinalities
+		Quicksort.sort(cluster_ids_argsort, cardinalities, Quicksort.DescendingQSComparator());
+		
+		// Keep track of the files we need to merge later
+		List<File> table_slices = new ArrayList<File>(); 
+				
+		// Now write this portion to a temporary file before continuing with the remaining cycle
+		File first_columns_file = null;
+		try {
+			first_columns_file = File.createTempFile("tableslice_", ".temp", export_folder.toFile());
+			first_columns_file.deleteOnExit();
+			
+			table_slices.add(first_columns_file);
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+			AptaLogger.log(Level.SEVERE, this.getClass(), "Could not create temporary file");
+			AptaLogger.log(Level.SEVERE, this.getClass(), e);
+			return;
+		}
+		
+		try {
+			
+			AptaLogger.log(Level.INFO, this.getClass(), "Populating temporary file " + first_columns_file.toString());
+			
+			BufferedWriter bw = new BufferedWriter(new FileWriter(first_columns_file.toString()));
+			
+			int card_idx = 0; 	//since we are using the cardinality array to sort the indices, we need to use 
+								// a running index for this array
+			
+			Boolean withPrimers = Configuration.getParameters().getBoolean("Export.IncludePrimerRegions");
+			
+			for (int index : cluster_ids_argsort) {
+				
+				// Create sequence with, or without primers, if no sequence is present in the ref cycle for this cluster, write N/A
+				byte[] sequence = (seed_ids[index] == -1) ? "N/A".getBytes() : experiment.getAptamerPool().getAptamer(seed_ids[index]);
+				
+				AptamerBounds bounds = (seed_ids[index] == -1) ? new AptamerBounds(0,3) : withPrimers ? new AptamerBounds(0, sequence.length) : Configuration.getExperiment().getAptamerPool().getAptamerBounds(seed_ids[index]);
+				
+				bw.write(String.format("%s\t%s\t%s\t%s\t%s\t%.5f\n", 
+						index, // cluster id 
+						(withPrimers ? new String(sequence) : new String(Arrays.copyOfRange(sequence, bounds.startIndex, bounds.endIndex))), // Seed sequence
+						seed_ids[index] == -1 ? "N/A" : seed_ids[index], // seed id
+						cardinalities[card_idx], // Cluster size
+						diversities[index], // cluster diversity
+						((double) cardinalities[card_idx] / (double) reference_cycle.getSize()) * 1000000.0 // cluster CPM
+						));
+				
+				card_idx++;
+				
+			}
+			
+			bw.close();
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+			AptaLogger.log(Level.SEVERE, this.getClass(), "Could not write to temporary file");
+			AptaLogger.log(Level.SEVERE, this.getClass(), e);
+			return;
+		}
+		
+		// free space
+		seed_ids = null;
+		seed_sizes = null;
+		cluster_ids = null;
+		
+		// we now have to compute the cluster size, diversity, and CPM for each cluster in the remaining selection cycles
+		for( int i = experiment.getAllSelectionCycles().size()-1; i>=0; i--) {
+			
+			SelectionCycle cycle = experiment.getAllSelectionCycles().get(i);
+			
+			if (cycle == reference_cycle) continue;
+			
+			AptaLogger.log(Level.INFO, this.getClass(), String.format("Sorting clusters by size in round %s" , cycle.getName()));
+			
+			// we are going to reuse the arrays created for the reference cycle, 
+			// but we need to reinitialize them
+			for (int x=0; x<numberOfClusters; x++) {
+				
+				cardinalities[x] = 0;
+				diversities[x] =   0;
+				
+			} 
+			
+			// Fill the arrays
+			cluster_it = clusters.iterator().iterator();
+			cardinality_it = cycle.iterator().iterator();
+			cluster_entry = cluster_it.next();
+			cardinality_entry = cardinality_it.next();
+			
+			while ( cluster_it.hasNext() && cardinality_it.hasNext() ) { // Ids are sorted in both cases
+
+				if (cluster_entry.getKey() < cardinality_entry.getKey()) {
+					
+					cluster_entry = cluster_it.next();
+					
+				}
+				else if (cluster_entry.getKey() > cardinality_entry.getKey()){
+					
+					cardinality_entry = cardinality_it.next();
+					
+				}
+				
+				// Process
+				else {
+
+					cardinalities[cluster_entry.getValue()] += cardinality_entry.getValue(); 
+					diversities[cluster_entry.getValue()] += 1;
+					cluster_entry = cluster_it.next();
+					
+				}
+
+			}
+			
+			
+			// Now write this portion to a temporary file
+			File next_columns_file = null;
+			try {
+				next_columns_file = File.createTempFile("tableslice_", ".temp", export_folder.toFile());
+				next_columns_file.deleteOnExit();
+				
+				table_slices.add(next_columns_file);
+				
+			} catch (IOException e) {
+				e.printStackTrace();
+				AptaLogger.log(Level.SEVERE, this.getClass(), "Could not create temporary file");
+				AptaLogger.log(Level.SEVERE, this.getClass(), e);
+				return;
+			}
+
+			try {
+				
+				AptaLogger.log(Level.INFO, this.getClass(), "Populating temporary file " + next_columns_file.toString());
+				
+				BufferedWriter bw = new BufferedWriter(new FileWriter(next_columns_file.toString()));
+				
+				for (int index : cluster_ids_argsort) {
+					
+					bw.write(String.format("%s\t%s\t%.5f\n", 
+							cardinalities[index], // Cluster size
+							diversities[index], // cluster diversity
+							((double) cardinalities[index] / (double) reference_cycle.getSize()) * 1000000.0 // cluster CPM
+							));
+					
+				}
+				
+				bw.close();
+										
+			} catch (IOException e) {
+				e.printStackTrace();
+				AptaLogger.log(Level.SEVERE, this.getClass(), "Could not write to temporary file");
+				AptaLogger.log(Level.SEVERE, this.getClass(), e);
+				return;
+			}
+			
+			
+		}
+		
+		// Finally we merge the file into a new one, line by line
+		List<BufferedReader> fileReaders = new ArrayList<BufferedReader>();
+		try {
+			
+			// Open all files
+			for ( File f : table_slices ) {
+				
+			    BufferedReader br = new BufferedReader(new FileReader(f));
+			    fileReaders.add(br);
+				
+			}
+			
+			// Create the final file that will contain the table
+			ExportWriter writer = Configuration.getParameters().getBoolean("Export.compress") ? new CompressedExportWriter() : new UncompressedExportWriter();
+			writer.open(Paths.get(export_folder.toString(), filename));
+			
+			// Create header 
+			StringBuilder header = new StringBuilder("Cluster ID\tSeed Sequence\tSeed ID\t");
+			for( int i = experiment.getAllSelectionCycles().size()-1; i>=0; i--) {
+				
+				SelectionCycle cycle = experiment.getAllSelectionCycles().get(i);
+				
+				header.append(cycle.getName() + " Size\t");
+				header.append(cycle.getName() + " Diversity\t");
+				header.append(cycle.getName() + " CPM" + ((i!=0) ? "\t" : ""));
+				
+			}
+			writer.write(header.toString()+"\n");
+			
+			// Join the table columns, line by line
+			ArrayList<String> current_lines = new ArrayList<String>();
+			StringBuilder concatenated_line = new StringBuilder();
+			
+			while ( 
+					fileReaders.stream().map( t1 -> {
+						String line = null;
+						try {
+							line = t1.readLine();
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+						current_lines.add(line);
+						return line;
+					} ).noneMatch(Objects::isNull) ) {
+				
+				// process the lines
+				concatenated_line.append(current_lines.get(0).trim());
+				current_lines.stream().skip(1).forEach( line -> {concatenated_line.append("\t"+line.trim());});
+				
+				// write to file
+				writer.write(concatenated_line+"\n");
+				
+				// reset line container
+				current_lines.clear();
+				concatenated_line.setLength(0);
+			}
+			
+			// Close handle to the table file
+			writer.close();
+			
+		} catch (FileNotFoundException e) {
+			
+			e.printStackTrace();
+			AptaLogger.log(Level.SEVERE, this.getClass(), "Could not open temporary file");
+			AptaLogger.log(Level.SEVERE, this.getClass(), e);
+			return;
+			
+		}
+		
+		// close all file handles and remove temporary files
+		try {
+			
+			
+			for (BufferedReader reader : fileReaders) {
+				
+				reader.close();
+				
+			}
+		} catch (IOException e) {
+			
+			e.printStackTrace();
+			AptaLogger.log(Level.SEVERE, this.getClass(), "Could not close one ore more file reader handles");
+			AptaLogger.log(Level.SEVERE, this.getClass(), e);
+			return;
+			
+		}
+		
+		// delete temporary files
+		for (File f : table_slices) {
+			
+			f.delete();
+			
+		}
+		
+		
+	}
 	
 }

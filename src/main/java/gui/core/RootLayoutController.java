@@ -560,7 +560,9 @@ public class RootLayoutController {
             
             Stage stage = new Stage();
             stage.setTitle("Export Data");
-            stage.setResizable(false);
+            stage.setResizable(true);
+            stage.setMinWidth(835);
+            stage.setMinHeight(650);
             stage.setScene(new Scene(root,  Control.USE_COMPUTED_SIZE, Control.USE_COMPUTED_SIZE));
     		stage.setOnCloseRequest((e) -> { e.consume(); });
             stage.show();
@@ -837,6 +839,11 @@ public class RootLayoutController {
     	alert.setTitle("How to cite this work");
     	alert.setHeaderText("If you used this work in your reserach, please cite the corresponding publications.");
     	alert.setContentText(
+    			"AptaSuite \n" +
+    			"Hoinka, J., Backofen, R. & Przytycka, T. M. (2018).\n"+
+    			"AptaSUITE: A Full-Featured Bioinformatics Framework for the Comprehensive Analysis of Aptamers from HT-SELEX Experiments.\n"+ 
+    			"Molecular Therapy - Nucleic Acids, 11, 515–517. https://doi.org/10.1016/j.omtn.2018.04.006\n\n"+   			
+    			
     			"AptaPLEX \n" + 
     			"Hoinka, J., & Przytycka, T. (2016). \n" + 
     			"AptaPLEX - A dedicated, multithreaded demultiplexer for HT-SELEX data.\n" + 

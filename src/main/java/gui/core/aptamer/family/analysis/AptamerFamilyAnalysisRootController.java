@@ -582,7 +582,7 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 		// Initialize
 		for (int x=0; x<numberOfClusters; x++) {
 			
-			cardinalities[0] = 0;
+			cardinalities[x] = 0;
 			cluster_ids[x] = x;
 			
 		}

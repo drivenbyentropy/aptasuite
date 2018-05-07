@@ -35,6 +35,15 @@ $ java -jar path/to/aptasuite-x.y.z.jar -help
 
 Please see the [Wiki](https://github.com/drivenbyentropy/aptasuite/wiki) for a detailed manual.
 
+## How to Cite
+If you use AptaSuite in your work, please cite it as
+```
+AptaSUITE: A Full-Featured Bioinformatics Framework for the Comprehensive Analysis of Aptamers from HT-SELEX Experiments. 
+Hoinka, J., Backofen, R. and Przytycka, T. M. (2018). 
+Molecular Therapy - Nucleic Acids, 11, 515–517. https://doi.org/10.1016/j.omtn.2018.04.006
+```
+I addition, please cite the individual algorithms that aided your analysis. Details on how to cite these can be found in the `Help -> How to Cite` menu of the graphical user interface.
+
 ## Screenshots
 ![image](https://drivenbyentropy.github.io/images/screnshot2.png)  |  ![image](https://drivenbyentropy.github.io/images/screnshot4.png)
 :-------------------------:|:-------------------------:

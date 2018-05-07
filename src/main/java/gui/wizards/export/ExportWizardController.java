@@ -3,17 +3,24 @@
  */
 package gui.wizards.export;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 
 import javax.annotation.PostConstruct;
 
 import exceptions.InformationNotFoundException;
 import gui.activity.ProgressPaneController;
+import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
@@ -22,14 +29,18 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
+import lib.aptamer.datastructures.ClusterContainer;
 import lib.aptamer.datastructures.Experiment;
 import lib.aptamer.datastructures.SelectionCycle;
 import lib.export.Export;
 import utilities.AptaLogger;
 import utilities.Configuration;
+import utilities.Quicksort;
 
 /**
  * @author Jan Hoinka
@@ -78,6 +89,18 @@ public class ExportWizardController {
 	
 	@FXML
 	private Button closeButton;
+	
+	@FXML
+	private CheckBox clusterExportCheckbox;
+	
+	@FXML
+	private Label clusterExportNoClusterInformationFoundLabel;
+	
+	@FXML
+	private HBox clusterExportHBox;
+	
+	@FXML
+	private ProgressIndicator clusterExportProgressIndicator;
 	
 	Experiment experiment = Configuration.getExperiment();
 	
@@ -128,8 +151,90 @@ public class ExportWizardController {
 		sequenceFormatComboBox.getItems().add("Fastq");
 		sequenceFormatComboBox.getItems().add("Fasta");
 		sequenceFormatComboBox.setValue(Configuration.getParameters().getString("Export.SequenceFormat","Fastq"));
+		
+		//Do we have clusters to export?
+		checkClusterDataAvailability();
 	}
 	
+	
+	/**
+	 * Checks whether we have cluster data that can be exported 
+	 */
+	private void checkClusterDataAvailability() {
+		
+		Runnable logic = new Runnable() {
+
+			@Override
+			public void run() {
+			
+				AptaLogger.log(Level.INFO, this.getClass(), "Checking for cluster information");
+				
+				Platform.runLater(()->{
+				
+					clusterExportProgressIndicator.setProgress(-1);
+					
+				});
+				
+				
+				boolean dataAvailable = false;
+				
+				// Do the trivial test first
+				if (experiment.getClusterContainer() != null) {
+					
+					dataAvailable = true;
+					
+				} // now we need to attempt to load data from disk
+				else {
+					
+					try {
+						experiment.instantiateClusterContainer(false, false);
+						dataAvailable = true;
+					}
+					catch (InformationNotFoundException e) {
+						dataAvailable = false;
+					}
+					
+				}
+				
+				// now show the corresponding GUI elements
+				if (dataAvailable) {
+					
+					AptaLogger.log(Level.INFO, this.getClass(), "Found cluster information");
+					
+					Platform.runLater(()->{
+						
+						clusterExportHBox.setVisible(false);
+						clusterExportNoClusterInformationFoundLabel.setVisible(false);
+						clusterExportCheckbox.setVisible(true);
+						
+					});
+					
+					
+				} 
+				else {
+					
+					AptaLogger.log(Level.INFO, this.getClass(), "Did not find cluster information");
+					
+					Platform.runLater(()->{
+						
+						clusterExportHBox.setVisible(false);
+						clusterExportNoClusterInformationFoundLabel.setVisible(true);
+						clusterExportCheckbox.setVisible(false);
+						
+					});
+					
+					
+				}
+				
+			}
+		
+		};
+		
+		//Run it without blocking the GUI
+		Thread t = new Thread(logic);
+		t.start();
+		
+	}
 	
 	/**
 	 * Checks input for correctness, writes to the contig file and exports the data
@@ -239,6 +344,29 @@ public class ExportWizardController {
 						AptaLogger.log(Level.FINEST, this.getClass(), new InformationNotFoundException("No structure information was found to export. Did you run AptaSUITE with the -structures option?"));
 						
 					}
+				}
+				
+				// Export cluster table
+				if(clusterExportCheckbox.isSelected()) {
+					
+					AptaLogger.log(Level.INFO, this.getClass(), "Exporting cluster table");
+					
+					//Make sure we have clusters
+					try {
+						if (experiment.getClusterContainer() == null)
+						{
+							experiment.instantiateClusterContainer(false, true);
+						}
+						
+						export.ClusterTable(Configuration.getExperiment(), exportPath, "cluster_table.txt" + (compress ? ".gz" : ""));
+						
+					} catch(Exception e) { // We need to make sure a cluster pool exists
+						
+						AptaLogger.log(Level.WARNING, this.getClass(), new InformationNotFoundException("No cluster information was found to export. Did you run AptaSUITE with the -cluster option?"));
+						AptaLogger.log(Level.FINEST, this.getClass(), new InformationNotFoundException("No cluster information was found to export. Did you run AptaSUITE with the -cluster option?"));
+						
+					}
+					
 				}
 
 				// Re enable the close button

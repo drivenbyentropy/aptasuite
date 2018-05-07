@@ -6,6 +6,7 @@
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.ProgressIndicator?>
 <?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.Tooltip?>
@@ -19,7 +20,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="620.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.wizards.export.ExportWizardController">
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="650.0" prefWidth="835.0" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.wizards.export.ExportWizardController">
    <center>
       <StackPane fx:id="rootStackPane" BorderPane.alignment="CENTER">
          <BorderPane.margin>
@@ -35,8 +36,11 @@
                      <font>
                         <Font size="24.0" />
                      </font>
+                     <VBox.margin>
+                        <Insets top="10.0" />
+                     </VBox.margin>
                   </Label>
-                  <Label text="Select the data to be exported below and press &quot;Export&quot;. The data will be exported to the export folder of the experiment path.">
+                  <Label prefWidth="800.0" text="Select the data to be exported below and press &quot;Export&quot;. The data will be exported to the export folder of the experiment path.">
                      <font>
                         <Font size="12.0" />
                      </font>
@@ -50,7 +54,7 @@
                         <Font name="System Bold" size="12.0" />
                      </font>
                   </Label>
-                  <Label minHeight="-Infinity" text="Select this option to export every unique species of the selection.  For each aptamer, the corresponding frequency for that species in each selection cycle is exported.  The sequences are sorted by the sum of each row. The information is written to a file named pool.txt[.gz] in the export folder of the project path." wrapText="true" VBox.vgrow="ALWAYS">
+                  <Label minHeight="-Infinity" text="Select this option to export every unique species of the selection.  For each aptamer, the corresponding frequency for that species in each selection cycle is exported.  The sequences are sorted by the sum of each row. The information is written to a file named pool.txt[.gz] in the export folder of the project path." wrapText="true">
                      <font>
                         <Font size="12.0" />
                      </font>
@@ -123,6 +127,9 @@
                                     </Label>
                                     <ComboBox fx:id="sequenceFormatComboBox" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" />
                                  </children>
+                                 <VBox.margin>
+                                    <Insets bottom="5.0" />
+                                 </VBox.margin>
                               </HBox>
                               <ListView fx:id="selectionCycleListView" minWidth="-Infinity" />
                            </children>
@@ -203,6 +210,43 @@
                   <Region maxHeight="1.7976931348623157E308" VBox.vgrow="ALWAYS" />
                   <Region maxHeight="1.7976931348623157E308" VBox.vgrow="ALWAYS" />
                   <Separator />
+                  <Label layoutX="20.0" layoutY="556.0" text="Export Cluster Table">
+                     <font>
+                        <Font name="System Bold" size="12.0" />
+                     </font>
+                  </Label>
+                  <StackPane>
+                     <children>
+                        <CheckBox fx:id="clusterExportCheckbox" minHeight="-Infinity" mnemonicParsing="false" text="Export a table of all clusters sorted by cluster size of the highest selection round including Cluster ID, Seed Sequence and ID, and Size, Diversity and CMP for each round." visible="false" wrapText="true" StackPane.alignment="CENTER_LEFT">
+                           <font>
+                              <Font size="12.0" />
+                           </font>
+                        </CheckBox>
+                        <Label fx:id="clusterExportNoClusterInformationFoundLabel" minHeight="-Infinity" text="No cluster information found. Please run AptaCLUSTER from the Aptamer Family Analysis tab to be able to export cluster data." visible="false" wrapText="true" StackPane.alignment="CENTER_LEFT">
+                           <font>
+                              <Font size="12.0" />
+                           </font>
+                           <padding>
+                              <Insets bottom="5.0" />
+                           </padding>
+                        </Label>
+                        <HBox fx:id="clusterExportHBox" alignment="CENTER_LEFT">
+                           <children>
+                              <Label minHeight="-Infinity" text="Checking for cluster information..." wrapText="true">
+                                 <font>
+                                    <Font size="12.0" />
+                                 </font>
+                                 <padding>
+                                    <Insets bottom="5.0" />
+                                 </padding>
+                              </Label>
+                              <Region HBox.hgrow="ALWAYS" />
+                              <ProgressIndicator fx:id="clusterExportProgressIndicator" progress="0.0" />
+                           </children>
+                        </HBox>
+                     </children>
+                  </StackPane>
+                  <Separator layoutX="20.0" layoutY="520.0" />
                   <Region maxHeight="1.7976931348623157E308" VBox.vgrow="ALWAYS" />
                   <Label text="Additional Options">
                      <font>
@@ -211,34 +255,14 @@
                   </Label>
                   <HBox>
                      <children>
-                        <VBox HBox.hgrow="ALWAYS">
+                        <VBox spacing="10.0" HBox.hgrow="ALWAYS">
                            <children>
-                              <Label minHeight="-Infinity" text="Select this option if the resulting files should be gzip compressed." wrapText="true">
-                                 <font>
-                                    <Font size="12.0" />
-                                 </font>
-                                 <VBox.margin>
-                                    <Insets bottom="5.0" />
-                                 </VBox.margin>
-                              </Label>
-                              <CheckBox fx:id="compressFilesCheckbox" mnemonicParsing="false" text="Compress Files">
+                              <CheckBox fx:id="compressFilesCheckbox" minHeight="-Infinity" mnemonicParsing="false" text="Select this option if the resulting files should be gzip compressed.">
                                  <font>
                                     <Font size="12.0" />
                                  </font>
                               </CheckBox>
-                           </children>
-                        </VBox>
-                        <VBox HBox.hgrow="ALWAYS">
-                           <children>
-                              <Label minHeight="-Infinity" text="Select this option if the 5' and 3' primers should be exported flanking the randomized region." wrapText="true">
-                                 <font>
-                                    <Font size="12.0" />
-                                 </font>
-                                 <VBox.margin>
-                                    <Insets bottom="5.0" />
-                                 </VBox.margin>
-                              </Label>
-                              <CheckBox fx:id="withPrimersCheckBox" mnemonicParsing="false" text="With Primers">
+                              <CheckBox fx:id="withPrimersCheckBox" mnemonicParsing="false" text="Select this option if the 5' and 3' primers should be exported flanking the randomized region.">
                                  <font>
                                     <Font size="12.0" />
                                  </font>
