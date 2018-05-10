@@ -518,7 +518,7 @@ public class Experiment implements Serializable{
 		cycle.setBarcodeFivePrime(barcode5);
 		cycle.setBarcodeThreePrime(barcode3);
 		
-		// finally, add it to the complete list of cyckes
+		// finally, add it to the complete list of cycles
 		allSelectionCycles.add(cycle);
 		
 		return cycle;
@@ -589,31 +589,12 @@ public class Experiment implements Serializable{
 	public SelectionCycle getSelectionCycleById(String id){
 		
 		//iterate over all cycles and search for a matching id
-		for (SelectionCycle c : selectionCycles){
-			
-			//skip empty slots
-			if (c == null){
-				continue;
-			}
-			
+		for (SelectionCycle c : getAllSelectionCycles()){
+		
 			if (c.getName().equals(id)){
 				return c;
 			}
 			
-			// if not found, we also have to go though the counter and control selections
-			else{
-				for(SelectionCycle d : c.getControlCycles()){
-					if (d.getName().equals(id)){
-						return d;
-					}
-				}
-				
-				for(SelectionCycle d : c.getCounterSelectionCycles()){
-					if (d.getName().equals(id)){
-						return d;
-					}
-				}
-			}
 		}
 		
 		// the cycle does not exist

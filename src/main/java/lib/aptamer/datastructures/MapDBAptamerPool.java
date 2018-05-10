@@ -12,7 +12,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.BitSet;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
@@ -31,6 +33,7 @@ import orestes.bloomfilter.BloomFilter;
 import orestes.bloomfilter.FilterBuilder;
 import utilities.AptaLogger;
 import utilities.Configuration;
+import utilities.FileUtilities;
 
 /**
  * Implements the AptamerPool interface using a non-volatile based storage solution in order
@@ -193,89 +196,94 @@ public class MapDBAptamerPool implements AptamerPool {
 		// If we are reading an existing database, iterate over the folder and open the individual MapDB instances
 		if (! newdb){ 
 			AptaLogger.log(Level.INFO, this.getClass(), "Searching for existing datasets in " + poolDataPath.toString());
-			try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(Paths.get(poolDataPath.toString()), "data*" )) {
+			
+								
+			// Get the correct order of the paths
+			List<Path> sorted_paths = FileUtilities.getSortedPaths(Files.newDirectoryStream(Paths.get(poolDataPath.toString()), "data*" ));
+			
+			AptaLogger.log(Level.INFO, this.getClass(), "Found a total of " + sorted_paths.size() + " files on disk.");
+			
+			// Process them in the correct order
+			for (Path file : sorted_paths) { // this will only get the data*.mapdb 
+                
+    			// Open and read the TreeMap
+				AptaLogger.log(Level.INFO, this.getClass(), "Processing " + file.toString());
+				long tParserStart = System.currentTimeMillis();
+		
+				DB db = this.getMapDBInstance(file.toFile(),false);
 				
-				for (Path file : directoryStream) { // this will only get the data*.mapdb 
-	                
-	    			// Open and read the TreeMap
-    				AptaLogger.log(Level.INFO, this.getClass(), "Processing " + file.toString());
-    				long tParserStart = System.currentTimeMillis();
-    		
-    				DB db = this.getMapDBInstance(file.toFile(),false);
-    				
-    				HTreeMap<byte[], Integer> dbmap = db.hashMap("map")
-    						.keySerializer(new SerializerCompressionWrapper<byte[]>(Serializer.BYTE_ARRAY))
-    						.valueSerializer(Serializer.INTEGER)
-    						.open();
-    				
-    				poolData.add(dbmap);
-    				poolDataPaths.add(file);
+				HTreeMap<byte[], Integer> dbmap = db.hashMap("map")
+						.keySerializer(new SerializerCompressionWrapper<byte[]>(Serializer.BYTE_ARRAY))
+						.valueSerializer(Serializer.INTEGER)
+						.open();
+				
+				poolData.add(dbmap);
+				poolDataPaths.add(file);
 
-    				// Setup helper variables	    				
-    				BloomFilter<String> localBloomFilter = new FilterBuilder(maxTreeMapCapacity, bloomFilterCollisionProbability).buildBloomFilter();
-    				poolDataBloomFilter.add(localBloomFilter);
-    				
-    				// Now load and initialize the inverse view of the data
-    				Path inverseFile = Paths.get(file.getParent().toString(), "inverse_" + file.getFileName().toString());
-    				
-    				AptaLogger.log(Level.CONFIG, this.getClass(), "Reading inverse view from " + inverseFile.toString());
-    				
-    				DB db_inverse = this.getMapDBInstance(inverseFile.toFile(),false);
+				// Setup helper variables	    				
+				BloomFilter<String> localBloomFilter = new FilterBuilder(maxTreeMapCapacity, bloomFilterCollisionProbability).buildBloomFilter();
+				poolDataBloomFilter.add(localBloomFilter);
+				
+				// Now load and initialize the inverse view of the data
+				Path inverseFile = Paths.get(file.getParent().toString(), "inverse_" + file.getFileName().toString());
+				
+				AptaLogger.log(Level.CONFIG, this.getClass(), "Reading inverse view from " + inverseFile.toString());
+				
+				DB db_inverse = this.getMapDBInstance(inverseFile.toFile(),false);
 
-    				BTreeMap<Integer, byte[]> inverse_dbmap = db_inverse.treeMap("map")
-    						.valuesOutsideNodesEnable()
-    						.keySerializer(Serializer.INTEGER)
-    						.valueSerializer(new SerializerCompressionWrapper<byte[]>(Serializer.BYTE_ARRAY))
-    				        .open();
-    				
-    				poolDataInverse.add(inverse_dbmap);
-    				
-    				// Setup helper variables	    				
-    				BitSet localBitSet = new BitSet(maxTreeMapCapacity);
-    				poolDataInverseFilters.add(localBitSet);
-    				
-    				// Update bloom filter content and determine database size
-    				final AtomicInteger currentDBmapSize = new AtomicInteger(0);
-    				inverse_dbmap.forEach((key,value) -> {
-    					
-    					bloomFilter.addRaw(value);
-    					localBloomFilter.addRaw(value);
-    					
-    					this.poolDataInverseFilter.set(key);
-    					localBitSet.set(key);
-    					
-    					currentDBmapSize.getAndIncrement();
-    					
-    				});
-    				
-    				// Update values
-    				poolSize += currentDBmapSize.intValue();
-    				currentTreeMapSize = currentDBmapSize.intValue();
-    				
-    				// And finally load the bounds data
-    				Path boundsFile = Paths.get(file.getParent().toString(), "bounds_" + file.getFileName().toString());
-    				
-    				AptaLogger.log(Level.CONFIG, this.getClass(), "Reading bounds data from " + boundsFile.toString());
-    				
-    				DB db_bounds = this.getMapDBInstance(boundsFile.toFile(),false);
+				BTreeMap<Integer, byte[]> inverse_dbmap = db_inverse.treeMap("map")
+						.valuesOutsideNodesEnable()
+						.keySerializer(Serializer.INTEGER)
+						.valueSerializer(new SerializerCompressionWrapper<byte[]>(Serializer.BYTE_ARRAY))
+				        .open();
+				
+				poolDataInverse.add(inverse_dbmap);
+				
+				// Setup helper variables	    				
+				BitSet localBitSet = new BitSet(maxTreeMapCapacity);
+				poolDataInverseFilters.add(localBitSet);
+				
+				// Update bloom filter content and determine database size
+				final AtomicInteger currentDBmapSize = new AtomicInteger(0);
+				inverse_dbmap.forEach((key,value) -> {
+					
+					bloomFilter.addRaw(value);
+					localBloomFilter.addRaw(value);
+					
+					this.poolDataInverseFilter.set(key);
+					localBitSet.set(key);
+					
+					currentDBmapSize.getAndIncrement();
+					
+				});
+				
+				// Update values
+				poolSize += currentDBmapSize.intValue();
+				currentTreeMapSize = currentDBmapSize.intValue();
+				
+				// And finally load the bounds data
+				Path boundsFile = Paths.get(file.getParent().toString(), "bounds_" + file.getFileName().toString());
+				
+				AptaLogger.log(Level.CONFIG, this.getClass(), "Reading bounds data from " + boundsFile.toString());
+				
+				DB db_bounds = this.getMapDBInstance(boundsFile.toFile(),false);
 
-    				BTreeMap<Integer, int[]> bounds_dbmap = db_bounds.treeMap("map")
-    						.valuesOutsideNodesEnable()
-    						.keySerializer(Serializer.INTEGER)
-    						.valueSerializer(Serializer.INT_ARRAY)
-    				        .open();
-    				
-    				boundsData.add(bounds_dbmap);
-    				
-    				
-    				AptaLogger.log(Level.CONFIG, this.getClass(), 
-    						"Total number of aptamers in file: " + currentTreeMapSize + "\n" +
-    						"Total number of aptamers: " + poolSize + "\n" + 
-    						"Processed in " + ((System.currentTimeMillis() - tParserStart) / 1000.0) + " seconds."
-    						);
-	                
-	            }
-	        } catch (IOException ex) {}
+				BTreeMap<Integer, int[]> bounds_dbmap = db_bounds.treeMap("map")
+						.valuesOutsideNodesEnable()
+						.keySerializer(Serializer.INTEGER)
+						.valueSerializer(Serializer.INT_ARRAY)
+				        .open();
+				
+				boundsData.add(bounds_dbmap);
+				
+				
+				AptaLogger.log(Level.CONFIG, this.getClass(), 
+						"Total number of aptamers in file: " + currentTreeMapSize + "\n" +
+						"Total number of aptamers: " + poolSize + "\n" + 
+						"Processed in " + ((System.currentTimeMillis() - tParserStart) / 1000.0) + " seconds."
+						);
+                
+            }
 			
 			AptaLogger.log(Level.INFO, this.getClass(), "Found and loaded a total of " + poolSize + " aptamers from disk.");
 

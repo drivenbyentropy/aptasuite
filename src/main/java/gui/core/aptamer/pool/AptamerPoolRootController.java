@@ -301,9 +301,11 @@ public class AptamerPoolRootController implements Initializable{
 	public void initializeContent() {
 		
 		initializeControlElements();
-		
+
 		// We want the gui not to block on initialization, hence we wrap this into a progress pane
-		ProgressPaneController pp = ProgressPaneController.getProgressPane(new Runnable() {
+		ProgressPaneController pp = ProgressPaneController.getProgressPane(null, this.aptamerPoolRootStackPane);
+		
+		Runnable logic = new Runnable() {
 			
 			@Override
 			public void run() {
@@ -312,7 +314,7 @@ public class AptamerPoolRootController implements Initializable{
 				
 				initializeControlArrays();
 				
-				computeIndexOrder();
+				computeIndexOrder(pp);
 				
 				AptaLogger.log(Level.INFO, this.getClass(), "Creating Table and Pagination");
 				
@@ -332,8 +334,9 @@ public class AptamerPoolRootController implements Initializable{
 				
 			}
 		
-		}, this.aptamerPoolRootStackPane);
-		
+		};
+
+		pp.setLogic(logic);
 		pp.setShowLogs(true);
 		pp.run();
 		
@@ -840,6 +843,7 @@ public class AptamerPoolRootController implements Initializable{
 		
 	
 		// On cycle options
+		String last_selection_cycle = null;
 		for (int x=experiment.getSelectionCycles().size()-1; x>=0; x--) {
 			
 			// Skip non-existing cycles
@@ -849,7 +853,8 @@ public class AptamerPoolRootController implements Initializable{
 			if (positive.get(x) != null) {
 
 				 this.onCycleComboBox.getItems().add(positive.get(x).getName());
-				
+				 if ((last_selection_cycle) == null) last_selection_cycle = positive.get(x).getName();
+				 
 			}
 			
 			// Take care of the negative selections
@@ -876,7 +881,7 @@ public class AptamerPoolRootController implements Initializable{
 			
 		}
 		// Set last positive cycle as default
-		this.onCycleComboBox.getSelectionModel().selectFirst();
+		this.onCycleComboBox.getSelectionModel().select(last_selection_cycle);
 		
 		// Items per page
 		this.itemsPerPageTextField.textProperty().bindBidirectional(this.rows_per_page, new NumberStringConverter());
@@ -952,7 +957,7 @@ public class AptamerPoolRootController implements Initializable{
 	 * Given the constraints from the controls, calculate the order in which the 
 	 * aptamers will appear in the list 
 	 */
-	private void computeIndexOrder() {
+	private void computeIndexOrder(ProgressPaneController pp) {
 
 		// Set the bit array to true at the locations where we want to consider the data
 		SelectionCycle cycle_to_sort_by = experiment.getSelectionCycleById(cycle_to_sort_by_string);
@@ -970,7 +975,7 @@ public class AptamerPoolRootController implements Initializable{
 		this.id_mask.clear();
 		
 		// Keep record to know how many items pass the filter
-		int items_to_sort = 0;
+		AtomicInteger items_to_sort = new AtomicInteger(0);
 		
 		
 		// we have to differentiate between counts and enrichment 
@@ -981,16 +986,54 @@ public class AptamerPoolRootController implements Initializable{
 			// Temporarily store the counts in an array as random access to mapdb is slow but sequential access is fast
 			int[] counts = new int[aptamer_ids.length];
 			
-			for ( Entry<Integer, Integer> item : cycle_to_sort_by.iterator() ) { 
+			System.out.println("here");
 			
-				// since aptamers are one-indexed, we need to substract one
-				this.id_mask.set(item.getKey()-1); 
-				items_to_sort++;
+			// Provide a progress bar for this operation
+			pp.setShowProgressBar(true);
+			
+			Thread forloop = new Thread( new Runnable() {
+
+				@Override
+				public void run() {
+					
+					for ( Entry<Integer, Integer> item : cycle_to_sort_by.iterator() ) { 
+						
+						// since aptamers are one-indexed, we need to substract one
+						id_mask.set(item.getKey()-1); 
+						items_to_sort.incrementAndGet();
+						
+						// Get the count
+						counts[item.getKey()-1] = item.getValue();
+						
+					}
+					
+				}
 				
-				// Get the count
-				counts[item.getKey()-1] = item.getValue();
-				
+			});
+					
+			forloop.start();
+
+			while (forloop.isAlive() && !forloop.isInterrupted()) {
+				try {
+					pp.setProgress(items_to_sort.doubleValue()/cycle_to_sort_by.getUniqueSize() );
+					pp.setProgressLabel(String.format("Retrieved %s/%s items (%.2f%%)", items_to_sort.get(), cycle_to_sort_by.getUniqueSize(), (items_to_sort.doubleValue()/cycle_to_sort_by.getUniqueSize())*100.0) );
+					
+					System.out.println(items_to_sort.get() + "  " + cycle_to_sort_by.getUniqueSize());
+					System.out.flush();
+					
+					// Once every half a second should suffice
+					Thread.sleep(500);
+					
+				} catch (InterruptedException ie) {
+					break;
+				}
 			}
+
+			// Last Update
+			pp.setProgress(1.0);
+			pp.setProgressLabel(String.format("Retrieved %s/%s items (%.2f%%)", items_to_sort.get(), cycle_to_sort_by.getUniqueSize(), 100.0) );
+			
+			pp.setShowProgressBar(false);
 			
 			AptaLogger.log(Level.INFO, this.getClass(), "Prioritizing data");
 			
@@ -1013,7 +1056,7 @@ public class AptamerPoolRootController implements Initializable{
 								
 				}
 				
-				Quicksort.quicksort(aptamer_ids, counts, 0, items_to_sort-1, new DescQSComparator());
+				Quicksort.quicksort(aptamer_ids, counts, 0, items_to_sort.get()-1, new DescQSComparator());
 				
 			}
 			
@@ -1030,7 +1073,7 @@ public class AptamerPoolRootController implements Initializable{
 								
 				}
 				
-				Quicksort.quicksort(aptamer_ids, counts, 0, items_to_sort-1, new AscQSComparator()); 
+				Quicksort.quicksort(aptamer_ids, counts, 0, items_to_sort.get()-1, new AscQSComparator()); 
 				
 			}			
 			
@@ -1068,7 +1111,7 @@ public class AptamerPoolRootController implements Initializable{
 					
 					this.id_mask.set(item.getKey()-1);
 					enrichments[item.getKey()-1] /= ( item.getValue() / previous_cycle_size );
-					items_to_sort++;
+					items_to_sort.incrementAndGet();
 					
 				}
 				
@@ -1097,7 +1140,7 @@ public class AptamerPoolRootController implements Initializable{
 								
 				}
 				
-				Quicksort.quicksort(aptamer_ids, enrichments, 0, items_to_sort-1, new DescQSComparator());  
+				Quicksort.quicksort(aptamer_ids, enrichments, 0, items_to_sort.get()-1, new DescQSComparator());  
 			
 			}
 		
@@ -1115,7 +1158,7 @@ public class AptamerPoolRootController implements Initializable{
 								
 				}
 				
-				Quicksort.quicksort(aptamer_ids, enrichments, 0, items_to_sort-1, new AscQSComparator()); 
+				Quicksort.quicksort(aptamer_ids, enrichments, 0, items_to_sort.get()-1, new AscQSComparator()); 
 				
 			}
 			
@@ -1546,12 +1589,14 @@ public class AptamerPoolRootController implements Initializable{
 		}
 		
 		// We want the gui not to block on initialization, hence we wrap this into a progress pane
-		ProgressPaneController pp = ProgressPaneController.getProgressPane(new Runnable() {
+		ProgressPaneController pp = ProgressPaneController.getProgressPane(null, this.aptamerPoolRootStackPane);
+		
+		Runnable logic = new Runnable() {
 			
 			@Override
 			public void run() {
 				
-				computeIndexOrder();
+				computeIndexOrder(pp);
 				
 				AptaLogger.log(Level.INFO, this.getClass(), "Creating Table and Pagination");
 				
@@ -1559,8 +1604,9 @@ public class AptamerPoolRootController implements Initializable{
 				
 			}
 		
-		}, this.aptamerPoolRootStackPane);
+		};
 		
+		pp.setLogic(logic);
 		pp.setShowLogs(true);
 		pp.run();
 

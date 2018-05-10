@@ -27,6 +27,7 @@ import orestes.bloomfilter.BloomFilter;
 import orestes.bloomfilter.FilterBuilder;
 import utilities.AptaLogger;
 import utilities.Configuration;
+import utilities.FileUtilities;
 
 /**
  * @author Jan Hoinka
@@ -148,81 +149,84 @@ public class MapDBStructurePool implements StructurePool {
 			
 			AptaLogger.log(Level.INFO, this.getClass(), "Searching for existing datasets in " + structureDataPath.toString());
 
-			try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(Paths.get(structureDataPath.toString()))) {
+			// Get the correct order of the paths
+			List<Path> sorted_paths = FileUtilities.getSortedPaths(Files.newDirectoryStream(Paths.get(structureDataPath.toString())));
+						
+			AptaLogger.log(Level.INFO, this.getClass(), "Found a total of " + sorted_paths.size() + " files on disk.");
+
 				
-				for (Path file : directoryStream) {
+			for (Path file : sorted_paths) {
+                
+    			// Open and read the TreeMap, skip the inverse file
+    			if (Files.isRegularFile(file)){
+    				
+    				AptaLogger.log(Level.INFO, this.getClass(), "Processing file " + file.toString());
+    				
+    				BTreeMap<Integer, double[]> dbmap = null;
+    				DB db_structure = null;
+    				
+    				try {
+    					db_structure = DBMaker
+    						    .fileDB(file.toFile())
+    						    .allocateStartSize( this.allocateStartSize )
+    						    .allocateIncrement( this.allocateIncrement )
+    						    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
+    						    .fileMmapPreclearDisable() // Make mmap file faster
+    						  //.cleanerHackEnable() 	// Unmap (release resources) file when its closed. 
+														//Note that this is not compatible with MacOS and Java 9...
+    						    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
+    						    .executorEnable()
+    						    .make();
+    					
+    					dbmap = db_structure.treeMap("map")
+    								.valuesOutsideNodesEnable()
+    								.keySerializer(Serializer.INTEGER)
+    								.valueSerializer(new SerializerCompressionWrapper(Serializer.DOUBLE_ARRAY))
+    						        .open();
+    				}
+    				
+    				//If this fails, we need to make sure that all file handles have been closed
+    				catch(Exception e) {
+    					
+    						    					
+    					close();
+    					if (db_structure != null) {  
+    						db_structure.close(); 
+    					}
+    					
+    					throw(e);
+    					
+    				}
+    				
+    				structureData.add(dbmap);
+    				structureDataPaths.add(file);
+    				
+    				BloomFilter<Integer> localBloomFilter = new FilterBuilder(maxTreeMapCapacity, bloomFilterCollisionProbability).buildBloomFilter();
+    				structureDataFilter.add(localBloomFilter);
+    				
+    				
+    				// Update the filter content
+    				int currentTreeMapSize = 0;
+    				Iterator<Integer> iterator = dbmap.keyIterator();
+    				
+    				while (iterator.hasNext()){
+    					Integer item = iterator.next();
+    					localBloomFilter.add(item);
+    					globalStructureDataFilter.add(item);
+    					currentTreeMapSize++;
+    				}
+    				
+    				// Update values
+    				structureDataSize += currentTreeMapSize;
+    				
+    				AptaLogger.log(Level.CONFIG, this.getClass(), 
+    						"Found and loaded file " + file.toString() + "\n" +
+    						"Total number of aptamers in file: " + currentTreeMapSize + "\n" +
+    						"Total number of aptamers: " + structureDataSize
+    						);
 	                
-	    			// Open and read the TreeMap, skip the inverse file
-	    			if (Files.isRegularFile(file)){
-	    				
-	    				AptaLogger.log(Level.INFO, this.getClass(), "Processing file " + file.toString());
-	    				
-	    				BTreeMap<Integer, double[]> dbmap = null;
-	    				DB db_structure = null;
-	    				
-	    				try {
-	    					db_structure = DBMaker
-	    						    .fileDB(file.toFile())
-	    						    .allocateStartSize( this.allocateStartSize )
-	    						    .allocateIncrement( this.allocateIncrement )
-	    						    .fileMmapEnableIfSupported() // Only enable mmap on supported platforms
-	    						    .fileMmapPreclearDisable() // Make mmap file faster
-	    						  //.cleanerHackEnable() 	// Unmap (release resources) file when its closed. 
-															//Note that this is not compatible with MacOS and Java 9...
-	    						    .concurrencyScale(8) // TODO: Number of threads make this a parameter?
-	    						    .executorEnable()
-	    						    .make();
-	    					
-	    					dbmap = db_structure.treeMap("map")
-	    								.valuesOutsideNodesEnable()
-	    								.keySerializer(Serializer.INTEGER)
-	    								.valueSerializer(new SerializerCompressionWrapper(Serializer.DOUBLE_ARRAY))
-	    						        .open();
-	    				}
-	    				
-	    				//If this fails, we need to make sure that all file handles have been closed
-	    				catch(Exception e) {
-	    					
-	    						    					
-	    					close();
-	    					if (db_structure != null) {  
-	    						db_structure.close(); 
-	    					}
-	    					
-	    					throw(e);
-	    					
-	    				}
-	    				
-	    				structureData.add(dbmap);
-	    				structureDataPaths.add(file);
-	    				
-	    				BloomFilter<Integer> localBloomFilter = new FilterBuilder(maxTreeMapCapacity, bloomFilterCollisionProbability).buildBloomFilter();
-	    				structureDataFilter.add(localBloomFilter);
-	    				
-	    				
-	    				// Update the filter content
-	    				int currentTreeMapSize = 0;
-	    				Iterator<Integer> iterator = dbmap.keyIterator();
-	    				
-	    				while (iterator.hasNext()){
-	    					Integer item = iterator.next();
-	    					localBloomFilter.add(item);
-	    					globalStructureDataFilter.add(item);
-	    					currentTreeMapSize++;
-	    				}
-	    				
-	    				// Update values
-	    				structureDataSize += currentTreeMapSize;
-	    				
-	    				AptaLogger.log(Level.CONFIG, this.getClass(), 
-	    						"Found and loaded file " + file.toString() + "\n" +
-	    						"Total number of aptamers in file: " + currentTreeMapSize + "\n" +
-	    						"Total number of aptamers: " + structureDataSize
-	    						);
-		                
-		            }
-				}
-        	} catch (IOException ex) {}
+	            }
+			}
 			
 			// If no structure data exists on disk, we need to fail here
 			if (structureData.isEmpty()){
