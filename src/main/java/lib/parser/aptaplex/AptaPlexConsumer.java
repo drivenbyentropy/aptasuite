@@ -111,7 +111,19 @@ public class AptaPlexConsumer implements Runnable {
 	 * If no 3' primer is present, the parser needs to know the size of the
 	 * randomized region to extract
 	 */
-	private Integer randomizedRegionSize = null;
+	private Integer randomizedRegionSizeExactBound = null;
+	
+	/**
+	 * The user can specify a range of size to be accepted. 
+	 * This is the smallest size of the randomized region to be accepted.
+	 */
+	private Integer randomizedRegionSizeLowerBound = null;
+	
+	/**
+	 * The user can specify a range of size to be accepted. 
+	 * This is the largest size of the randomized region to be accepted.
+	 */
+	private Integer randomizedRegionSizeUpperBound = null;
 	
 	/**
 	 * Access to the data structures storing the Nucleotide distributions, 
@@ -159,19 +171,53 @@ public class AptaPlexConsumer implements Runnable {
 			barcodes3.add(barcode.getBytes());
 		}
 
+		// do we have restrictions on the randomized region sizes?
 		try {
-			randomizedRegionSize = Configuration.getParameters().getInt("Experiment.randomizedRegionSize");
+			randomizedRegionSizeExactBound = Configuration.getParameters().getInt("Experiment.randomizedRegionSize");
+		} catch (NoSuchElementException e) {
+		}
+		
+		try {
+			randomizedRegionSizeLowerBound = Configuration.getParameters().getInt("AptaplexParser.randomizedRegionSizeLowerBound");
+		} catch (NoSuchElementException e) {
+		}
+		
+		try {
+			randomizedRegionSizeUpperBound = Configuration.getParameters().getInt("AptaplexParser.randomizedRegionSizeUpperBound");
 		} catch (NoSuchElementException e) {
 		}
 
 		// we need to make sure that if no 3'primer was specified, we do at
 		// least have a
 		// randomized region size. Otherwise, extraction will fail
-		if (this.primer3 == null && this.randomizedRegionSize == null) {
-			throw new InvalidConfigurationException(
-					"Error. Neither the 3' primer nor a randomized region size was specified. Please add either of these parameters to the configuration.");
+		if (this.primer3 == null && this.randomizedRegionSizeExactBound == null) {
+			throw new InvalidConfigurationException("Error. Neither the 3' primer nor a randomized region size was specified. Please add either of these parameters to the configuration.");
+		}
+		
+		// the exact randomized region size takes precedence over the range
+		if (this.randomizedRegionSizeExactBound != null) {
+			
+			this.randomizedRegionSizeLowerBound = null;
+			this.randomizedRegionSizeUpperBound = null;
+			
+		}
+		
+		// if using the range, we need both upper and lower and lower < upper
+		if (
+				(this.randomizedRegionSizeLowerBound != null &&  this.randomizedRegionSizeUpperBound == null) ||
+				(this.randomizedRegionSizeLowerBound == null &&  this.randomizedRegionSizeUpperBound != null) 						
+			) {
+			throw new InvalidConfigurationException("Error. Either the lower or upper bound for the range of the randomized region size was not specified. Please add these missing parameters to the configuration.");
 		}
 
+		if ( 
+				(this.randomizedRegionSizeLowerBound != null &&  this.randomizedRegionSizeUpperBound != null) && 
+				(this.randomizedRegionSizeLowerBound >= this.randomizedRegionSizeUpperBound)
+				
+			) {
+			throw new InvalidConfigurationException( "Error. The lower bound for the range of the randomized region size must be smaller than the upper bound. Please check your configuration");
+		}
+		
 		// compute the reverse of the 5 primer primer. This is required due to the inner workings of the Bitap algorithm
 		ArrayUtils.reverse(this.primer5reverse);
 	}
@@ -277,7 +323,7 @@ public class AptaPlexConsumer implements Runnable {
 				 randomized_region_end_index = -1;
 				
 				 if (primer3 == null){ //use Experiment.randomizedRegionSize
-					 	randomized_region_end_index = randomized_region_start_index + randomizedRegionSize -1;
+					 	randomized_region_end_index = randomized_region_start_index + randomizedRegionSizeExactBound -1;
 				 }
 				 else{ // use the boundaries defined by the primer regions
 					 randomized_region_end_index = primer3_match.index;
@@ -285,10 +331,12 @@ public class AptaPlexConsumer implements Runnable {
 				
 				 // if the sequence was exacted successfully, we can finally
 				 // add it to the selection cycle
-				 if (
+				 if (		// Sanity checks
 						    (randomized_region_start_index < randomized_region_end_index && randomized_region_end_index <= contig.length) //Primers are in the correct order
 						 && (randomized_region_start_index-primer5.length >= 0) // 5' primer does not overshoot the contig to the left
 						 && (randomized_region_end_index+primer3.length <= contig.length) // 3' primer does not overshoot the contig to the right
+						 && (randomizedRegionSizeExactBound != null ? (randomized_region_end_index-randomized_region_start_index) == randomizedRegionSizeExactBound : true) // if the randomized region is specified, only let those aptamers through that have the desired lenght
+						 && (randomizedRegionSizeLowerBound != null ? randomizedRegionSizeLowerBound <= (randomized_region_end_index-randomized_region_start_index) && (randomized_region_end_index-randomized_region_start_index) <= randomizedRegionSizeUpperBound : true) // if a range of sizes is specified, make sure the aptamer falls into these categories
 					){
 					 
 					 if (!storeReverseComplement) { // Do we have to compute the reverse complement?

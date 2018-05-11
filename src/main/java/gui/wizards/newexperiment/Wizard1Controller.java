@@ -28,6 +28,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.Spinner;
@@ -78,12 +79,24 @@ public class Wizard1Controller{
 	
 	@FXML
 	private Spinner<Integer> randomizedRegionSizeSpinner;
+	
+	@FXML
+	private Spinner<Integer> randomizedRegionSizeLowerSpinner;
+	
+	@FXML
+	private Spinner<Integer> randomizedRegionSizeUpperSpinner;
     
 	@FXML
 	private HBox actionBar;
 	
 	@FXML
 	private ActionBarController actionBarController;
+	
+	@FXML
+	private CheckBox exactLengthCheckBox;
+	
+	@FXML
+	private CheckBox rangeLengthCheckBox;	
 	
 	
     private List<SelectionCycleDetailsController> selectionCycleDetailsControllers = new ArrayList<SelectionCycleDetailsController>();
@@ -125,7 +138,22 @@ public class Wizard1Controller{
     	primer3TextField.textProperty().bindBidirectional(getDataModel().getPrimer3());
     	
     	randomizedRegionSizeSpinner.getValueFactory().valueProperty().bindBidirectional(getDataModel().getRandomizedRegionSize());
+    	randomizedRegionSizeLowerSpinner.getValueFactory().valueProperty().bindBidirectional(getDataModel().getRandomizedRegionSizeLower());
+    	randomizedRegionSizeUpperSpinner.getValueFactory().valueProperty().bindBidirectional(getDataModel().getRandomizedRegionSizeUpper());
 
+    	// Make sure that either only the exact size or the range or non of them is selected
+    	exactLengthCheckBox.selectedProperty().addListener((obs, wasSelected, isNowSelected) -> {
+    	    if (isNowSelected) {
+    	    	rangeLengthCheckBox.setSelected(false);
+    	    }
+    	});
+
+    	rangeLengthCheckBox.selectedProperty().addListener((obs, wasSelected, isNowSelected) -> {
+    	    if (isNowSelected) {
+    	    	exactLengthCheckBox.setSelected(false);
+    	    }
+    	});
+    	
     	forwardReadsFileTextField.textProperty().bindBidirectional(getDataModel().getForwardReadsFile());
     	reverseReadsFileTextField.textProperty().bindBidirectional(getDataModel().getReverseReadsFile());
     	
@@ -217,6 +245,58 @@ public class Wizard1Controller{
         			);
 
     		is_valid = false;
+    		
+    	}
+    	
+    	// Make sure that if a range for the randomized region size is specified, it is a valid one
+    	if (this.rangeLengthCheckBox.isSelected()) {
+    		
+    		int min = randomizedRegionSizeLowerSpinner.getValueFactory().getValue();
+    		int max = randomizedRegionSizeUpperSpinner.getValueFactory().getValue();
+    		
+    		if (min == max || min == 0 || max == 0) {
+    			
+        		ControlFXValidatorFactory.setTemporaryValidation(
+        				randomizedRegionSizeLowerSpinner, 
+            			ControlFXValidatorFactory.AllwaysWrongValidator("Min cannot be equal to Max or zero"), 
+            			this.validationSupport, 
+            			ControlFXValidatorFactory.AllwaysCorrectValidator,
+            			false
+            			);
+
+        		ControlFXValidatorFactory.setTemporaryValidation(
+        				randomizedRegionSizeUpperSpinner, 
+            			ControlFXValidatorFactory.AllwaysWrongValidator("Max cannot be equal to Min or zero"), 
+            			this.validationSupport, 
+            			ControlFXValidatorFactory.AllwaysCorrectValidator,
+            			false
+            			);
+        		
+        		is_valid = false;
+    			
+    		}
+    		
+    		if (min >= max) {
+    			
+        		ControlFXValidatorFactory.setTemporaryValidation(
+        				randomizedRegionSizeLowerSpinner, 
+            			ControlFXValidatorFactory.AllwaysWrongValidator("Min cannot be larger or equal to Max"), 
+            			this.validationSupport, 
+            			ControlFXValidatorFactory.AllwaysCorrectValidator,
+            			false
+            			);
+
+        		ControlFXValidatorFactory.setTemporaryValidation(
+        				randomizedRegionSizeUpperSpinner, 
+            			ControlFXValidatorFactory.AllwaysWrongValidator("Max cannot be smaller than to Min"), 
+            			this.validationSupport, 
+            			ControlFXValidatorFactory.AllwaysCorrectValidator,
+            			false
+            			);
+        		
+        		is_valid = false;
+    			
+    		}
     		
     	}
     	
@@ -490,9 +570,16 @@ public class Wizard1Controller{
     		
     		}
     		
-    		if (getDataModel().getRandomizedRegionSize().isEqualTo(0).not().get()) {
+    		if (this.exactLengthCheckBox.isSelected()) {
     			
     			utilities.Configuration.getParameters().setProperty("Experiment.randomizedRegionSize", getDataModel().getRandomizedRegionSize().get());
+    			
+    		}
+    		
+    		if (this.rangeLengthCheckBox.isSelected()) {
+    			
+    			utilities.Configuration.getParameters().setProperty("AptaplexParser.randomizedRegionSizeLowerBound", getDataModel().getRandomizedRegionSizeLower().get());
+    			utilities.Configuration.getParameters().setProperty("AptaplexParser.randomizedRegionSizeUpperBound", getDataModel().getRandomizedRegionSizeUpper().get());
     			
     		}
     		

@@ -40,6 +40,10 @@ public class DataModel {
 	
 	private ObjectProperty<Integer> randomizedRegionSize = new SimpleObjectProperty<Integer>(0);
 	
+	private ObjectProperty<Integer> randomizedRegionSizeLower = new SimpleObjectProperty<Integer>(0);
+	
+	private ObjectProperty<Integer> randomizedRegionSizeUpper = new SimpleObjectProperty<Integer>(0);
+	
 	private StringProperty forwardReadsFile = new SimpleStringProperty();
 	
 	private StringProperty reverseReadsFile = new SimpleStringProperty();
@@ -166,6 +170,34 @@ public class DataModel {
 	 */
 	public void setRandomizedRegionSize(ObjectProperty<Integer> randomizedRegionSize) {
 		this.randomizedRegionSize = randomizedRegionSize;
+	}
+	
+	/**
+	 * @return the randomizedRegionSizeLower
+	 */
+	public ObjectProperty<Integer> getRandomizedRegionSizeLower() {
+		return randomizedRegionSizeLower;
+	}
+
+	/**
+	 * @param randomizedRegionSizeLower the randomizedRegionSizeLower to set
+	 */
+	public void setRandomizedRegionSizeLower(ObjectProperty<Integer> randomizedRegionSizeLower) {
+		this.randomizedRegionSizeLower = randomizedRegionSizeLower;
+	}
+	
+	/**
+	 * @return the randomizedRegionSizeUpper
+	 */
+	public ObjectProperty<Integer> getRandomizedRegionSizeUpper() {
+		return randomizedRegionSizeUpper;
+	}
+
+	/**
+	 * @param randomizedRegionSizeUpper the randomizedRegionSizeUpper to set
+	 */
+	public void setRandomizedRegionSizeUpper(ObjectProperty<Integer> randomizedRegionSizeUpper) {
+		this.randomizedRegionSizeUpper = randomizedRegionSizeUpper;
 	}
 
 	/**

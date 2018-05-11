@@ -88,7 +88,7 @@ public class Configuration {
 		// AptaplexParser Options
 		defaults.put("AptaplexParser.reader", "FastqReader"); //Current options are FastqReader and RawReader
 		defaults.put("AptaplexParser.isPerFile", true); 
-		defaults.put("AptaplexParser.BlockingQueueSize", 500); 
+		defaults.put("AptaplexParser.BlockingQueueSize", 5000); 
 		defaults.put("AptaplexParser.PairedEndMinOverlap", 15); // Milab option: smallest overlap required when creating
 																// contig
 		defaults.put("AptaplexParser.PairedEndMaxMutations", 5); // Maximal number of mutations in the overlapping

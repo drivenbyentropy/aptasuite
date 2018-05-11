@@ -2,12 +2,14 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.Spinner?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
@@ -29,7 +31,7 @@
                   <Font name="System Bold" size="14.0" />
                </font>
             </Label>
-            <Label minHeight="-Infinity" text="Specify the primer sequences as used during the selection. Note that the primers are to be specified in 5' to 3' orientation of the original aptamer as present during the selection, not based on the orientation in the sequencing data. Optionally, you can also specify the randomized region size. If specified, all sequences which differ if length from that value will be filtered out." wrapText="true">
+            <Label minHeight="-Infinity" text="Specify the primer sequences as used during the selection. Note that the primers are to be specified in 5' to 3' orientation of the original aptamer as present during the selection, not based on the orientation in the sequencing data." wrapText="true">
                <font>
                   <Font size="12.0" />
                </font>
@@ -65,18 +67,89 @@
                         <Font size="12.0" />
                      </font>
                      <HBox.margin>
-                        <Insets right="30.0" />
+                        <Insets />
                      </HBox.margin>
                   </TextField>
-                  <Label text="Randomized Region Size">
+               </children>
+            </HBox>
+            <Label text="Randomized Region Size">
+               <font>
+                  <Font name="System Bold" size="14.0" />
+               </font>
+            </Label>
+            <Label minHeight="-Infinity" text="Optionally, you can also specify the randomized region size. Either select and specify an exact value (this is mandatory if you do not specify a 3' primer) or a range (inclusive) for the length of the randomized region. If specified, all sequences which differ in length from the selected condition will be filtered out. If non of the checkboxes are selected, all aptamers regardless of their randomized region size will be accepted." wrapText="true">
+               <font>
+                  <Font size="12.0" />
+               </font>
+            </Label>
+            <HBox alignment="CENTER_LEFT">
+               <children>
+                  <CheckBox fx:id="exactLengthCheckBox" mnemonicParsing="false">
+                     <graphic>
+                        <HBox alignment="CENTER_LEFT">
+                           <children>
+                              <Label text="Exact Length">
+                                 <font>
+                                    <Font size="12.0" />
+                                 </font>
+                                 <HBox.margin>
+                                    <Insets right="5.0" />
+                                 </HBox.margin>
+                              </Label>
+                              <Spinner fx:id="randomizedRegionSizeSpinner" max="100" min="0" prefHeight="22.0" prefWidth="75.0" />
+                           </children>
+                        </HBox>
+                     </graphic>
+                  </CheckBox>
+                  <Region HBox.hgrow="ALWAYS" />
+                  <Label text="OR">
                      <font>
-                        <Font size="12.0" />
+                        <Font name="System Bold" size="12.0" />
                      </font>
-                     <HBox.margin>
-                        <Insets right="10.0" />
-                     </HBox.margin>
                   </Label>
-                  <Spinner fx:id="randomizedRegionSizeSpinner" max="100" min="0" prefHeight="22.0" prefWidth="75.0" />
+                  <Region HBox.hgrow="ALWAYS" />
+                  <HBox>
+                     <children>
+                        <CheckBox fx:id="rangeLengthCheckBox" mnemonicParsing="false">
+                           <graphic>
+                              <HBox alignment="CENTER_LEFT">
+                                 <children>
+                                    <Label text="Specify Range">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                       <HBox.margin>
+                                          <Insets right="10.0" />
+                                       </HBox.margin>
+                                    </Label>
+                                    <Label text="Min">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                       <HBox.margin>
+                                          <Insets right="5.0" />
+                                       </HBox.margin>
+                                    </Label>
+                                    <Spinner fx:id="randomizedRegionSizeLowerSpinner" max="100" min="0" prefHeight="22.0" prefWidth="75.0">
+                                       <HBox.margin>
+                                          <Insets right="10.0" />
+                                       </HBox.margin>
+                                    </Spinner>
+                                    <Label text="Max">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                       <HBox.margin>
+                                          <Insets right="5.0" />
+                                       </HBox.margin>
+                                    </Label>
+                                    <Spinner fx:id="randomizedRegionSizeUpperSpinner" max="100" min="0" prefHeight="22.0" prefWidth="75.0" />
+                                 </children>
+                              </HBox>
+                           </graphic>
+                        </CheckBox>
+                     </children>
+                  </HBox>
                </children>
             </HBox>
             <Label text="Selection Cycles">
