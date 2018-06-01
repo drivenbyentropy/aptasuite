@@ -35,6 +35,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.ScrollBar;
+import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -49,6 +50,7 @@ import utilities.AptaColors;
 import utilities.AptaLogger;
 import utilities.Configuration;
 import utilities.GUIUtilities;
+import utilities.SequenceTableUtils;
 
 /**
  * @author Jan Hoinka
@@ -348,6 +350,10 @@ public class AptaMutRootController {
 			this.enrichedTableView.setStyle("-fx-font: 14px monospace;");
 			this.depleatedTableView.setStyle("-fx-font: 14px monospace;");
 			
+			this.seedTableView.getSelectionModel().setSelectionMode( SelectionMode.MULTIPLE );
+			this.enrichedTableView.getSelectionModel().setSelectionMode( SelectionMode.MULTIPLE );
+			this.depleatedTableView.getSelectionModel().setSelectionMode( SelectionMode.MULTIPLE );
+			
 		});
 		
 		// Style the sequence columns
@@ -475,6 +481,11 @@ public class AptaMutRootController {
 	    // when the user selects a column to sort on, the other two tables follow this behaviour
 	    GUIUtilities.createSortBinding(this.seedTableView, this.enrichedTableView);
 	    GUIUtilities.createSortBinding(this.seedTableView, this.depleatedTableView);
+	    
+	    // enable copy/paste
+	 	new SequenceTableUtils(seedTableView, 1, showPrimersRadioButton);
+	 	new SequenceTableUtils(enrichedTableView, 1, showPrimersRadioButton);
+	 	new SequenceTableUtils(depleatedTableView, 1, showPrimersRadioButton);
 	    
 	}
 	

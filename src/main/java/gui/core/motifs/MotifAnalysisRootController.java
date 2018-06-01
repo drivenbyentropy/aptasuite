@@ -87,6 +87,7 @@ import utilities.AptaLogger;
 import utilities.Configuration;
 import utilities.GUIUtilities;
 import utilities.Quicksort;
+import utilities.SequenceTableUtils;
 
 /**
  * @author Jan Hoinka
@@ -714,6 +715,10 @@ public class MotifAnalysisRootController implements Initializable{
 		    	
 		    }
 		});
+		
+		// enable copy/paste
+		new SequenceTableUtils(poolTableView, 1, showPrimersRadioButton);
+		
 		
 	}
 	

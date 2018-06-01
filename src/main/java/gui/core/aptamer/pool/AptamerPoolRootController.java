@@ -89,6 +89,7 @@ import utilities.Index;
 import utilities.QSComparator;
 import utilities.QSDoubleComparator;
 import utilities.Quicksort;
+import utilities.SequenceTableUtils;
 
 /**
  * @author Jan Hoinka
@@ -1371,6 +1372,10 @@ public class AptamerPoolRootController implements Initializable{
 		    	
 		    }
 		});
+		
+		
+		// enable copy/paste
+		new SequenceTableUtils(poolTableView, 1, showPrimersRadioButton);
 		
 	}
 	

@@ -90,6 +90,7 @@ import utilities.AptaLogger;
 import utilities.Configuration;
 import utilities.GUIUtilities;
 import utilities.Quicksort;
+import utilities.SequenceTableUtils;
 
 /**
  * @author Jan Hoinka
@@ -995,6 +996,9 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 		    	
 		    }
 		});
+		
+		// enable copy/paste
+		new SequenceTableUtils(sequenceTableView, 1, showPrimersRadioButton);
 		
 		
 	}
