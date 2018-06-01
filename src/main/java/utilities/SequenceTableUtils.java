@@ -23,7 +23,8 @@ import lib.aptamer.datastructures.Experiment;
 /**
  * @author Roland09, hoinkaj
  *
- * The basic idea for this class was authored by GitHub user Roland09, see https://gist.github.com/Roland09/4a9bbec634ca4a081b66
+ * The basic idea for this class was authored by GitHub user 
+ * Roland09, see https://gist.github.com/Roland09/4a9bbec634ca4a081b66
  * I adopted it for my needs and added a context menu
  * 
  */
@@ -34,7 +35,7 @@ public class SequenceTableUtils {
 	private RadioButton showPrimersRadioButton = null;
 	private ContextMenu contextMenu;
 	private Experiment experiment = Configuration.getExperiment();
-	
+	private String newline = System.lineSeparator();
 	
 	
 	public SequenceTableUtils(TableView<?> table, int sequence_column_id, RadioButton showPrimersRadioButton) {
@@ -190,7 +191,7 @@ public class SequenceTableUtils {
 				
 			} else if (prevRow != -1) {
 				
-				clipboardString.append('\n');
+				clipboardString.append(newline);
 				
 			}
 
@@ -281,7 +282,7 @@ public class SequenceTableUtils {
 					
 				} else if (prevRow != -1) {
 					
-					clipboardString.append('\n');
+					clipboardString.append(newline);
 					
 				}
 
