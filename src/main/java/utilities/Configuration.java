@@ -100,6 +100,11 @@ public class Configuration {
 
 		defaults.put("AptaplexParser.StoreReverseComplement", false); // Useful for DNA aptamers. If set to true, the reverse complement of the
 																	  // of the identified primers and randomized region of the contig is stored in the database 
+		defaults.put("AptaplexParser.CheckReverseComplement", false); // If set to true, AptaPlex will attempt to demultiplex and extract the randomized region of 
+																	  // of the reverse complement of a contig should the initial attempt have failed. This setting is
+																	  // useful if you expect aptamers to be present in a mixture of forward and reverse-complements
+																	  // in your sequencing data
+		
 		
 		// AptaSIM Options
 		defaults.put("Aptasim.HmmDegree", 2); // Degree of the Markov model

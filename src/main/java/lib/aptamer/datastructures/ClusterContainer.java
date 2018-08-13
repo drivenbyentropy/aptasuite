@@ -40,12 +40,22 @@ public interface ClusterContainer extends Serializable{
 	public int addToCluster(byte[] a, int cluster_id);
 	
 	/**
-	 * Adds aptamer <code>a</code> to cluster <code>cluster_id</code. If the aptamer was previously assigned 
+	 * Adds aptamer <code>a</code> to cluster <code>cluster_id</code>. If the aptamer was previously assigned 
 	 * to another cluster, this setting will be overwritten.
 	 * @param a the aptamer in question
 	 * @return the unique cluster id
 	 */
 	public int addToCluster(int a, int cluster_id);
+	
+	/**
+	 * Reassigns aptamer <code>a</code> to cluster <code>cluster_id</code>.
+	 * Aptamer must already be assigned in the Cluster Container, otherwise no change will be 
+	 * performed.
+	 * @param a the aptamer in question
+	 * @param cluster_id
+	 * @return the new cluster id or -1 if <code>a</code> was not present
+	 */
+	public int reassignClusterId(int a, int cluster_id);
 	
 	/**
 	 * Checks whether an aptamer has already been assigned a cluster

@@ -1118,6 +1118,26 @@ public class CLI {
 					export.Structures(Configuration.getExperiment().getStructurePool(), Paths.get(exportPath.toString(), "structures.txt" + (compress ? ".gz" : "")));
 					break;
 					
+				case "clustertable":
+					
+					AptaLogger.log(Level.INFO, this.getClass(), "Exporting cluster table");
+					
+					// Get the instance of the StructurePool
+					try {
+						if (experiment.getClusterContainer() == null)
+						{
+							experiment.instantiateClusterContainer(false, true);
+						}	
+					} catch(Exception e) { // We need to make sure a cluster pool exists
+						
+						throw new InformationNotFoundException("No cluster information was found to export. Did you run AptaCLUSTER?");
+						
+					}
+						
+						
+					export.ClusterTable(experiment, exportPath, "cluster_table.txt" + (compress ? ".gz" : ""));
+					break;	
+					
 				default:
 					AptaLogger.log(Level.SEVERE, this.getClass(), "Export option " + token + " not recognized. Exiting.");
 					throw new InvalidConfigurationException("Export option " + token + " not recognized.");

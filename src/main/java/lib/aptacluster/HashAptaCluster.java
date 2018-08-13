@@ -5,15 +5,21 @@ package lib.aptacluster;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.Map.Entry;
 import java.util.Random;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.logging.Level;
 
 import org.eclipse.collections.api.list.primitive.MutableIntList;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
+
+import com.google.common.primitives.Ints;
 
 import lib.aptamer.datastructures.AptamerBounds;
 import lib.aptamer.datastructures.ClusterContainer;
@@ -23,8 +29,10 @@ import orestes.bloomfilter.BloomFilter;
 import orestes.bloomfilter.FilterBuilder;
 import utilities.AptaLogger;
 import utilities.Configuration;
+import utilities.Index;
 import utilities.QSComparator;
 import utilities.Quicksort;
+
 
 /**
  * @author Jan Hoinka
@@ -144,6 +152,8 @@ public class HashAptaCluster implements AptaCluster {
 		for (int x=0; x<this.lshIterations; x++){
 			LSHIteration(x+1, lsh.get(x));
 		}
+		
+		AdjustClusterIDs();
 		
 		clusters.setReadOnly();
 
@@ -476,6 +486,61 @@ public class HashAptaCluster implements AptaCluster {
 		AptaLogger.log(Level.INFO, this.getClass(), String.format("Finished cutoff computation in %s seconds. Using cutoff %s", ((System.currentTimeMillis() - tstart) / 1000.0), kmer_cutoff));
 		
 		return cutoff/counter;
+	}
+	
+	
+	/**
+	 * During the LSH iterations, cluster ids might have changed in such a way that some clusters
+	 * are now missing (i.e. contain 0 members). However, AptaSuite requires clusters to be ordered
+	 * in +1 increments. This function takes care of reordering them.
+	 */
+	private void AdjustClusterIDs() {
+		
+		// will contain a negative number at a particular index, indicating
+		// the shift of that cluster id to make it monotonically increasing in +1 increments.
+		// a 1 indicates this cluster ID did not exist before
+		int[] cluster_adjustment_map = new int[cluster_id.get()+1];
+		
+		// Initialize everything to 1. 1 takes the place of null here
+		Arrays.fill(cluster_adjustment_map, 1);
+		
+		// Place a 2 at the index corresponding to an existing cluster id
+		clusters.iterator().forEach( entry -> {
+			
+			cluster_adjustment_map[entry.getValue()] = 2;
+			
+		});
+		
+		int idx1       = Index.indexOf(cluster_adjustment_map, 2); // find the first cluster id
+		int idx2       = Index.indexOf(cluster_adjustment_map, 2, idx1+1); // and the next one after that
+		int prev_idx   =  idx1; 
+		int prev_value = -idx1; // the initial shift
+		
+		while (idx2 < cluster_adjustment_map.length && idx2 != -1) {
+
+			// update previous position
+			cluster_adjustment_map[prev_idx] = prev_value;
+
+			// compute shift value for this position 
+			prev_value = -(idx2 - idx1) + prev_value + 1;
+			
+			// move the pointers
+			prev_idx = idx2;
+			idx1 = idx2;
+			idx2 = Index.indexOf(cluster_adjustment_map, 2, idx2+1);
+			
+		}
+		
+		// finally, we have one last update to make
+		if (prev_idx != -1) cluster_adjustment_map[prev_idx] = prev_value;
+
+		// now we can update the ids in the cluster container
+		clusters.iterator().forEach( entry -> {
+			
+			clusters.reassignClusterId(entry.getKey(), entry.getValue() + cluster_adjustment_map[entry.getValue()]);
+			
+		});
+		
 	}
 
 }

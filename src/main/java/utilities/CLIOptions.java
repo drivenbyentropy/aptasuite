@@ -50,8 +50,8 @@ public class CLIOptions {
 		parameters.addOption("net", false, "Experimental branch: AptaNET");
 		
 		// Export
-		Option export = new Option("export", true, "Writes the specified <data> to file. Multiple arguments must be comma-separated with not spaces in between. Arguments: \n\npool: every unique aptamer of the selection together with the counts of all selection cycles\n\ncycles: the aptamers sequences as present in the specified selection cycles. Each aptamer will be written to file as many times as its cardinality in the pool.\n\nclusters: Exports the clusters for the specified cycles sorted by cluster size\n\nstructures: writes the structural data for the aptamer pool to file.");
-		export.setArgName("pool,cycles,clusters,structure");
+		Option export = new Option("export", true, "Writes the specified <data> to file. Multiple arguments must be comma-separated with not spaces in between. Arguments: \n\npool: every unique aptamer of the selection together with the counts of all selection cycles\n\ncycles: the aptamers sequences as present in the specified selection cycles. Each aptamer will be written to file as many times as its cardinality in the pool.\n\nclusters: Exports the clusters for the specified cycles sorted by cluster size\n\nstructures: writes the structural data for the aptamer pool to file.\n\nclustertable: export a table of all clusters sorted by cluster size of the highest selection round including Cluster ID, Seed Sequence and ID, and Size, Diversity and CMP for each round.");
+		export.setArgName("pool,cycles,clusters,structure,clustertable");
 		
 		parameters.addOption(export);
 		

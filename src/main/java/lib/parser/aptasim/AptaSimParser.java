@@ -386,7 +386,7 @@ public class AptaSimParser implements Parser, Runnable{
 		for (int x=0; x<number_of_seeds; x++)
 		{
 			byte[] n = generateSequence(randomized_region_size, true);
-			int c = rand.nextInt(max_sequence_count); 
+			int c = Math.max(1, rand.nextInt(max_sequence_count)); 
 			int a = min_seed_affinity + rand.nextInt(21);
 			
 			// Add aptamer to pool and update affinity 
@@ -406,8 +406,8 @@ public class AptaSimParser implements Parser, Runnable{
 		for (int x=number_of_seeds; x<number_of_sequences; x++)
 		{
 			byte[] n = generateSequence(randomized_region_size, true);
-			int c = rand.nextInt(max_sequence_count);
-			int a = rand.nextInt(max_sequence_affinity);
+			int c = Math.max(1, rand.nextInt(max_sequence_count));
+			int a = Math.max(1, rand.nextInt(max_sequence_affinity));
 			
 			// Add aptamer to pool and update affinity 
 			int a_id = cycle.addToSelectionCycle(n, primer5.length(), randomized_region_size+primer5.length(),  c);

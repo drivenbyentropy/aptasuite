@@ -32,7 +32,7 @@ public class CompressedExportWriter implements ExportWriter {
 			
 			zip = new GZIPOutputStream(new FileOutputStream(p.toFile()));
 			writer = new BufferedWriter(new OutputStreamWriter(zip, "UTF-8"));
-		
+			
 		} catch (IOException e) {
 			AptaLogger.log(Level.SEVERE, this.getClass(), "Could not create file " + p.toString());
 			AptaLogger.log(Level.SEVERE, this.getClass(), org.apache.commons.lang.exception.ExceptionUtils.getStackTrace(e));

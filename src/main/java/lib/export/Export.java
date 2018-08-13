@@ -10,25 +10,23 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.Writer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.logging.Level;
 
 import org.eclipse.collections.api.iterator.MutableIntIterator;
 import org.eclipse.collections.api.list.primitive.MutableIntList;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
-
-import com.koloboke.collect.map.hash.HashIntIntMap;
-import com.koloboke.collect.map.hash.HashIntIntMaps;
 
 import exceptions.InvalidConfigurationException;
 import gnu.trove.map.hash.TIntIntHashMap;
@@ -39,6 +37,7 @@ import lib.aptamer.datastructures.ClusterContainer;
 import lib.aptamer.datastructures.Experiment;
 import lib.aptamer.datastructures.SelectionCycle;
 import lib.aptamer.datastructures.StructurePool;
+import scala.annotation.compileTimeOnly;
 import utilities.AptaLogger;
 import utilities.Configuration;
 import utilities.QSComparator;
@@ -621,7 +620,7 @@ public class Export {
 	
 	/**
 	 * Export a table of all clusters sorted by cluster size of the highest selection 
-	 * round including Cluster ID, Seed Sequence and ID, and Size, Diverseriy and CMP 
+	 * round including Cluster ID, Seed Sequence and ID, and Size, Diversity and CMP 
 	 * for each round.
 	 * 
 	 * Note, this function assumes that cluster information is present, i.e. that <code>experiment.getClusterContainer() != null </code>
@@ -632,85 +631,155 @@ public class Export {
 	 */
 	public void ClusterTable(Experiment experiment, Path export_folder, String filename) {
 		
-		
-		AptaLogger.log(Level.INFO, this.getClass(), "Initializing cluster data for export");
+		AptaLogger.log(Level.INFO, this.getClass(), "Initializing cluster data for export." );
 		
 		ClusterContainer clusters = experiment.getClusterContainer(); 
 		
 		// Set the total number of clusters
 		int numberOfClusters = clusters.getNumberOfClusters();
 		
+		AptaLogger.log(Level.INFO, this.getClass(), String.format("Total clusters to export: %s", numberOfClusters));
+		
 		// Create initial cluster ids
-		int[] cluster_ids = new int[numberOfClusters];
 		int[] cluster_ids_argsort = new int[numberOfClusters];
 
 		// We need a secondary array to store the counts
-		int[] cardinalities = new int[numberOfClusters];
+		int[] cluster_sizes = new int[numberOfClusters];
 		
 		// We also need to store diversity
-		int[] diversities = new int[numberOfClusters];
+		int[] cluster_diversities = new int[numberOfClusters];
 		
 		// And a reference to the seed
 		int[] seed_ids = new int[numberOfClusters];
 		int[] seed_sizes = new int[numberOfClusters];
 		
+		// Finally, we use a bitset to track which clusters seed we have already determined
+		BitSet found_clusters = new BitSet(numberOfClusters);
+		
 		// Initialize
 		for (int x=0; x<numberOfClusters; x++) {
 			
-			cardinalities[x] = 0;
-			diversities[x] =   0;
+			cluster_sizes[x] = 0;
+			cluster_diversities[x] =   0;
 			seed_ids[x] =      -1;
-			seed_sizes[x] =    0;
-			cluster_ids[x] =   x;
+			seed_sizes[x] =    -1;
 			cluster_ids_argsort[x] = x;
 			
 		}
-		
-		SelectionCycle reference_cycle = experiment.getAllSelectionCycles().get(experiment.getAllSelectionCycles().size()-1);
-		
-		// Fill cardinality array by size
-		Iterator<Entry<Integer, Integer>> cluster_it = clusters.iterator().iterator();
-		Iterator<Entry<Integer, Integer>> cardinality_it = reference_cycle.iterator().iterator();
-		Entry<Integer, Integer> cluster_entry = cluster_it.next();
-		Entry<Integer, Integer> cardinality_entry = cardinality_it.next();
-		
-		while ( cluster_it.hasNext() && cardinality_it.hasNext() ) { // Ids are sorted in both cases
 
-			if (cluster_entry.getKey() < cardinality_entry.getKey()) {
+		// find the seed for each cluster. the seed is defined as the aptamer with largest cardinality 
+		// starting from the last selection cycle. If the last selection cycle does not contain this cluster
+		// the previous cycle will be considered and so on.
+		for( int i = experiment.getAllSelectionCycles().size()-1; i>=0; i-- ) {
+			
+			try {
+				SelectionCycle reference_cycle = experiment.getAllSelectionCycles().get(i);
 				
-				cluster_entry = cluster_it.next();
+				// Fill cardinality array by size
+				Iterator<Entry<Integer, Integer>> cluster_it = clusters.iterator().iterator();
+				Iterator<Entry<Integer, Integer>> cardinality_it = reference_cycle.iterator().iterator();
+				Entry<Integer, Integer> cluster_entry = cluster_it.next();
+				Entry<Integer, Integer> cardinality_entry = cardinality_it.next();
+				
+				while ( cluster_it.hasNext() && cardinality_it.hasNext() ) { // Ids are sorted in both cases
+	
+					if (cluster_entry.getKey() < cardinality_entry.getKey()) {
+					
+						cluster_entry = cluster_it.next();
+						
+					}
+					else if (cluster_entry.getKey() > cardinality_entry.getKey()){
+						
+						cardinality_entry = cardinality_it.next();
+					}
+					
+					// Process...
+					else {
+									
+						// ...but only if we do not already have a cluster seed
+						if (!found_clusters.get(cluster_entry.getValue())) {
+						
+							//cardinalities[cluster_entry.getValue()] += cardinality_entry.getValue(); 
+							//diversities[cluster_entry.getValue()] += 1;
+							
+							// is this our seed? 
+							if ( cardinality_entry.getValue() >= seed_sizes[cluster_entry.getValue()] ) {
+								
+								seed_ids[cluster_entry.getValue()] = cardinality_entry.getKey();
+								seed_sizes[cluster_entry.getValue()] = cardinality_entry.getValue();
+						 
+							}
+						
+						}
+						
+						cluster_entry = cluster_it.next();
+					}
+		
+				}
+			}
+			catch (Exception e) {
+				
+				AptaLogger.log(Level.WARNING, this.getClass(), e);
+				System.out.println(e.toString());
+				e.printStackTrace();
 				
 			}
-			else if (cluster_entry.getKey() > cardinality_entry.getKey()){
+	
+			// we now have to determine those entries for which we have found a cluster seed in this round 
+			// to exclude them from being considered further
+			for (int j=0; j<seed_ids.length; j++) {
 				
-				cardinality_entry = cardinality_it.next();
+				if (seed_ids[j] != -1)  found_clusters.set(j);
 				
 			}
 			
-			// Process
-			else {
+		}
 
-				cardinalities[cluster_entry.getValue()] += cardinality_entry.getValue(); 
-				diversities[cluster_entry.getValue()] += 1;
+		
+		// Compute the cluster diversities and sizes for the last selection round
+		SelectionCycle reference_cycle = experiment.getAllSelectionCycles().get(experiment.getAllSelectionCycles().size()-1);
+		try {
+			
+			// Fill cardinality array by size
+			Iterator<Entry<Integer, Integer>> cluster_it = clusters.iterator().iterator();
+			Iterator<Entry<Integer, Integer>> cardinality_it = reference_cycle.iterator().iterator();
+			Entry<Integer, Integer> cluster_entry = cluster_it.next();
+			Entry<Integer, Integer> cardinality_entry = cardinality_it.next();
+			
+			while ( cluster_it.hasNext() && cardinality_it.hasNext() ) { // Ids are sorted in both cases
+
+				if (cluster_entry.getKey() < cardinality_entry.getKey()) {
 				
-				// is this our seed? 
-				if ( cardinality_entry.getValue() >= seed_sizes[cluster_entry.getValue()] ) {
-					
-					seed_ids[cluster_entry.getValue()] = cardinality_entry.getKey();
-					seed_sizes[cluster_entry.getValue()] = cardinality_entry.getValue();
+					cluster_entry = cluster_it.next();
 					
 				}
+				else if (cluster_entry.getKey() > cardinality_entry.getKey()){
+					
+					cardinality_entry = cardinality_it.next();
+				}
 				
-				cluster_entry = cluster_it.next();
-				
+				// Process...
+				else {
+					
+					cluster_sizes[cluster_entry.getValue()] += cardinality_entry.getValue();
+					cluster_diversities[cluster_entry.getValue()]++;
+					
+					cluster_entry = cluster_it.next();
+				}
+	
 			}
-
-		}	
-		
-		AptaLogger.log(Level.INFO, this.getClass(), String.format("Sorting clusters by size in round %s" , reference_cycle.getName()));
+		}
+		catch (Exception e) {
+			
+			AptaLogger.log(Level.WARNING, this.getClass(), e);
+			System.out.println(e.toString());
+			e.printStackTrace();
+			
+		}
 		
 		// Sort the cluster id array according to the cardinalities
-		Quicksort.sort(cluster_ids_argsort, cardinalities, Quicksort.DescendingQSComparator());
+		AptaLogger.log(Level.INFO, this.getClass(), String.format("Sorting clusters by size in round %s" , experiment.getAllSelectionCycles().get(experiment.getAllSelectionCycles().size()-1)));
+		Quicksort.sort(cluster_ids_argsort, cluster_sizes, Quicksort.DescendingQSComparator());
 		
 		// Keep track of the files we need to merge later
 		List<File> table_slices = new ArrayList<File>(); 
@@ -736,10 +805,12 @@ public class Export {
 			
 			BufferedWriter bw = new BufferedWriter(new FileWriter(first_columns_file.toString()));
 			
-			int card_idx = 0; 	//since we are using the cardinality array to sort the indices, we need to use 
+			int card_idx = 0; 	//since we are using the cluster size array to sort the indices, we need to use 
 								// a running index for this array
 			
 			Boolean withPrimers = Configuration.getParameters().getBoolean("Export.IncludePrimerRegions");
+			
+			double reference_cycle_size = reference_cycle.getSize();
 			
 			for (int index : cluster_ids_argsort) {
 				
@@ -748,13 +819,13 @@ public class Export {
 				
 				AptamerBounds bounds = (seed_ids[index] == -1) ? new AptamerBounds(0,3) : withPrimers ? new AptamerBounds(0, sequence.length) : Configuration.getExperiment().getAptamerPool().getAptamerBounds(seed_ids[index]);
 				
-				bw.write(String.format("%s\t%s\t%s\t%s\t%s\t%.5f\n", 
+				bw.write(String.format("%s\t%s\t%s\t%.5f\t%s\t%.5f\n", 
 						index, // cluster id 
 						(withPrimers ? new String(sequence) : new String(Arrays.copyOfRange(sequence, bounds.startIndex, bounds.endIndex))), // Seed sequence
 						seed_ids[index] == -1 ? "N/A" : seed_ids[index], // seed id
-						cardinalities[card_idx], // Cluster size
-						diversities[index], // cluster diversity
-						((double) cardinalities[card_idx] / (double) reference_cycle.getSize()) * 1000000.0 // cluster CPM
+						cluster_sizes[card_idx] / reference_cycle_size, // Cluster size is percent of pool size
+						cluster_diversities[index], // cluster diversity
+						((double) cluster_sizes[card_idx] / reference_cycle_size) * 1000000.0 // cluster CPM
 						));
 				
 				card_idx++;
@@ -773,12 +844,12 @@ public class Export {
 		// free space
 		seed_ids = null;
 		seed_sizes = null;
-		cluster_ids = null;
 		
 		// we now have to compute the cluster size, diversity, and CPM for each cluster in the remaining selection cycles
 		for( int i = experiment.getAllSelectionCycles().size()-1; i>=0; i--) {
 			
 			SelectionCycle cycle = experiment.getAllSelectionCycles().get(i);
+			double cycle_size = cycle.getSize();
 			
 			if (cycle == reference_cycle) continue;
 			
@@ -788,16 +859,16 @@ public class Export {
 			// but we need to reinitialize them
 			for (int x=0; x<numberOfClusters; x++) {
 				
-				cardinalities[x] = 0;
-				diversities[x] =   0;
+				cluster_sizes[x] = 0;
+				cluster_diversities[x] =   0;
 				
 			} 
 			
 			// Fill the arrays
-			cluster_it = clusters.iterator().iterator();
-			cardinality_it = cycle.iterator().iterator();
-			cluster_entry = cluster_it.next();
-			cardinality_entry = cardinality_it.next();
+			Iterator<Entry<Integer, Integer>> cluster_it = clusters.iterator().iterator();
+			Iterator<Entry<Integer, Integer>> cardinality_it = cycle.iterator().iterator();
+			Entry<Integer, Integer> cluster_entry = cluster_it.next();
+			Entry<Integer, Integer> cardinality_entry = cardinality_it.next();
 			
 			while ( cluster_it.hasNext() && cardinality_it.hasNext() ) { // Ids are sorted in both cases
 
@@ -815,8 +886,8 @@ public class Export {
 				// Process
 				else {
 
-					cardinalities[cluster_entry.getValue()] += cardinality_entry.getValue(); 
-					diversities[cluster_entry.getValue()] += 1;
+					cluster_sizes[cluster_entry.getValue()] += cardinality_entry.getValue(); 
+					cluster_diversities[cluster_entry.getValue()] += 1;
 					cluster_entry = cluster_it.next();
 					
 				}
@@ -847,10 +918,10 @@ public class Export {
 				
 				for (int index : cluster_ids_argsort) {
 					
-					bw.write(String.format("%s\t%s\t%.5f\n", 
-							cardinalities[index], // Cluster size
-							diversities[index], // cluster diversity
-							((double) cardinalities[index] / (double) reference_cycle.getSize()) * 1000000.0 // cluster CPM
+					bw.write(String.format("%.5f\t%s\t%.5f\n", 
+							cluster_sizes[index] / cycle_size, // Cluster size is percent of pool size
+							cluster_diversities[index], // cluster diversity
+							((double) cluster_sizes[index] / cycle_size) * 1000000.0 // cluster CPM
 							));
 					
 				}
@@ -880,8 +951,11 @@ public class Export {
 			}
 			
 			// Create the final file that will contain the table
+			AptaLogger.log(Level.INFO, this.getClass(), "Merging table slices into " + Paths.get(export_folder.toString(), filename).toString());
+			
 			ExportWriter writer = Configuration.getParameters().getBoolean("Export.compress") ? new CompressedExportWriter() : new UncompressedExportWriter();
 			writer.open(Paths.get(export_folder.toString(), filename));
+			
 			
 			// Create header 
 			StringBuilder header = new StringBuilder("Cluster ID\tSeed Sequence\tSeed ID\t");

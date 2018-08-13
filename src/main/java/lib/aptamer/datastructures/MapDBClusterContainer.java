@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.AbstractMap;
+import java.util.BitSet;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.logging.Level;
@@ -47,9 +48,18 @@ public class MapDBClusterContainer implements ClusterContainer {
 
 	/**
 	 * Bloom Filter for fast member lookup
+	 * Worst case scenario is we have as many clusters as we have aptamers
 	 */
-	private transient BloomFilter<Integer> containerContent = new FilterBuilder(Configuration.getParameters().getInt("MapDBAptamerPool.bloomFilterCapacity"), Configuration.getParameters().getDouble("MapDBAptamerPool.bloomFilterCollisionProbability")).buildBloomFilter();
+	private transient BloomFilter<Integer> containerContent = new FilterBuilder(Configuration.getExperiment().getAptamerPool().size(), Configuration.getParameters().getDouble("MapDBAptamerPool.bloomFilterCollisionProbability")).buildBloomFilter();
+	//containerContent = new FilterBuilder(Configuration.getParameters().getInt("MapDBAptamerPool.bloomFilterCapacity"), Configuration.getParameters().getDouble("MapDBAptamerPool.bloomFilterCollisionProbability")).buildBloomFilter();
 	
+	/**
+	 * Keep track of what ID has already been used.
+	 * Worst case scenario is we have as many clusters as we have aptamers 
+	 */
+	private transient BitSet clusterIDUsage = new BitSet(Configuration.getExperiment().getAptamerPool().size());
+	
+	private Integer totalNumberOfClusters = 0;
 	
 	/**
 	 * File backed map containing the IDs of each aptamer (as stored in <code>AptamerPool</code>)
@@ -59,14 +69,13 @@ public class MapDBClusterContainer implements ClusterContainer {
 	
 	
 	/**
-	 * Counts the total number of aptamer which have been assigned a cluster.
+	 * Counts the total number of aptamers which have been assigned a cluster.
 	 */
 	private int size = 0;
 	
 	private int max_cluster_id = 0;
 
 	public MapDBClusterContainer(boolean newdb) throws IOException {
-		
 
 		// Create the file backed map and perform sanity checks
 		Path projectPath = Paths.get(Configuration.getParameters().getString("Experiment.projectPath"));
@@ -96,7 +105,7 @@ public class MapDBClusterContainer implements ClusterContainer {
 					//.valuesOutsideNodesEnable()
 					.keySerializer(Serializer.INTEGER)
 					.valueSerializer(Serializer.INTEGER)
-			        .create();
+			        .create();			
 		}
 		else { // we need to read from file and update class members
 			AptaLogger.log(Level.CONFIG, this.getClass(), "Reading from file '" + Paths.get(poolDataPath.toString(), containerFileName).toFile() + "' for cluster storage.");
@@ -119,6 +128,15 @@ public class MapDBClusterContainer implements ClusterContainer {
 			
 			clusterContainer.forEach( (key,value) -> {
 				containerContent.add(key);
+				
+				// update number of clusters
+				if (!clusterIDUsage.get(value)) {
+					
+					totalNumberOfClusters += 1;
+					clusterIDUsage.set(value);
+					
+				}
+				
 				size++;
 				max_cluster_id = Math.max(max_cluster_id, value);
 			});
@@ -145,15 +163,7 @@ public class MapDBClusterContainer implements ClusterContainer {
 		// Check if the aptamer is already present in the pool and add it if not
 		int id_a = Configuration.getExperiment().getAptamerPool().getIdentifier(a);
 		
-		// Update the size
-		size++;
-				
-		clusterContainer.put(id_a, cluster_id);
-		containerContent.add(id_a);
-
-		max_cluster_id = Math.max(max_cluster_id, cluster_id);
-		
-		return id_a;
+		return addToCluster(id_a, cluster_id);
 		
 	}
 
@@ -168,7 +178,15 @@ public class MapDBClusterContainer implements ClusterContainer {
 				
 		clusterContainer.put(a, cluster_id);
 		containerContent.add(a);
-
+		
+		// update number of clusters
+		if (!clusterIDUsage.get(cluster_id)) {
+			
+			totalNumberOfClusters += 1;
+			clusterIDUsage.set(cluster_id);
+			
+		}
+		
 		max_cluster_id = Math.max(max_cluster_id, cluster_id);
 		
 		return a;
@@ -384,8 +402,17 @@ public class MapDBClusterContainer implements ClusterContainer {
 	@Override
 	public int getNumberOfClusters() {
 
-		return max_cluster_id+1;
+		return totalNumberOfClusters;
 		
+	}
+
+	@Override
+	public int reassignClusterId(int a, int cluster_id) {
+		
+		Integer r = clusterContainer.replace(a, cluster_id);
+		
+		return r == null? -1 : r;
+	
 	}
 
 }

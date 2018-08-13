@@ -60,4 +60,42 @@ public class Index {
 		
 	}	
 	
+	/**
+	 * Returns the index of the first occurrence of <code>element</code> in the array <code>arr</code> 
+	 * @param arr the array to be searched
+	 * @param element the element to be searched for
+	 * @param from the start position (inclusive) to search from 
+	 * @return the index of the first occurrence of the element or -1 if not found 
+	 */
+	public static int indexOf(int[] arr, int element, int from) {
+		
+		int pos = -1;
+		for (int x=from; x<arr.length; x++) {
+			
+			if (arr[x] == element) {
+				
+				pos = x;
+				break;
+				
+			}
+			
+		}
+		
+		return pos;
+		
+	}
+	
+	/**
+	 * Returns the index of the first occurrence of <code>element</code> in the array <code>arr</code> 
+	 * @param arr the array to be searched
+	 * @param element the element to be searched for
+	 * @return the index of the first occurrence of the element or -1 if not found 
+	 */
+	public static int indexOf(int[] arr, int element) {
+		
+		return indexOf(arr, element, 0);
+		
+	}
+	
+	
 }

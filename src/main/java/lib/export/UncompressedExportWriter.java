@@ -27,7 +27,7 @@ public class UncompressedExportWriter implements ExportWriter{
 		
 		try {
 			
-			out = new FileOutputStream(p.toFile(), true);
+			out = new FileOutputStream(p.toFile(), false);
 			writer = new BufferedWriter(new OutputStreamWriter(out, "UTF-8"));
 		
 		} catch (IOException e) {
