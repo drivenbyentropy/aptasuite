@@ -57,11 +57,22 @@ public class WizardAdvancedOptionsController {
     @FXML
     private ComboBox<Boolean> storeReverseComplementComboBox;
     
+    @FXML
+    private ComboBox<Boolean> onlyRandomizedRegionInData;
+    
+    @FXML
+    private ComboBox<Boolean> undeterminedToFileComboBox;
+    
+    @FXML
+    private ComboBox<Boolean> checkReverseComplementComboBox;
+    
+    
 	@FXML
 	private HBox actionBar;
 	
 	@FXML
 	private ActionBarController actionBarController;
+	
 	
 
     /**
@@ -96,9 +107,19 @@ public class WizardAdvancedOptionsController {
     	
     	setButtonActions();
     	
-    	ObservableList<Boolean> list = FXCollections.observableArrayList(true,false);
-    	storeReverseComplementComboBox.setItems(list);
+    	// Combo Boxes
+    	storeReverseComplementComboBox.setItems(FXCollections.observableArrayList(true,false));
     	storeReverseComplementComboBox.setConverter(new YesNoStringConverter());
+    	
+    	onlyRandomizedRegionInData.setItems(FXCollections.observableArrayList(true,false));
+    	onlyRandomizedRegionInData.setConverter(new YesNoStringConverter());
+    	onlyRandomizedRegionInData.disableProperty().bind(dataModel.getIsDemultiplexed());
+    	
+    	undeterminedToFileComboBox.setItems(FXCollections.observableArrayList(true,false));
+    	undeterminedToFileComboBox.setConverter(new YesNoStringConverter());
+
+    	checkReverseComplementComboBox.setItems(FXCollections.observableArrayList(true,false));
+    	checkReverseComplementComboBox.setConverter(new YesNoStringConverter());
     	
     	// Bind to datamodel
     	aptaplexParserPairedEndMinOverlapTextField.textProperty().bindBidirectional(getDataModel().getAptaplexParserPairedEndMinOverlap(), new NumberStringConverter());
@@ -114,6 +135,9 @@ public class WizardAdvancedOptionsController {
     	mapDBSelectionCycleBloomFilterCollisionProbabilityTextField.textProperty().bindBidirectional(getDataModel().getMapDBSelectionCycleBloomFilterCollisionProbability(), new NumberStringConverter());
     	performanceMaxNumberOfCoresSpinner.getValueFactory().valueProperty().bindBidirectional(getDataModel().getPerformanceMaxNumberOfCores());
     	storeReverseComplementComboBox.valueProperty().bindBidirectional(getDataModel().getStoreReverseComplement());
+    	onlyRandomizedRegionInData.valueProperty().bindBidirectional(getDataModel().getStoreReverseComplement());
+    	undeterminedToFileComboBox.valueProperty().bindBidirectional(getDataModel().getUndeterminedToFile());
+    	checkReverseComplementComboBox.valueProperty().bindBidirectional(getDataModel().getCheckReverseComplement());
     	
     }
     

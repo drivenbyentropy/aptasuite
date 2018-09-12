@@ -3,6 +3,8 @@
  */
 package lib.export;
 
+import lib.parser.aptaplex.Read;
+
 /**
  * @author Jan Hoinka
  * API for defining an export format of the sequence data
@@ -23,4 +25,12 @@ public interface ExportFormat<T> {
 	 */
 	String format(int id, T data);
 	
+	/**
+	 * This function should return a valid formated 
+	 * representation of and aptamer read acccording to
+	 * AptaSuites internal <code>Read</code> structure
+	 * @param the Read instance to extract the data from
+	 * @return a string formatted in the correct way
+	 */
+	String format(Read r, SequencingDirection d);
 }

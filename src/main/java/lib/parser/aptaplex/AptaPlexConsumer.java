@@ -3,10 +3,13 @@
  */
 package lib.parser.aptaplex;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -25,6 +28,11 @@ import com.milaboratory.core.sequence.NSequenceWithQuality;
 import exceptions.InvalidConfigurationException;
 import lib.aptamer.datastructures.Metadata;
 import lib.aptamer.datastructures.SelectionCycle;
+import lib.export.CompressedExportWriter;
+import lib.export.ExportWriter;
+import lib.export.FastqExportFormat;
+import lib.export.SequencingDirection;
+import lib.export.UncompressedExportWriter;
 import lib.parser.aptaplex.distances.BitapDistance;
 import lib.parser.aptaplex.distances.Distance;
 import lib.parser.aptaplex.distances.EditDistance;
@@ -32,6 +40,7 @@ import lib.parser.aptaplex.distances.Result;
 import utilities.Accumulator;
 import utilities.AptaLogger;
 import utilities.Configuration;
+import utilities.Pair;
 
 /**
  * @author Jan Hoinka
@@ -101,6 +110,10 @@ public class AptaPlexConsumer implements Runnable {
 	 */
 	private boolean isPerFile = Configuration.getParameters().getBoolean("AptaplexParser.isPerFile");
 	
+	/**
+	 * True if the sequences have previously been stripped of their primers and barcodes
+	 */
+	private boolean onlyRandomizedRegionInData = Configuration.getParameters().getBoolean("AptaplexParser.OnlyRandomizedRegionInData");
 	
 	/**
 	 * If true, the reverse complement of the sequences will be stored. This is usefull for DNA aptamers 
@@ -141,7 +154,7 @@ public class AptaPlexConsumer implements Runnable {
 	 * Instance of the MiTools merger used to create the contig sequences in
 	 * case of paired end sequencing
 	 */
-	MismatchOnlyPairedReadMerger merger = new MismatchOnlyPairedReadMerger(
+	private MismatchOnlyPairedReadMerger merger = new MismatchOnlyPairedReadMerger(
 			Configuration.getParameters().getInt("AptaplexParser.PairedEndMinOverlap"),
 			1.0 - 1.0 * Configuration.getParameters().getInt("AptaplexParser.PairedEndMaxMutations")
 					/ Configuration.getParameters().getInt("AptaplexParser.PairedEndMinOverlap"),
@@ -152,17 +165,28 @@ public class AptaPlexConsumer implements Runnable {
 	 * Distance class used to determine the best match for barcodes and primers
 	 * in the contig.
 	 */
-	Distance bitapDistance = new BitapDistance();
-	Distance editDistance = new EditDistance();
+	private Distance bitapDistance = new BitapDistance();
+	private Distance editDistance = new EditDistance();
 
 	/**
 	 * Tolerances, i.e. maximal number of mismatches for matching primer and
 	 * barcodes to the contig
 	 */
-	int primerTolerance = Configuration.getParameters().getInt("AptaplexParser.PrimerTolerance");
-	int barcodeTolerance = Configuration.getParameters().getInt("AptaplexParser.BarcodeTolerance");
+	private int primerTolerance = Configuration.getParameters().getInt("AptaplexParser.PrimerTolerance");
+	private int barcodeTolerance = Configuration.getParameters().getInt("AptaplexParser.BarcodeTolerance");
 
-	public AptaPlexConsumer(BlockingQueue<Object> queue, AptaPlexProgress progress) {
+	/**
+	 * Placeholder in case failed reads are to be exported to file. If not null
+	 * reads will be written to file. 
+	 */
+	private Map<Path, Pair<ExportWriter,ExportWriter>> undeterminedExportWriterMap = null;
+	
+	/**
+	 * Writes a read in fastq format
+	 */
+	private FastqExportFormat fastqExportFormat = new FastqExportFormat("undetermined");
+	
+	public AptaPlexConsumer(BlockingQueue<Object> queue, AptaPlexProgress progress, Map<Path, Pair<ExportWriter,ExportWriter>> undeterminedExportWriterMap) {
 
 		this.queue = queue;
 		this.progress = progress;
@@ -224,6 +248,9 @@ public class AptaPlexConsumer implements Runnable {
 			throw new InvalidConfigurationException( "Error. The lower bound for the range of the randomized region size must be smaller than the upper bound. Please check your configuration");
 		}
 		
+		// instantiate a file writer
+		this.undeterminedExportWriterMap = undeterminedExportWriterMap;
+		
 		// compute the reverse of the 5 primer primer. This is required due to the inner workings of the Bitap algorithm
 		ArrayUtils.reverse(this.primer5reverse);
 	}
@@ -253,235 +280,77 @@ public class AptaPlexConsumer implements Runnable {
 					continue;
 				}
 				
-				// ...now try to process it
-				AtomicInteger returnCode = processRead(contig, false, null);
 				
-				// only look into reverse complement if configuration indicates it and above matching has failed
-				if (returnCode != null && checkReverseComplement) {
+				// we need to differentiate between randomized region only mode, 
+				// and fully parsable data
+				if (this.onlyRandomizedRegionInData) {
+					
+					this.processReadRandomizedRegionOnly(contig);
+					
+				}
+				else {
 				
-					// if reverse complement is requested, compute it, in-place
-					// sequence in byte array representation (ASCII)
-					for (int x = 0; x < contig.length; x++) {
-		
-						switch (contig[x]) {
-						case 65:
-							contig[x] = 84;
-							break;
-		
-						case 67:
-							contig[x] = 71;
-							break;
-		
-						case 71:
-							contig[x] = 67;
-							break;
-		
-						case 84:
-							contig[x] = 65;
-							break;
+					// ...now try to process it
+					AtomicInteger returnCode = processRead(contig, false, null);
+					
+					// only look into reverse complement if configuration indicates it and above matching has failed
+					if (returnCode != null && checkReverseComplement) {
+					
+						// if reverse complement is requested, compute it, in-place
+						// sequence in byte array representation (ASCII)
+						for (int x = 0; x < contig.length; x++) {
+			
+							switch (contig[x]) {
+							case 65:
+								contig[x] = 84;
+								break;
+			
+							case 67:
+								contig[x] = 71;
+								break;
+			
+							case 71:
+								contig[x] = 67;
+								break;
+			
+							case 84:
+								contig[x] = 65;
+								break;
+							}
 						}
-					}
-					
-					for (int i = 0; i < contig.length / 2; i++) {
-						byte temp_s = contig[i];
-						contig[i] = contig[contig.length - i - 1];
-						contig[contig.length - i - 1] = temp_s;
-					}
-					
-					// process as usual
-					processRead(contig, true, null);
 						
+						for (int i = 0; i < contig.length / 2; i++) {
+							byte temp_s = contig[i];
+							contig[i] = contig[contig.length - i - 1];
+							contig[contig.length - i - 1] = temp_s;
+						}
+						
+						// process as usual
+						returnCode = processRead(contig, true, returnCode);
+							
+					}
+					
+					// if we could still not parse this read, we write it to the 
+					// undetermined lane if the user requested it
+					if (returnCode != null && undeterminedExportWriterMap != null) {
+						
+						// Forward 
+						undeterminedExportWriterMap.get(read.source_forward).first.write(fastqExportFormat.format(read, SequencingDirection.FORWARD));
+						
+						// Reverse
+						if (undeterminedExportWriterMap.get(read.source_forward).second != null) {
+						
+							undeterminedExportWriterMap.get(read.source_forward).second.write(fastqExportFormat.format(read, SequencingDirection.REVERSE));
+							
+						}
+						
+					}
+					
 				}
 				
 				// Update the progress in a thread-safe manner
 				progress.totalProcessedReads.incrementAndGet();
 
-				
-				
-				
-				
-				
-//				// Update the progress in a thread-safe manner
-//				progress.totalProcessedReads.incrementAndGet();
-//
-//				// process queueElement
-//				read = (Read) queueElement;
-//				
-//				// Differentiate between single-end and paired-end sequencing
-//				if (read.reverse_read != null) {
-//
-//					// if paired end, we need to compute the transcribed inverse
-//					// for the reverse read
-//					computeTranscribedReverse();
-//
-//					// and create the contig of the two
-//					contig = computeContig();
-//					
-//					// if we failed to assemble, there is no need to continue at
-//					// this point
-//					if (contig == null) {
-//						progress.totalContigAssemblyFails.incrementAndGet();
-//						continue;
-//					}
-//				} else {
-//					contig = read.forward_read;
-//				}
-//
-//				// check for undetermined nucleotides and fail if present
-//				if (!isValidSequence(contig)) {
-//					progress.totalInvalidContigs.incrementAndGet();
-//					continue;
-//				}
-//
-//				// Match the 5' primer
-//				// Since the bitab algorithms starts at the 3' end of the sequence
-//				// and returns the first element which matches, we need to turn the search 
-//				// problem around
-//				byte[] contigreverse = contig.clone();
-//				ArrayUtils.reverse(contigreverse);
-//				Result primer5_match = matchPrimer(contigreverse, primer5reverse);
-//				if (primer5_match != null){
-//					primer5_match.index = contig.length - primer5_match.index - primer5reverse.length; 
-//				}
-//
-//				if (primer5_match == null) { // no match
-//					progress.totalUnmatchablePrimer3.incrementAndGet();
-//					continue;
-//				}
-//
-//				// Match the 3' primer if present
-//				Result primer3_match = null;
-//				if (primer3 != null) {
-//					primer3_match = matchPrimer(contig, primer3);
-//
-//					if (primer3_match == null){ // no match
-//						progress.totalUnmatchablePrimer3.incrementAndGet();
-//						continue;
-//					}
-//				}
-//
-//				// Identify the selection cycle this read corresponds to
-//				if (!isPerFile) {
-//					read.selection_cycle = matchBarcodes(contig, primer5_match, primer3_match);
-//				}
-//
-//				// Check for possible conflicts
-//
-//				// selection cycle assignment failed
-//				if (read.selection_cycle == null){
-//					progress.totalInvalidCycle.getAndIncrement();
-//					continue;
-//				}
-//				
-//				// the primers need to be checked for overlap
-//				 if (primer3 != null && isOverlapped(primer5_match, primer5, primer3_match, primer3)){
-//					 progress.totalPrimerOverlaps.incrementAndGet();
-//					 continue;
-//				 }
-//				
-//				 // we can now extract the randomized region
-//				 randomized_region_start_index = primer5_match.index + primer5.length;
-//				 randomized_region_end_index = -1;
-//				
-//				 if (primer3 == null){ //use Experiment.randomizedRegionSize
-//					 	randomized_region_end_index = randomized_region_start_index + randomizedRegionSizeExactBound -1;
-//				 }
-//				 else{ // use the boundaries defined by the primer regions
-//					 randomized_region_end_index = primer3_match.index;
-//				 }
-//				
-//				 // if the sequence was exacted successfully, we can finally
-//				 // add it to the selection cycle
-//				 if (		// Sanity checks
-//						    (randomized_region_start_index < randomized_region_end_index && randomized_region_end_index <= contig.length) //Primers are in the correct order
-//						 && (randomized_region_start_index-primer5.length >= 0) // 5' primer does not overshoot the contig to the left
-//						 && (randomized_region_end_index+primer3.length <= contig.length) // 3' primer does not overshoot the contig to the right
-//						 && (randomizedRegionSizeExactBound != null ? (randomized_region_end_index-randomized_region_start_index) == randomizedRegionSizeExactBound : true) // if the randomized region is specified, only let those aptamers through that have the desired lenght
-//						 && (randomizedRegionSizeLowerBound != null ? randomizedRegionSizeLowerBound <= (randomized_region_end_index-randomized_region_start_index) && (randomized_region_end_index-randomized_region_start_index) <= randomizedRegionSizeUpperBound : true) // if a range of sizes is specified, make sure the aptamer falls into these categories
-//					){
-//					 
-//					 if (!storeReverseComplement) { // Do we have to compute the reverse complement?
-//					 
-//						read.selection_cycle.addToSelectionCycle(
-//							 Arrays.copyOfRange(contig, randomized_region_start_index-primer5.length, randomized_region_end_index+primer3.length)
-//							 ,primer5.length
-//							 ,primer5.length + (randomized_region_end_index-randomized_region_start_index)
-//							 );
-//						 
-//					 	// Add metadata information
-//						addAcceptedNucleotideDistributions(read.selection_cycle, contig, randomized_region_start_index, randomized_region_end_index);
-//
-//					 } else { // We do!
-//						 
-//						// First, extract the relevant region from the read
-//						contig = Arrays.copyOfRange(contig, randomized_region_start_index-primer5.length, randomized_region_end_index+primer3.length);
-//						 
-//						// Now compute the reverse complement
-//						for (int x = 0; x < contig.length; x++) {
-//
-//							switch (contig[x]) {
-//							case 65:
-//								contig[x] = 84;
-//								break;
-//
-//							case 67:
-//								contig[x] = 71;
-//								break;
-//
-//							case 71:
-//								contig[x] = 67;
-//								break;
-//
-//							case 84:
-//								contig[x] = 65;
-//								break;
-//							}
-//						}
-//						
-//						// And reverse it
-//						for(int i = 0; i < contig.length / 2; i++)
-//						{
-//						    byte temp = contig[i];
-//						    contig[i] = contig[contig.length - i - 1];
-//						    contig[contig.length - i - 1] = temp;
-//						}
-//						
-//
-//						// We also need tyo recompute the boundaries
-//						int start = contig.length - (primer5.length + (randomized_region_end_index-randomized_region_start_index));
-//						int end = contig.length - primer5.length;
-//						
-//						read.selection_cycle.addToSelectionCycle(
-//								 contig
-//								 ,start
-//								 ,end
-//								 );
-//						 
-//						 // Add metadata information
-//						 addAcceptedNucleotideDistributions(read.selection_cycle, contig, start, end);
-//						 
-//					 }
-//					 
-//				 	 // Store nucleotide distribution and quality score
-//				 	 addNuceotideDistributions();
-//					 addQualityScores();
-//					 
-//					 progress.totalAcceptedReads.incrementAndGet();
-//					 
-//				 }else { // Handle errors
-//					 
-//					 if (randomized_region_start_index-primer5.length < 0) {
-//						 
-//						 progress.totalUnmatchablePrimer5.incrementAndGet();
-//						 
-//					 }
-//					 else if(randomized_region_end_index+primer3.length > contig.length) {
-//						 
-//						 progress.totalUnmatchablePrimer3.incrementAndGet();
-//						 
-//					 }
-//					 
-//				 }
 
 			} catch (Exception e) {
 				AptaLogger.log(Level.SEVERE, this.getClass(), org.apache.commons.lang.exception.ExceptionUtils.getStackTrace(e));
@@ -524,6 +393,96 @@ public class AptaPlexConsumer implements Runnable {
 		return contig;
 		
 	}
+	
+	/**
+	 * Processes the current queueElement. Assumes that the read consists only of the randomized region 
+	 * @param queueElement the element to be processed 
+	 * @return the error progress counter that was incremented in the last call of this function. null if success.  
+	 */
+	private AtomicInteger processReadRandomizedRegionOnly(byte[] contig_rr) {
+		
+		 // add the primers synthetically to the reads
+		byte[] contig = new byte[primer5.length + contig_rr.length + primer3.length];
+
+		System.arraycopy(primer5, 0, contig, 0, primer5.length);
+		System.arraycopy(contig_rr, 0, contig, primer5.length, contig_rr.length);
+		System.arraycopy(primer3, 0, contig, primer5.length+contig_rr.length, primer3.length);
+		
+		 // we extract the randomized region
+		 int randomized_region_start_index = primer5.length;
+		 int randomized_region_end_index = primer5.length+contig_rr.length;
+		
+		 // and add it to the selection cycle	 
+		 if (!storeReverseComplement) { // Do we have to compute the reverse complement?
+		 
+			read.selection_cycle.addToSelectionCycle(
+				 contig,
+				 primer5.length,
+				 primer5.length + (randomized_region_end_index-randomized_region_start_index)
+				 );
+			 
+		 	// Add metadata information
+			addAcceptedNucleotideDistributions(read.selection_cycle, contig, randomized_region_start_index, randomized_region_end_index);
+
+		 } else { // We do!
+			 
+			// compute the complement...
+			for (int x = 0; x < contig.length; x++) {
+
+				switch (contig[x]) {
+				case 65:
+					contig[x] = 84;
+					break;
+
+				case 67:
+					contig[x] = 71;
+					break;
+
+				case 71:
+					contig[x] = 67;
+					break;
+
+				case 84:
+					contig[x] = 65;
+					break;
+				}
+			}
+			
+			// ...and reverse it
+			for(int i = 0; i < contig.length / 2; i++)
+			{
+			    byte temp = contig[i];
+			    contig[i] = contig[contig.length - i - 1];
+			    contig[contig.length - i - 1] = temp;
+			}
+			
+			// We also need to recompute the boundaries
+			int start = contig.length - (primer5.length + (randomized_region_end_index-randomized_region_start_index));
+			int end = contig.length - primer5.length;
+			
+			read.selection_cycle.addToSelectionCycle(
+					 contig
+					 ,start
+					 ,end
+					 );
+			 
+			 
+			 // Add metadata information
+			 addAcceptedNucleotideDistributions(read.selection_cycle, contig, start, end);
+			 
+		 }
+		 
+	 	 // Store nucleotide distribution and quality score
+	 	 addNuceotideDistributions();
+		 addQualityScores();
+		 
+		 progress.totalAcceptedReads.incrementAndGet();
+		 
+		 // if we are here, all went well and we can go home.
+		 return null;
+		
+	}
+	
 	
 	/**
 	 * Processes the current queueElement and attempts to demultiplex and extract the randomized region 
@@ -685,6 +644,10 @@ public class AptaPlexConsumer implements Runnable {
 			 addQualityScores();
 			 
 			 progress.totalAcceptedReads.incrementAndGet();
+			 
+			 if(previous_return_code != null) {
+				 previous_return_code.decrementAndGet();
+			 }
 			 
 		 }else { // Handle errors
 			 

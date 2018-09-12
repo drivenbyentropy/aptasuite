@@ -39,6 +39,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.image.Image;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.Control;
@@ -469,6 +470,7 @@ public class RootLayoutController {
             
             Stage stage = new Stage();
             stage.setTitle("Create a New Experiment");
+            stage.getIcons().add(new Image(getClass().getClassLoader().getResourceAsStream("logo.png")));           
             stage.setScene(new Scene(root, Control.USE_COMPUTED_SIZE, Control.USE_COMPUTED_SIZE));
     		
     		// The datamodel to be passed from scene to scene
@@ -530,6 +532,7 @@ public class RootLayoutController {
             
             Stage stage = new Stage();
             stage.setTitle("Create Simulated Data Set");
+            stage.getIcons().add(new Image(getClass().getClassLoader().getResourceAsStream("logo.png")));
             stage.setResizable(false);
             stage.setScene(new Scene(root, 800, 730));
     		stage.setOnCloseRequest((e) -> { e.consume(); });
@@ -560,6 +563,7 @@ public class RootLayoutController {
             
             Stage stage = new Stage();
             stage.setTitle("Export Data");
+            stage.getIcons().add(new Image(getClass().getClassLoader().getResourceAsStream("logo.png")));
             stage.setResizable(true);
             stage.setMinWidth(835);
             stage.setMinHeight(650);

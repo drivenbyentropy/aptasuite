@@ -34,6 +34,12 @@ public class DataModel {
 	
 	private BooleanProperty storeReverseComplement = new SimpleBooleanProperty(false);
 	
+	private BooleanProperty onlyRandomizedRegionInData = new SimpleBooleanProperty(false);
+	
+	private BooleanProperty undeterminedToFile = new SimpleBooleanProperty(false);
+	
+	private BooleanProperty checkReverseComplement = new SimpleBooleanProperty(false);
+	
 	private StringProperty primer5 = new SimpleStringProperty();
 	
 	private StringProperty primer3 = new SimpleStringProperty();
@@ -319,6 +325,50 @@ public class DataModel {
 		this.storeReverseComplement = storeReverseComplement;
 	}
 
+	/**
+	 * @return the storeReverseComplement
+	 */
+	public BooleanProperty getOnlyRandomizedRegionInData() {
+		return onlyRandomizedRegionInData;
+	}
+
+	/**
+	 * @param storeReverseComplement the storeReverseComplement to set
+	 */
+	public void setOnlyRandomizedRegionInData(BooleanProperty onlyRandomizedRegionInData) {
+		this.onlyRandomizedRegionInData = onlyRandomizedRegionInData;
+	}
+	
+	
+	/**
+	 * @return the storeReverseComplement
+	 */
+	public BooleanProperty getCheckReverseComplement() {
+		return checkReverseComplement;
+	}
+
+	/**
+	 * @param storeReverseComplement the storeReverseComplement to set
+	 */
+	public void setCheckReverseComplement(BooleanProperty checkReverseComplement) {
+		this.checkReverseComplement = checkReverseComplement;
+	}
+	
+	
+	/**
+	 * @return the storeReverseComplement
+	 */
+	public BooleanProperty getUndeterminedToFile() {
+		return undeterminedToFile;
+	}
+
+	/**
+	 * @param storeReverseComplement the storeReverseComplement to set
+	 */
+	public void setUndeterminedToFile(BooleanProperty undeterminedToFile) {
+		this.undeterminedToFile = undeterminedToFile;
+	}
+	
 	/**
 	 * @return the aptaplexParserPairedEndMinOverlap
 	 */

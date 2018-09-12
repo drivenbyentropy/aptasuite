@@ -124,7 +124,7 @@ public class FastqReader implements Reader {
 			
 			//read the next three lines of which we need lines 1 and 3
 			r.forward_read = forward_reader.readLine().getBytes();
-			forward_reader.readLine();
+			r.metadata_forward = new String(buffer + "\n" + forward_reader.readLine()).getBytes();
 			r.forward_quality = forward_reader.readLine().getBytes();
 			
 			
@@ -141,7 +141,7 @@ public class FastqReader implements Reader {
 				
 				//read the next three lines of which we need lines 1 and 3
 				r.reverse_read = reverse_reader.readLine().getBytes();
-				reverse_reader.readLine();
+				r.metadata_reverse = (buffer + "\n" + reverse_reader.readLine()).getBytes();
 				r.reverse_quality = reverse_reader.readLine().getBytes();
 				
 			}

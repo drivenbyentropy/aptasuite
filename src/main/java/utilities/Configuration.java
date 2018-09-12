@@ -104,7 +104,11 @@ public class Configuration {
 																	  // of the reverse complement of a contig should the initial attempt have failed. This setting is
 																	  // useful if you expect aptamers to be present in a mixture of forward and reverse-complements
 																	  // in your sequencing data
-		
+		defaults.put("AptaplexParser.OnlyRandomizedRegionInData", false); 	// If set to true, AptaPlex will assume that the barcodes AND the Primers have already been removed
+																			// by a third party application and will import the sequences without any checks (other than nucleotide validity).
+																			// In addition, it is assumed that the data has already been demultiplexed.		
+		defaults.put("AptaplexParser.UndeterminedToFile", false); 	// If set to true, AptaPlex will dump all read which failed processing for any reason to a fastq file located
+																	// in the export folder of the project and named undetermined.fastq.gz
 		
 		// AptaSIM Options
 		defaults.put("Aptasim.HmmDegree", 2); // Degree of the Markov model

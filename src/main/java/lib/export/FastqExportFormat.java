@@ -6,6 +6,7 @@ package lib.export;
 import java.util.Arrays;
 
 import lib.aptamer.datastructures.AptamerBounds;
+import lib.parser.aptaplex.Read;
 import utilities.Configuration;
 
 /**
@@ -65,6 +66,37 @@ public class FastqExportFormat implements ExportFormat<byte[]> {
 				"AptaSuite_" + id + " " + name + " length=" + length,
 				(withPrimers ? new String(sequence) : new String(Arrays.copyOfRange(sequence, bounds.startIndex, bounds.endIndex))),
 				qualityScores.subSequence(0, length)
+				);
+		
+	}
+
+	@Override
+	public String format(Read r, SequencingDirection d) {
+		
+		byte[] sequence = null;
+		byte[] quality = null;
+		String[] meta = null;
+		
+		// Get the data depending on the direction
+		if (d == SequencingDirection.FORWARD) {
+			
+			meta = r.metadata_forward == null ? null : new String(r.metadata_forward).split("\n");
+			sequence = r.forward_read;
+			quality = r.forward_quality;
+			
+		} else {
+			
+			meta = r.metadata_reverse == null ? null : new String(r.metadata_reverse).split("\n");
+			sequence = r.reverse_read;
+			quality = r.reverse_quality;
+			
+		}
+
+		return String.format("%s\n%s\n%s\n%s\n", 
+				meta == null ? "n/a" : meta[0],
+				sequence == null ? "n/a" : new String(sequence),
+				meta == null ? "n/a" : meta[1],
+				quality == null ? "n/a" : new String(quality)
 				);
 		
 	}

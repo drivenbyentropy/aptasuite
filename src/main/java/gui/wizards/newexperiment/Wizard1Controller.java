@@ -554,7 +554,6 @@ public class Wizard1Controller{
         	Path configuration_file = Paths.get(experiment_path.toAbsolutePath().toString(), "configuration.aptasuite");
     		utilities.Configuration.createConfiguration(configuration_file);
     		
-    		
     		// Experiment Name and Description
     		utilities.Configuration.getParameters().setProperty("Experiment.name", getDataModel().getExperimentName().get());
     		utilities.Configuration.getParameters().setProperty("Experiment.description", getDataModel().getExperimentDescription().get());
@@ -740,6 +739,23 @@ public class Wizard1Controller{
 
     		}   
     		
+    		if (getDataModel().getOnlyRandomizedRegionInData().get() != utilities.Configuration.getDefaults().getBoolean("AptaplexParser.OnlyRandomizedRegionInData")) {
+    			
+    			utilities.Configuration.getParameters().setProperty("AptaplexParser.OnlyRandomizedRegionInData", getDataModel().getOnlyRandomizedRegionInData().get());
+
+    		} 
+    		
+    		if (getDataModel().getUndeterminedToFile().get() != utilities.Configuration.getDefaults().getBoolean("AptaplexParser.UndeterminedToFile")) {
+    			
+    			utilities.Configuration.getParameters().setProperty("AptaplexParser.UndeterminedToFile", getDataModel().getUndeterminedToFile().get());
+
+    		}
+    		
+    		if (getDataModel().getCheckReverseComplement().get() != utilities.Configuration.getDefaults().getBoolean("AptaplexParser.CheckReverseComplement")) {
+    			
+    			utilities.Configuration.getParameters().setProperty("AptaplexParser.CheckReverseComplement", getDataModel().getCheckReverseComplement().get());
+
+    		}
     		
     		// Save to file 
     		utilities.Configuration.writeConfiguration();

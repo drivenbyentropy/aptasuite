@@ -1,6 +1,7 @@
 package lib.export;
 
 import lib.aptamer.datastructures.AptamerBounds;
+import lib.parser.aptaplex.Read;
 import utilities.Configuration;
 
 /**
@@ -50,7 +51,6 @@ public class FastaExportFormat implements ExportFormat<byte[]> {
 		// Compute length depending whether primers should be exported or not
 		int length = withPrimers ? sequence.length : bounds.endIndex - bounds.startIndex;
 		
-		
 		// Build the sequence with newline if the total lengths exceeds the specification
 		StringBuilder formattedSequence = new StringBuilder(length + new Double(length/80.).intValue());
 		int breakCounter = 0;
@@ -70,5 +70,60 @@ public class FastaExportFormat implements ExportFormat<byte[]> {
 				);
 		
 	}
+
+	@Override
+	public String format(Read r, SequencingDirection d) {
+		
+		// get data according to direction
+		byte[] sequence = null;
+		byte[] description = null;
+		
+		if (d == SequencingDirection.FORWARD) {
+			
+			sequence = r.forward_read;
+			description = r.metadata_forward;
+			
+		}
+		else {
+			
+			sequence = r.reverse_read;
+			description = r.metadata_reverse;
+			
+		}
+		
+		// Build the sequence with newline if the total lengths exceeds the specification
+		StringBuilder formattedSequence = new StringBuilder(sequence.length + new Double(sequence.length/80.).intValue());
+		int breakCounter = 0;
+		for (int x = 0; x < sequence.length; x++,breakCounter++){
+
+			if (breakCounter == 80){
+				formattedSequence.append("\n");
+				breakCounter = 0;
+			}
+			
+			formattedSequence.append((char) sequence[x]);
+		}
+		
+		// Do the same for the description
+		StringBuilder formattedDescription = new StringBuilder(description.length + new Double(description.length/80.).intValue());
+		breakCounter = 0;
+		for (int x = 0; x < description.length; x++,breakCounter++){
+
+			if (breakCounter == 80){
+				formattedDescription.append("\n");
+				breakCounter = 0;
+			}
+			
+			formattedDescription.append((char) description[x]);
+		}
+	
+		return String.format(">%s\n%s\n", 
+				formattedDescription.toString(),
+				formattedSequence.toString()
+				);
+		
+	}
+	
+	
 
 }

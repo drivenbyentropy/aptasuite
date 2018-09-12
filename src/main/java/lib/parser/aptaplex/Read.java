@@ -3,6 +3,8 @@
  */
 package lib.parser.aptaplex;
 
+import java.nio.file.Path;
+
 import lib.aptamer.datastructures.SelectionCycle;
 
 /**
@@ -37,6 +39,30 @@ public class Read {
 	 * they are present in formats such as fasta and fastq
 	 */
 	public byte[] reverse_quality = null;
+	
+	
+	/**
+	 *  Placeholder for format dependent data which might need to be carried over to other places
+	 *  Eg. read name etc
+	 */
+	public byte[] metadata_forward = null;
+
+	/**
+	 *  Placeholder for format dependent data which might need to be carried over to other places
+	 *  Eg. read name etc
+	 */
+	public byte[] metadata_reverse = null;
+	
+	/**
+	 * The forward source file of this read
+	 */
+	public Path source_forward = null;
+	
+	/**
+	 * The reverse source file of this read
+	 */
+	public Path source_reverse = null;
+	
 	
 	
 	/**

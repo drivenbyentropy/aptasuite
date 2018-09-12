@@ -59,6 +59,7 @@ public class Aptasuite {
 				// print the help if requested
 				if (line.hasOption("help")) {
 					HelpFormatter formatter = new HelpFormatter();
+					formatter.setWidth(120);
 					formatter.printHelp("AptaSUITE", "", CLIOptions.parameters,
 							"\nPlease report issues at https://github.com/drivenbyentropy/aptasuite", true);
 					System.exit(1);
@@ -73,6 +74,7 @@ public class Aptasuite {
 				System.err.println("Parameter Error.  Reason: " + exp.getMessage());
 				System.out.println("\n");
 				HelpFormatter formatter = new HelpFormatter();
+				formatter.setWidth(120);
 				formatter.printHelp("AptaSUITE", "", CLIOptions.parameters,
 						"\nPlease report issues at https://github.com/drivenbyentropy/aptasuite", true);
 			}
@@ -82,7 +84,6 @@ public class Aptasuite {
 		
 		// case gui
 		else {
-			// TODO: implement the gui handling
 			RootClass mainWindow = new RootClass();
 			mainWindow.lauchMainWindow();
 			System.out.println("Exiting");

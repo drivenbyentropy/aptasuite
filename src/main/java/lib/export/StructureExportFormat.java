@@ -3,6 +3,7 @@ package lib.export;
 import java.util.Arrays;
 
 import lib.aptamer.datastructures.AptamerBounds;
+import lib.parser.aptaplex.Read;
 import utilities.Configuration;
 
 /**
@@ -69,6 +70,13 @@ public class StructureExportFormat implements ExportFormat<double[]> {
 				"AptaSuite_" + id + "\t" + name + "\t" + rawSequence + "\t" + "length=" + length,
 				formattedStructure.toString()
 				);
+	}
+
+
+	@Override
+	public String format(Read r, SequencingDirection d) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

@@ -12,6 +12,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
+import javafx.scene.image.Image;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import utilities.Version;
@@ -31,6 +32,9 @@ public class RootClass extends Application {
     	// Read version 
         this.primaryStage = primaryStage;
         this.primaryStage.setTitle("AptaSUITE v"+Version.versionString());
+        
+        // Add icon
+        primaryStage.getIcons().add(new Image(getClass().getClassLoader().getResourceAsStream("logo.png")));
 
         try {
 	        // Load root layout from fxml file.

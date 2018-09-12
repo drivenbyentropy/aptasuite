@@ -13,6 +13,7 @@ import java.util.Iterator;
 import java.util.logging.Level;
 import exceptions.DuplicateSelectionCycleException;
 import exceptions.InformationNotFoundException;
+import exceptions.InvalidConfigurationException;
 import exceptions.InvalidSelectionCycleException;
 import utilities.AptaLogger;
 import utilities.Configuration;
@@ -166,6 +167,16 @@ public class Experiment implements Serializable{
 			}
 		}
 		
+		// if the data contains only the randomized region, we need to be in isPerFile mode
+		boolean isPerFile = Configuration.getParameters().getBoolean("AptaplexParser.isPerFile");
+		boolean onlyRandomizedRegionInData = Configuration.getParameters().getBoolean("AptaplexParser.OnlyRandomizedRegionInData");
+
+		if (onlyRandomizedRegionInData && !isPerFile) {
+			
+			throw new InvalidConfigurationException("Input files containing only randomized regions must be demultipledex. Please provide one file per selection round and set AptaplexParser.isPerFile = True");
+			
+		}
+		
 		// Set the SelectionCycle instances
 		// Get all information regarding the selection cycles
 		Integer[] rounds = null;
@@ -175,7 +186,6 @@ public class Experiment implements Serializable{
 		
 		String[] barcodes5 = Configuration.getParameters().getStringArray("AptaplexParser.barcodes5Prime");
 		String[] barcodes3 = Configuration.getParameters().getStringArray("AptaplexParser.barcodes3Prime");
-		boolean isPerFile = Configuration.getParameters().getBoolean("AptaplexParser.isPerFile");
 				
 		try{
 			rounds = (Integer[]) Configuration.getParameters().getArray(Integer.class, "SelectionCycle.round");

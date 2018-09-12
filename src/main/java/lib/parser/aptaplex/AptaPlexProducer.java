@@ -6,11 +6,17 @@ package lib.parser.aptaplex;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.logging.Level;
 import exceptions.InvalidSequenceReadFileException;
+import lib.export.CompressedExportWriter;
+import lib.export.ExportWriter;
+import lib.export.UncompressedExportWriter;
 import utilities.AptaLogger;
 import utilities.Configuration;
+import utilities.Pair;
 
 /**
  * @author Jan Hoinka
@@ -26,17 +32,28 @@ public class AptaPlexProducer implements Runnable{
 	/**
 	 * The queue to fill
 	 */
-	BlockingQueue<Object> queue = null;
+	private BlockingQueue<Object> queue = null;
+	
+	/**
+	 * The map containing the information for exporting the failed reads to undetermined
+	 */
+	private Map<Path, Pair<ExportWriter,ExportWriter>> undeterminedExportWriterMap = null; //TODO: CONTINUE HERE, EXPAND TO FORWARD AND REVERSE READS
 	
 	/**
 	 * Defines whether this instance is concerned with multiplexing the data, or if it has
 	 * previously been demultiplexed
 	 */
-	Boolean isPerFile = Configuration.getParameters().getBoolean("AptaplexParser.isPerFile");
+	private Boolean isPerFile = Configuration.getParameters().getBoolean("AptaplexParser.isPerFile");
 	
-	public AptaPlexProducer(BlockingQueue<Object> queue){
+	/**
+	 * Path to export data for easy access
+	 */
+	private Path exportPath = Paths.get(Configuration.getParameters().getString("Experiment.projectPath"), "export");
+	
+	public AptaPlexProducer(BlockingQueue<Object> queue, Map<Path, Pair<ExportWriter,ExportWriter>> undeterminedExportWriterMap){
 		
 		this.queue = queue;
+		this.undeterminedExportWriterMap = undeterminedExportWriterMap;
 	
 	}
 	
@@ -115,6 +132,27 @@ public class AptaPlexProducer implements Runnable{
 				}
 			}
 			
+			// at this point we can fill the undetermined map if requested by the user
+			if (this.undeterminedExportWriterMap != null) {
+				
+				// first create the export writers
+				Path forward_export_path = Paths.get(exportPath.toString(), "undetermined_"+current_forward_file_path.getFileName().toString()); 
+				ExportWriter forward_export_writer = Configuration.getParameters().getBoolean("Export.compress") ? new CompressedExportWriter() : new UncompressedExportWriter();
+				forward_export_writer.open(forward_export_path);
+				
+				Path reverse_export_path = null;
+				if (current_reverse_file_path != null) {
+					
+					reverse_export_path = Paths.get(exportPath.toString(), "undetermined_"+current_reverse_file_path.getFileName().toString()); 
+					ExportWriter reverse_export_writer = Configuration.getParameters().getBoolean("Export.compress") ? new CompressedExportWriter() : new UncompressedExportWriter();
+					reverse_export_writer.open(reverse_export_path);
+					
+				}
+				
+				undeterminedExportWriterMap.put(current_forward_file_path, new Pair(forward_export_writer,reverse_export_path));
+				
+			}
+			
 			try {
 				// get the first read
 				Read read = reader.getNextRead();
@@ -129,6 +167,10 @@ public class AptaPlexProducer implements Runnable{
 						read.selection_cycle = Configuration.getExperiment().getAllSelectionCycles().get(x);
 						
 					}
+					
+					// add source files
+					read.source_forward = current_forward_file_path;
+					read.source_reverse = current_reverse_file_path;
 					
 					// put read into to queue
 					queue.put(read);
@@ -155,6 +197,8 @@ public class AptaPlexProducer implements Runnable{
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
+		
+		
 		
 	}
 }

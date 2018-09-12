@@ -187,6 +187,21 @@ public class Wizard2Controller{
         	
     		AptaLogger.getLogger().removeHandler(handler);
     		
+    		// Final update
+    		Platform.runLater(new Runnable() {
+				@Override
+				public void run() {
+        				totalAcceptedReadsTextField.textProperty().set(progress.totalAcceptedReads.toString());
+        				totalProcessedReadsTextField.textProperty().set(progress.totalProcessedReads.toString());
+        				contigAssemblyFailureTextField.textProperty().set(progress.totalContigAssemblyFails.toString());
+        				invalidAlphabetTextField.textProperty().set(progress.totalInvalidContigs.toString());
+        				primer5ErrorTextField.textProperty().set(progress.totalUnmatchablePrimer5.toString());
+        				primer3ErrorTextField.textProperty().set(progress.totalUnmatchablePrimer3.toString());
+        				invalidCycleTextField.textProperty().set(progress.totalInvalidCycle.toString());
+        				totalPrimerOverlapsTextField.textProperty().set(progress.totalPrimerOverlaps.toString());
+				}
+			});
+    		
         	// clean up
         	parserThread = null;
         	parser = null;
@@ -231,6 +246,7 @@ public class Wizard2Controller{
     				// Once every second should suffice
 					Thread.sleep(1000);
 				}
+				
 				return null;
 			}
 		};
