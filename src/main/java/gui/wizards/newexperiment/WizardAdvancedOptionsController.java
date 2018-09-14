@@ -135,7 +135,7 @@ public class WizardAdvancedOptionsController {
     	mapDBSelectionCycleBloomFilterCollisionProbabilityTextField.textProperty().bindBidirectional(getDataModel().getMapDBSelectionCycleBloomFilterCollisionProbability(), new NumberStringConverter());
     	performanceMaxNumberOfCoresSpinner.getValueFactory().valueProperty().bindBidirectional(getDataModel().getPerformanceMaxNumberOfCores());
     	storeReverseComplementComboBox.valueProperty().bindBidirectional(getDataModel().getStoreReverseComplement());
-    	onlyRandomizedRegionInData.valueProperty().bindBidirectional(getDataModel().getStoreReverseComplement());
+    	onlyRandomizedRegionInData.valueProperty().bindBidirectional(getDataModel().getOnlyRandomizedRegionInData() );
     	undeterminedToFileComboBox.valueProperty().bindBidirectional(getDataModel().getUndeterminedToFile());
     	checkReverseComplementComboBox.valueProperty().bindBidirectional(getDataModel().getCheckReverseComplement());
     	
