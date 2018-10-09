@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
@@ -139,19 +140,44 @@ public class MapDBStructurePool implements StructurePool {
 		
 		// Set the project path and pool data path
 		this.projectPath = projectPath;
-		
-		// Check if the data path exists, and if not create it
-		this.structureDataPath = Files.createDirectories(Paths.get(this.projectPath.toString(), poolName));
-		
-		
+			
 		// If we are reading an existing database, iterate over the folder and open the individual MapDB instances
 		if (! newdb){ 
 			
+			this.structureDataPath = Paths.get(this.projectPath.toString(), poolName);
+			
 			AptaLogger.log(Level.INFO, this.getClass(), "Searching for existing datasets in " + structureDataPath.toString());
 
-			// Get the correct order of the paths
-			List<Path> sorted_paths = FileUtilities.getSortedPaths(Files.newDirectoryStream(Paths.get(structureDataPath.toString())));
-						
+			// Get the correct order of the paths				
+			List<Path> sorted_paths = null;
+			DirectoryStream<Path> structureDataDirStream = null;
+			try {
+				
+				// this will fail if the directory does not exist
+				structureDataDirStream = Files.newDirectoryStream(Paths.get(structureDataPath.toString()));
+				sorted_paths = FileUtilities.getSortedPaths(structureDataDirStream);
+				
+			} catch(Exception e) {
+				
+				sorted_paths = Collections.EMPTY_LIST;
+				
+				AptaLogger.log(Level.INFO, this.getClass(), "Structure directory does not exist.");
+				AptaLogger.log(Level.INFO, this.getClass(), e);
+				
+			} finally {
+				
+				// we need to close this stream otherwise subsequent operations on this directory might fail
+				try {
+					structureDataDirStream.close();
+				} catch (Exception e) {
+					
+					AptaLogger.log(Level.INFO, this.getClass(), e);
+					
+				}
+				
+			}
+			
+			
 			AptaLogger.log(Level.INFO, this.getClass(), "Found a total of " + sorted_paths.size() + " files on disk.");
 
 				
@@ -240,6 +266,9 @@ public class MapDBStructurePool implements StructurePool {
 		}
 		else{ // Create an empty instance of the MapDB Container
 
+			// Check if the data path exists, and if not create it
+			this.structureDataPath = Files.createDirectories(Paths.get(this.projectPath.toString(), poolName)); 
+			
 			DB db_structure = DBMaker
 				    .fileDB(Paths.get(structureDataPath.toString(), "data" + String.format("%04d", structureData.size()) + ".mapdb").toFile())
 				    .allocateStartSize( this.allocateStartSize )

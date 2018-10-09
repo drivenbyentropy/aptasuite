@@ -4,6 +4,7 @@
 package gui.wizards.structureprofileprediction;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Queue;
@@ -25,10 +26,6 @@ import lib.structure.capr.CapRFactory;
 import utilities.AptaLogger;
 import utilities.Configuration;
 
-/**
- * @author Jan Hoinka
- *
- */
 /**
  * @author Jan Hoinka
  *
@@ -74,15 +71,17 @@ public class StructureProfilePredictionWizardController {
 	
 	
 	public void start() {
-		
+
 		// clean up old data if required
 		try {
 			FileUtils.deleteDirectory(Paths.get(projectPath.toString(), "structuredata").toFile());
+			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
+
 		//Start prediction right away, dont block UI
 		Thread t = new Thread(new Runnable() {
 

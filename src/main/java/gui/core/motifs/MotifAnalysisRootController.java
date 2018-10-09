@@ -1238,6 +1238,7 @@ public class MotifAnalysisRootController implements Initializable{
 				
 				if (!motifs_present.get()) { // and if not, run the prediction routine
 					
+			
 					Platform.runLater(() -> {
 						
 						Alert alert = new Alert(AlertType.CONFIRMATION);
