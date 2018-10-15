@@ -533,7 +533,7 @@ public class RootLayoutController {
             Stage stage = new Stage();
             stage.setTitle("Create Simulated Data Set");
             stage.getIcons().add(new Image(getClass().getClassLoader().getResourceAsStream("logo.png")));
-            stage.setResizable(false);
+            stage.setResizable(true);
             stage.setScene(new Scene(root, 800, 730));
     		stage.setOnCloseRequest((e) -> { e.consume(); });
             stage.show();

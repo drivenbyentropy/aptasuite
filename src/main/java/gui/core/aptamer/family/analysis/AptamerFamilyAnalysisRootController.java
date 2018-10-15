@@ -23,6 +23,7 @@ import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.io.FileUtils;
+import org.mapdb.Serializer;
 
 import exceptions.InformationNotFoundException;
 import gui.activity.ProgressPaneController;
@@ -66,6 +67,7 @@ import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
@@ -84,6 +86,8 @@ import lib.aptamer.datastructures.AptamerBounds;
 import lib.aptamer.datastructures.AptamerPool;
 import lib.aptamer.datastructures.ClusterContainer;
 import lib.aptamer.datastructures.Experiment;
+import lib.aptamer.datastructures.GenericStorage;
+import lib.aptamer.datastructures.MapDBGenericStorage;
 import lib.aptamer.datastructures.SelectionCycle;
 import utilities.AptaColors;
 import utilities.AptaLogger;
@@ -209,6 +213,9 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 	@FXML
 	private CheckBox plotIncludeNegativeSelectionsCheckBox;
 	
+	@FXML
+	private ToggleGroup clusterOrderToggleGroup;
+	
 	/**
 	 * Instance of the pagination for the cluster table
 	 */
@@ -305,6 +312,32 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 	private String query_string;
 	
 	private boolean isInitialized = false;
+	
+
+	/**
+	 * Global access to the thread computing the logo and mutation chart data
+	 * Access is required because the thread need to be stopped if the user selects
+	 * a different cluster before these computations are completed.
+	 */
+	private Thread logo_thread = null;
+	
+	/**
+	 * Lazy loading caches for various data in this view 
+	 */
+	//Key: [CycleID]$["Size"|"Diversity"]
+	private GenericStorage<String, int[]> lazyCacheClusterIDs = null;
+	private GenericStorage<String, int[]> lazyCacheClusterCardinalities = null;
+	
+	//Key: ClusterID
+	private GenericStorage<Integer, int[]> lazyCacheAptamerIDs = null;
+	private GenericStorage<Integer, byte[]> lazyCachePoolClusterMembership = null;
+	private GenericStorage<Integer, byte[]> lazyCacheClusterMembership = null;
+	
+	//Key: ClusterID
+	private GenericStorage<Integer, double[]> lazyCacheLogoData = null;
+	private GenericStorage<Integer, double[]> lazyCacheMutationData = null;
+	
+	
 	
 	public Boolean isInitialized() {
 		
@@ -477,6 +510,8 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 	 */
 	private void loadClusterInformation(ProgressPaneController pp) {
 		
+				AptaLogger.log(Level.INFO, this.getClass(), "Loading Cluster Information (this process might take a while)");
+		
 				// Make sure we have cluster information at this point
 				boolean clusters_present = true;
 				if (experiment.getClusterContainer() == null)
@@ -493,6 +528,31 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 				if (clusters_present) {
 				
 					clusters = experiment.getClusterContainer();
+					
+					// Load the LazyCache if possible or create a new one
+					Path clusterDataPath = Paths.get(Configuration.getParameters().getString("Experiment.projectPath"),"clusterdata");
+					try {
+						
+						// Cluster Table
+						this.lazyCacheClusterIDs = new MapDBGenericStorage<String, int[]>(clusterDataPath, "lazycacheclusterids.mapdb", Serializer.STRING, Serializer.INT_ARRAY);
+						this.lazyCacheClusterCardinalities = new MapDBGenericStorage<String, int[]>(clusterDataPath, "lazycacheclustercardinalities.mapdb", Serializer.STRING, Serializer.INT_ARRAY);
+						
+						// Aptamer Table
+						this.lazyCacheAptamerIDs = new MapDBGenericStorage<Integer, int[]>(clusterDataPath, "lazycacheaptamerids.mapdb", Serializer.INTEGER, Serializer.INT_ARRAY);
+						this.lazyCachePoolClusterMembership = new MapDBGenericStorage<Integer, byte[]>(clusterDataPath, "lazycachepoolclustermembership.mapdb", Serializer.INTEGER, Serializer.BYTE_ARRAY);
+						this.lazyCacheClusterMembership = new MapDBGenericStorage<Integer, byte[]>(clusterDataPath, "lazycacheclustermembership.mapdb", Serializer.INTEGER, Serializer.BYTE_ARRAY);
+						
+						// Logo and Mutation Data
+						this.lazyCacheLogoData = new MapDBGenericStorage<Integer, double[]>(clusterDataPath, "lazycachelogodata.mapdb", Serializer.INTEGER, Serializer.DOUBLE_ARRAY);
+						this.lazyCacheMutationData = new MapDBGenericStorage<Integer, double[]>(clusterDataPath, "lazycachemutationdata.mapdb", Serializer.INTEGER, Serializer.DOUBLE_ARRAY);						
+						
+					}
+					catch (Exception e) {
+						
+						AptaLogger.log(Level.WARNING, this.getClass(), "Failed to load the LazyCache for Aptamer Families. Error:");
+						AptaLogger.log(Level.WARNING, this.getClass(), e);
+
+					}
 					
 					// Show the pane
 					clusterBorderPane.setVisible(true);
@@ -580,123 +640,146 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 		// We need a secondary array to store the counts
 		cardinalities = new int[numberOfClusters];
 		
-		// Initialize
-		for (int x=0; x<numberOfClusters; x++) {
+		// For the lazy cache, we need to use a combination key of
+		// cycle name and cardinality criteria
+		String combined_key = this.referenceSelectionCycleComboBox.getValue().getName() + "$" + (((RadioButton) clusterOrderToggleGroup.getSelectedToggle()).getText());
+		
+		//check if we have this required information precomputed in the lazy cache
+		if (this.lazyCacheClusterIDs.containsKey(combined_key)) {
 			
-			cardinalities[x] = 0;
-			cluster_ids[x] = x;
+			AptaLogger.log(Level.INFO, this.getClass(), "Loading information from the Lazy Cache");
+			
+			//we can directly set the cluster_ids and cardinality arrays
+			cluster_ids = this.lazyCacheClusterIDs.get(combined_key);
+			cardinalities = this.lazyCacheClusterCardinalities.get(combined_key);
 			
 		}
-
-		SelectionCycle reference_cycle = referenceSelectionCycleComboBox.getSelectionModel().getSelectedItem();
+		else {
 		
-		// We use a runnable to obtain a nice GUI update 
-		AtomicInteger progress = new AtomicInteger(0);
-		Double total = (double) Math.max( clusters.getSize(), reference_cycle.getUniqueSize() );
-		
-		Runnable get_cluster_information  = new Runnable() {
-
-			@Override
-			public void run() {
+			// Initialize
+			for (int x=0; x<numberOfClusters; x++) {
 				
-				// Fill cardinality array
-				if (clusterOrderSizeRadioButton.isSelected()) { // For size
+				cardinalities[x] = 0;
+				cluster_ids[x] = x;
+				
+			}
+	
+			SelectionCycle reference_cycle = referenceSelectionCycleComboBox.getSelectionModel().getSelectedItem();
+			
+			// We use a runnable to obtain a nice GUI update 
+			AtomicInteger progress = new AtomicInteger(0);
+			Double total = (double) Math.max( clusters.getSize(), reference_cycle.getUniqueSize() );
+			
+			Runnable get_cluster_information  = new Runnable() {
+	
+				@Override
+				public void run() {
 					
-					Iterator<Entry<Integer, Integer>> cluster_it = clusters.iterator().iterator();
-					Iterator<Entry<Integer, Integer>> cardinality_it = reference_cycle.iterator().iterator();
-					Entry<Integer, Integer> cluster_entry = cluster_it.next();
-					Entry<Integer, Integer> cardinality_entry = cardinality_it.next();
-					
-					
-					while ( cluster_it.hasNext() && cardinality_it.hasNext() ) { // Ids are sorted in both cases
-
-						progress.incrementAndGet();
-
-						if (cluster_entry.getKey() < cardinality_entry.getKey()) {
-							
-							cluster_entry = cluster_it.next();
-							
-						}
-						else if (cluster_entry.getKey() > cardinality_entry.getKey()){
-							
-							cardinality_entry = cardinality_it.next();
-							
-						}
+					// Fill cardinality array
+					if (clusterOrderSizeRadioButton.isSelected()) { // For size
 						
-						// Process
-						else {
-
-							cardinalities[cluster_entry.getValue()] += cardinality_entry.getValue();  
-							cluster_entry = cluster_it.next();
-							
-						}
-
-
-					}	
-							
-					
-				} else { //For Diversity
-					
-					Iterator<Entry<Integer, Integer>> cluster_it = clusters.iterator().iterator();
-					Iterator<Entry<Integer, Integer>> cardinality_it = reference_cycle.iterator().iterator();
-					Entry<Integer, Integer> cluster_entry = cluster_it.next();
-					Entry<Integer, Integer> cardinality_entry = cardinality_it.next();
-					
-					while ( cluster_it.hasNext() && cardinality_it.hasNext() ) { // Ids are sorted in both cases
-
-						progress.incrementAndGet();
+						Iterator<Entry<Integer, Integer>> cluster_it = clusters.iterator().iterator();
+						Iterator<Entry<Integer, Integer>> cardinality_it = reference_cycle.iterator().iterator();
+						Entry<Integer, Integer> cluster_entry = cluster_it.next();
+						Entry<Integer, Integer> cardinality_entry = cardinality_it.next();
 						
-						if (cluster_entry.getKey() < cardinality_entry.getKey()) {
-							
-							cluster_entry = cluster_it.next();
-							
-						}
-						else if (cluster_entry.getKey() > cardinality_entry.getKey()){
-							
-							cardinality_entry = cardinality_it.next();
-							
-						}
 						
-						else {
-
-							cardinalities[cluster_entry.getValue()] += 1;  
-							cluster_entry = cluster_it.next();
+						while ( cluster_it.hasNext() && cardinality_it.hasNext() ) { // Ids are sorted in both cases
+	
+							progress.incrementAndGet();
+	
+							if (cluster_entry.getKey() < cardinality_entry.getKey()) {
+								
+								cluster_entry = cluster_it.next();
+								
+							}
+							else if (cluster_entry.getKey() > cardinality_entry.getKey()){
+								
+								cardinality_entry = cardinality_it.next();
+								
+							}
 							
-						}
+							// Process
+							else {
+	
+								cardinalities[cluster_entry.getValue()] += cardinality_entry.getValue();  
+								cluster_entry = cluster_it.next();
+								
+							}
+	
+	
+						}	
+								
 						
-					}		
+					} else { //For Diversity
+						
+						Iterator<Entry<Integer, Integer>> cluster_it = clusters.iterator().iterator();
+						Iterator<Entry<Integer, Integer>> cardinality_it = reference_cycle.iterator().iterator();
+						Entry<Integer, Integer> cluster_entry = cluster_it.next();
+						Entry<Integer, Integer> cardinality_entry = cardinality_it.next();
+						
+						while ( cluster_it.hasNext() && cardinality_it.hasNext() ) { // Ids are sorted in both cases
+	
+							progress.incrementAndGet();
+							
+							if (cluster_entry.getKey() < cardinality_entry.getKey()) {
+								
+								cluster_entry = cluster_it.next();
+								
+							}
+							else if (cluster_entry.getKey() > cardinality_entry.getKey()){
+								
+								cardinality_entry = cardinality_it.next();
+								
+							}
+							
+							else {
+	
+								cardinalities[cluster_entry.getValue()] += 1;  
+								cluster_entry = cluster_it.next();
+								
+							}
+							
+						}		
+						
+					}
 					
 				}
 				
-			}
+			};
 			
-		};
-		
-		Thread get_cluster_information_thread = new Thread(get_cluster_information);
-		get_cluster_information_thread.start();
-		
-		while (get_cluster_information_thread.isAlive() && !get_cluster_information_thread.isInterrupted()) {
-			try {
-				pp.setProgress(progress.doubleValue()/total);
-				pp.setProgressLabel(String.format("%.2f%% Completed.", (progress.doubleValue()/total)*100.0));
-				
-				// Once every half a second should suffice
-				Thread.sleep(500);
-				
-			} catch (InterruptedException ie) {
-				break;
+			Thread get_cluster_information_thread = new Thread(get_cluster_information);
+			get_cluster_information_thread.start();
+			
+			while (get_cluster_information_thread.isAlive() && !get_cluster_information_thread.isInterrupted()) {
+				try {
+					pp.setProgress(progress.doubleValue()/total);
+					pp.setProgressLabel(String.format("%.2f%% Completed.", (progress.doubleValue()/total)*100.0));
+					
+					// Once every half a second should suffice
+					Thread.sleep(500);
+					
+				} catch (InterruptedException ie) {
+					break;
+				}
 			}
+	
+			// Last Update
+			pp.setProgress(1.0);
+			pp.setProgressLabel(String.format("%.2f%% Completed.", (progress.doubleValue()/total)*100.0));
+			
+			
+			AptaLogger.log(Level.INFO, this.getClass(), "Sorting Clusters");
+			
+			// Sort the cluster id array according to the cardinalities
+			Quicksort.sort(cluster_ids, cardinalities, Quicksort.DescendingQSComparator());
+		
+			// Add this result to the lazy cache
+			AptaLogger.log(Level.INFO, this.getClass(), "Storing information in the Lazy Cache");
+			this.lazyCacheClusterIDs.put(combined_key, cluster_ids);
+			this.lazyCacheClusterCardinalities.put(combined_key, cardinalities);
+			
 		}
-
-		// Last Update
-		pp.setProgress(1.0);
-		pp.setProgressLabel(String.format("%.2f%% Completed.", (progress.doubleValue()/total)*100.0));
-		
-		
-		AptaLogger.log(Level.INFO, this.getClass(), "Sorting Clusters");
-		
-		// Sort the cluster id array according to the cardinalities
-		Quicksort.sort(cluster_ids, cardinalities, Quicksort.DescendingQSComparator());
 		
 		// Set the number of items to display
 		total_cluster_table_items = cluster_ids.length;
@@ -719,7 +802,7 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 		id_column.setCellValueFactory(param -> param.getValue().getId());
 		id_column.setStyle( "-fx-alignment: CENTER-LEFT;");
 		
-		// Aptamer Sequence
+		// Cluster Size or Diversity
 		TableColumn<ClusterTableRowData, Integer> cardinality_column = new TableColumn<>("Cluster " + (this.clusterOrderSizeRadioButton.isSelected() ? "Size" : "Diversity"));
 		cardinality_column.setCellValueFactory(param -> param.getValue().getCardinality());
 		cardinality_column.setStyle( "-fx-alignment: CENTER-LEFT;" );
@@ -793,7 +876,7 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 	 * from the cluster table
 	 */
 	private void loadSelectedClusterDetails() {
-		
+
 		ProgressPaneController pp = ProgressPaneController.getProgressPane(null, this.rootStackPane);
 		
 		Runnable logic = new Runnable() {
@@ -804,7 +887,10 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 				// Clear any previous content from the Cardinality Chart and Cluster Enrichment
 				Platform.runLater( () -> {
 					cardinalityLineChart.getData().clear();
-					clusterComparisonScatterChart.getData().clear();				
+					clusterComparisonScatterChart.getData().clear();	
+					mutationStackedBarchart.getData().clear();
+					sequenceLogoStackPane.getChildren().clear();
+					clusterCardinalityBarChart.getData().clear();
 				});
 				
 				// Get the selected cluster index
@@ -817,7 +903,14 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 				createSequenceTable();
 				initializeSequenceTablePagination();
 
-				// Then the remaining elements, in a separate thread 
+				// Then the remaining elements, in a separate thread. Make sure we have 
+				// properly stopped any previously running thread.
+				if (logo_thread != null && logo_thread.isAlive()) {
+					
+					logo_thread.interrupt();
+					
+				}
+				
 				Thread thread = new Thread(new Runnable() {
 
 					@Override
@@ -828,23 +921,32 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 						ppl2.setShowLogs(false);
 						ppl2.run();
 						
-						ProgressPaneController ppl = ProgressPaneController.getProgressPane(new Runnable() {
+						ProgressPaneController ppl = ProgressPaneController.getProgressPane(null, mutationRatesStackPane, ppl2);
+
+						Runnable logic2 = new Runnable() {
 							
 							@Override
 							public void run() {
-								createLogoAndMutationPanels();
+								createLogoAndMutationPanels(ppl);
 							}
 						
-						}, mutationRatesStackPane, ppl2);
+						};
 						
+						ppl.setLogic(logic2);
 						ppl.setShowLogs(false);
+						ppl.setShowProgressBar(true);
+						ppl.setProgress(0);
+						ppl.setProgressLabel("Completed 0%");
 						ppl.run();
+						
+						// we need to be able to interrupt
+						logo_thread = ppl.getTaskThread();
 						
 					}
 				});
 				thread.start();
 				
-				// Compute the cardinality bar charts
+				// Compute the cluster cardinality bar charts
 				Thread thread2 = new Thread(new Runnable() {
 
 					@Override
@@ -1240,8 +1342,8 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 			Number cluster_size_value = (raw_size.intValue() / (double) cycle.getUniqueSize()) * 1000000;
 			cluster_sizes.getData().add(new XYChart.Data<String,Number>( cycle_label , cluster_size_value));
 			
-			Number enriched_count_value = (raw_diversity.intValue() / (double) cycle.getUniqueSize()) * 1000000;
-			cluster_diversities.getData().add(new XYChart.Data<String,Number>( cycle_label , enriched_count_value));
+			Number cluster_diversity_value = (raw_diversity.intValue() / (double) cycle.getUniqueSize()) * 1000000;
+			cluster_diversities.getData().add(new XYChart.Data<String,Number>( cycle_label , cluster_diversity_value));
 			
 		}
 		
@@ -1273,9 +1375,9 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 	/**
 	 * Creates the sequence cluster logo and the mutation barcharts associated with the selected 
 	 * cluster
-	 * @param cluster_membership
+	 * @param pp 
 	 */
-	private void createLogoAndMutationPanels() {
+	private void createLogoAndMutationPanels(ProgressPaneController ppl) {
 		
 		// Used to quickly map byte to indices
 		HashMap<Byte,Integer> index_mapping = new HashMap<Byte,Integer>();
@@ -1291,60 +1393,129 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 		byte[] seed = pool.getAptamer(this.aptamer_ids[0]);
 		AptamerBounds seed_bounds = pool.getAptamerBounds(this.aptamer_ids[0]);
 		
-		//AptamerBounds bound = experiment.getAptamerPool().getAptamerBounds(this.sequenceTableView.getItems().get(0).getId().getValue());
-		
 		// Determine the size of the randomized region based on the sequece table content
 		int randomized_region_size = seed_bounds.endIndex - seed_bounds.startIndex;
 		
 		// Initialize logo and mutation data structures
 		double[][] logo_data = new double[4][randomized_region_size];
 		double[][] mutation_data = new double[4][randomized_region_size];
-			
-		Iterator<Entry<Integer, byte[]>> pool_it = pool.inverse_view_iterator().iterator();
-		Iterator<Entry<Integer, Integer>> cardinality_it = reference_cycle.iterator().iterator();
-		Entry<Integer, byte[]> pool_entry = pool_it.next();
-		Entry<Integer, Integer> cardinality_entry = cardinality_it.next();
 		
-		while ( pool_it.hasNext() && cardinality_it.hasNext() ) { // Ids are sorted in both cases
-
-			if (pool_entry.getKey() < cardinality_entry.getKey()) {
-				
-				pool_entry = pool_it.next();
-				
-			}
-			else if (pool_entry.getKey() > cardinality_entry.getKey()) {
-				
-				cardinality_entry = cardinality_it.next();
-				
-			}
+		// Cluster ID
+		int cluster_id = this.clusterTableView.getSelectionModel().getSelectedItem().getId().getValue();
+		
+		if ( this.lazyCacheLogoData.containsKey( cluster_id) ) { //lazy loading
 			
-			else { // aptamer is in the referece cycle
-
-				if ( cluster_membership.get(pool_entry.getKey()) ) {
+			// Load from lazy cache
+			double[] logo_data_serialized = lazyCacheLogoData.get(cluster_id);
+			ppl.setProgress(0.25);
+			ppl.setProgressLabel("Completed 25%");
+			
+			double[] mutation_data_serialized = lazyCacheMutationData.get(cluster_id);
+			ppl.setProgress(0.50);
+			ppl.setProgressLabel("Completed 50%");
+			
+			System.arraycopy(logo_data_serialized, 0*randomized_region_size, logo_data[0], 0, randomized_region_size);
+			System.arraycopy(logo_data_serialized, 1*randomized_region_size, logo_data[1], 0, randomized_region_size);
+			System.arraycopy(logo_data_serialized, 2*randomized_region_size, logo_data[2], 0, randomized_region_size);
+			System.arraycopy(logo_data_serialized, 3*randomized_region_size, logo_data[3], 0, randomized_region_size);
+			
+			System.arraycopy(mutation_data_serialized, 0*randomized_region_size, mutation_data[0], 0, randomized_region_size);
+			System.arraycopy(mutation_data_serialized, 1*randomized_region_size, mutation_data[1], 0, randomized_region_size);
+			System.arraycopy(mutation_data_serialized, 2*randomized_region_size, mutation_data[2], 0, randomized_region_size);
+			System.arraycopy(mutation_data_serialized, 3*randomized_region_size, mutation_data[3], 0, randomized_region_size);
+			
+			ppl.setProgress(0.55);
+			ppl.setProgressLabel("Completed 55%");
+			
+		}		
+		else { // no data in lazy cache
+			
+			Iterator<Entry<Integer, byte[]>> pool_it = pool.inverse_view_iterator().iterator();
+			Iterator<Entry<Integer, Integer>> cardinality_it = reference_cycle.iterator().iterator();
+			Entry<Integer, byte[]> pool_entry = pool_it.next();
+			Entry<Integer, Integer> cardinality_entry = cardinality_it.next();
+			
+			int counter = 0;
+			double max = 2*reference_cycle.getUniqueSize();
+			while ( pool_it.hasNext() && cardinality_it.hasNext() ) { // Ids are sorted in both cases
+	
+				// update UI
+				if (counter % 1000 == 0) {
+					
+					ppl.setProgress(counter / max);
+					ppl.setProgressLabel("Completed " + (int)( (counter / max) * 100) + "%");
+					
+				}
 				
-					int cardinality = cardinality_entry.getValue();
-					byte[] sequence = pool_entry.getValue();
+				
+				// check if we should cancel this action
+				if (this.logo_thread.isInterrupted()) {
 					
-					for (int i = seed_bounds.startIndex, j=0; i<seed_bounds.endIndex; i++,j++) {
+					return;
 					
-						// Frequency plot
-						logo_data[index_mapping.get(sequence[i])][j] += (double)cardinality / cluster_membership.cardinality();
+				}
+				
+				if (pool_entry.getKey() < cardinality_entry.getKey()) {
+					
+					pool_entry = pool_it.next();
+					
+				}
+				else if (pool_entry.getKey() > cardinality_entry.getKey()) {
+					
+					cardinality_entry = cardinality_it.next();
+					counter++;
+					
+				}
+				
+				else { // aptamer is in the referece cycle
+	
+					if ( cluster_membership.get(pool_entry.getKey()) ) {
+					
+						int cardinality = cardinality_entry.getValue();
+						byte[] sequence = pool_entry.getValue();
 						
-						// Mutation plot
-						if (sequence[i] != seed[i]) {
+						for (int i = seed_bounds.startIndex, j=0; i<seed_bounds.endIndex; i++,j++) {
+						
+							// Frequency plot
+							logo_data[index_mapping.get(sequence[i])][j] += (double)cardinality / cluster_membership.cardinality();
 							
-							mutation_data[index_mapping.get(sequence[i])][j] += (double)cardinality / cluster_membership.cardinality();
-							
+							// Mutation plot
+							if (sequence[i] != seed[i]) {
+								
+								mutation_data[index_mapping.get(sequence[i])][j] += (double)cardinality / cluster_membership.cardinality();
+								
+							}
+						
 						}
 					
 					}
-				
+					
+					// Advance the iterators
+					pool_entry = pool_it.next();
+					
 				}
 				
-				// Advance the iterators
-				pool_entry = pool_it.next();
-				
 			}
+		
+			// Add to lazy cache
+			double[] logo_data_serialized = new double[4*randomized_region_size];
+			double[] mutation_data_serialized = new double[4*randomized_region_size];
+			
+			System.arraycopy(logo_data[0], 0, logo_data_serialized, 0*randomized_region_size, randomized_region_size);
+			System.arraycopy(logo_data[1], 0, logo_data_serialized, 1*randomized_region_size, randomized_region_size);
+			System.arraycopy(logo_data[2], 0, logo_data_serialized, 2*randomized_region_size, randomized_region_size);
+			System.arraycopy(logo_data[3], 0, logo_data_serialized, 3*randomized_region_size, randomized_region_size);
+			
+			System.arraycopy(mutation_data[0], 0, mutation_data_serialized, 0*randomized_region_size, randomized_region_size);
+			System.arraycopy(mutation_data[1], 0, mutation_data_serialized, 1*randomized_region_size, randomized_region_size);
+			System.arraycopy(mutation_data[2], 0, mutation_data_serialized, 2*randomized_region_size, randomized_region_size);
+			System.arraycopy(mutation_data[3], 0, mutation_data_serialized, 3*randomized_region_size, randomized_region_size);
+			
+			lazyCacheLogoData.put(cluster_id, logo_data_serialized);
+			lazyCacheMutationData.put(cluster_id, mutation_data_serialized);
+			
+			ppl.setProgress(0.55);
+			ppl.setProgressLabel("Completed 55%");
 			
 		}
 		
@@ -1380,6 +1551,9 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 			
 		});
 		
+		ppl.setProgress(0.75);
+		ppl.setProgressLabel("Completed 75%");
+		
 		// Prepare data for stacked mutation plot
 		XYChart.Series<String, Number> A = new XYChart.Series<String, Number>();
 		A.setName("A");
@@ -1402,11 +1576,15 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 		// Visualize sequence logo
 		Platform.runLater(() -> {
 			
+			mutationStackedBarchart.getData().clear();
 			mutationStackedBarchart.getData().setAll(A,C,G,T);
 			mutationStackedBarchart.getXAxis().setLabel("Nucleotide Position");
 			mutationStackedBarchart.getYAxis().setLabel("Mutation Frequency");
 			
 		});
+		
+		ppl.setProgress(1.0);
+		ppl.setProgressLabel("Completed 100%");
 		
 	}
 	
@@ -1433,6 +1611,30 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 
 		AtomicInteger progress = new AtomicInteger(0);
 		AtomicInteger total = new AtomicInteger(Math.max( clusters.getSize(), reference_cycle.getUniqueSize() ));
+		
+		Runnable get_cluster_information_lazy = new Runnable() {
+
+			@Override
+			public void run() {
+				
+				AptaLogger.log(Level.INFO, this.getClass(), "Loading cluster data from Lazy Cache");
+				total.set(3);				
+				
+				AptaLogger.log(Level.INFO, this.getClass(), "Loading Aptamer Pool Memberships");
+				pool_cluster_membership = BitSet.valueOf(lazyCachePoolClusterMembership.get(cluster_id));
+				progress.incrementAndGet();
+				
+				AptaLogger.log(Level.INFO, this.getClass(), "Loading Aptamer Cluster Memberships");
+				cluster_membership = BitSet.valueOf(lazyCacheClusterMembership.get(cluster_id));
+				progress.incrementAndGet();
+				
+				AptaLogger.log(Level.INFO, this.getClass(), "Loading Aptamer IDs");
+				aptamer_ids = lazyCacheAptamerIDs.get(cluster_id);
+				progress.incrementAndGet();
+				
+			}
+			
+		};
 		
 		Runnable get_cluster_information = new Runnable() {
 
@@ -1553,12 +1755,24 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 				Quicksort.sort(aptamer_ids, counts, Quicksort.DescendingQSComparator());
 				counts = null;
 				
+				// Store into Lazy Cache
+				AptaLogger.log(Level.INFO, this.getClass(), "Storing Aptamer Pool Memberships in Lazy Cache");
+				lazyCachePoolClusterMembership.put(cluster_id, pool_cluster_membership.toByteArray());
+				progress.incrementAndGet();
+				
+				AptaLogger.log(Level.INFO, this.getClass(), "Storing Aptamer Cluster Memberships in Lazy Cache");
+				lazyCacheClusterMembership.put(cluster_id, cluster_membership.toByteArray());
+				progress.incrementAndGet();
+				
+				AptaLogger.log(Level.INFO, this.getClass(), "Storing Aptamer IDs in Lazy Cache");
+				lazyCacheAptamerIDs.put(cluster_id, aptamer_ids);
+				
 			}
 			
 		};
 		
 		
-		Thread get_cluster_information_thread = new Thread(get_cluster_information);
+		Thread get_cluster_information_thread = new Thread( this.lazyCacheClusterMembership.containsKey(cluster_id) ? get_cluster_information_lazy : get_cluster_information);
 		get_cluster_information_thread.start();
 		
 		while (get_cluster_information_thread.isAlive() && !get_cluster_information_thread.isInterrupted()) {
@@ -1603,74 +1817,104 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 		SelectionCycle reference = this.referenceSelectionCycleComboBox.getValue();
 		Boolean log = this.clusterEnrichmentScaleLogarithmicRadioButton.isSelected();
 		
-		XYChart.Series series = new XYChart.Series();
+		ProgressPaneController pp = ProgressPaneController.getProgressPane(null, this.clusterEnrichmentStackPane);
 		
-		// Keep track of the max value to scale the plot equally on both axis
-		double max = 0;
-		
-		// Iterate over the aptamer ids of there reference cycle and compute the CMP values
-		for (int id : this.aptamer_ids) {
+		Runnable logic = new Runnable() {
 			
-			Number cmpX = (reference.getAptamerCardinality(id) / (double) reference.getSize()) * 1000000;
-			Number cmpY = (compare_to.getAptamerCardinality(id) / (double) compare_to.getSize()) * 1000000;
+			@Override
+			public void run() {
+				
+				XYChart.Series series = new XYChart.Series();
+				
+				// Keep track of the max value to scale the plot equally on both axis
+				double max = 0;
+				
+				// Iterate over the aptamer ids of there reference cycle and compute the CMP values
+				int counter = 0;
+				for (int id : aptamer_ids) {
+					
+					//update UI
+					if (counter % 100 == 0) {
+						
+						pp.setProgress(counter / (double)aptamer_ids.length );
+						pp.setProgressLabel("Completed " + (int)((counter / (double)aptamer_ids.length) * 100) + "%");
+						
+					}
+					
+					Number cmpX = (reference.getAptamerCardinality(id) / (double) reference.getSize()) * 1000000;
+					Number cmpY = (compare_to.getAptamerCardinality(id) / (double) compare_to.getSize()) * 1000000;
+					
+					// Scale to log if required
+					if (log) {
+						
+						cmpX = Math.log(cmpX.doubleValue());
+						cmpY = Math.log(cmpY.doubleValue());
+						
+					}
+					
+					series.getData().add(new XYChart.Data(cmpX , cmpY));
+					
+					max = Math.max(max, cmpX.doubleValue());
+					max = Math.max(max, cmpY.doubleValue());
+					
+					counter++;
+				}
+				
+				// Compute the upper bound so that the ticks are rounded
+				String str_max = ((int)max)+"";
+				StringBuilder sb = new StringBuilder();
+				sb.append("1");
+				for (int x=0; x<str_max.length(); x++) {
+					
+					sb.append("0");
+					
+				}
+				int upper_bound = Integer.parseInt(sb.toString());
+				
+
+				((NumberAxis) clusterComparisonScatterChart.getXAxis()).setAutoRanging(false);
+				((NumberAxis) clusterComparisonScatterChart.getYAxis()).setAutoRanging(false);
+				
+				((NumberAxis) clusterComparisonScatterChart.getXAxis()).setUpperBound((((int)max+5)/10)*10);
+				((NumberAxis) clusterComparisonScatterChart.getYAxis()).setUpperBound((((int)max+5)/10)*10);
+				
+				if (!log) {
+					((NumberAxis) clusterComparisonScatterChart.getXAxis()).setTickUnit((int)(upper_bound/10));
+					((NumberAxis) clusterComparisonScatterChart.getYAxis()).setTickUnit((int)(upper_bound/10));
+					
+					((NumberAxis) clusterComparisonScatterChart.getXAxis()).setMinorTickVisible(false);
+					((NumberAxis) clusterComparisonScatterChart.getYAxis()).setMinorTickVisible(false);
+				} else
+				{
+					
+					((NumberAxis) clusterComparisonScatterChart.getXAxis()).setTickUnit((int)(upper_bound/100));
+					((NumberAxis) clusterComparisonScatterChart.getYAxis()).setTickUnit((int)(upper_bound/100));
+					
+					((NumberAxis) clusterComparisonScatterChart.getXAxis()).setMinorTickVisible(true);
+					((NumberAxis) clusterComparisonScatterChart.getYAxis()).setMinorTickVisible(true);
+					
+				}
+				
+				Platform.runLater(() -> {
+				
+					clusterComparisonScatterChart.getData().setAll(series); 
+					clusterComparisonScatterChart.getXAxis().setLabel(reference.getName() + " (CMP)");
+					clusterComparisonScatterChart.getYAxis().setLabel(compare_to.getName() + " (CMP)");
+								
+				});
 			
-			// Scale to log if required
-			if (log) {
-				
-				cmpX = Math.log(cmpX.doubleValue());
-				cmpY = Math.log(cmpY.doubleValue());
-				
+				pp.setProgress(1);
+				pp.setProgressLabel("Completed 100%");
 			}
 			
-			series.getData().add(new XYChart.Data(cmpX , cmpY));
-			
-			max = Math.max(max, cmpX.doubleValue());
-			max = Math.max(max, cmpY.doubleValue());
-			
-		}
+		};
 		
-		// Compute the upper bound so that the ticks are rounded
-		String str_max = ((int)max)+"";
-		StringBuilder sb = new StringBuilder();
-		sb.append("1");
-		for (int x=0; x<str_max.length(); x++) {
-			
-			sb.append("0");
-			
-		}
-		int upper_bound = Integer.parseInt(sb.toString());
-		
-
-		((NumberAxis) this.clusterComparisonScatterChart.getXAxis()).setAutoRanging(false);
-		((NumberAxis) this.clusterComparisonScatterChart.getYAxis()).setAutoRanging(false);
-		
-		((NumberAxis) this.clusterComparisonScatterChart.getXAxis()).setUpperBound((((int)max+5)/10)*10);
-		((NumberAxis) this.clusterComparisonScatterChart.getYAxis()).setUpperBound((((int)max+5)/10)*10);
-		
-		if (!log) {
-			((NumberAxis) this.clusterComparisonScatterChart.getXAxis()).setTickUnit((int)(upper_bound/10));
-			((NumberAxis) this.clusterComparisonScatterChart.getYAxis()).setTickUnit((int)(upper_bound/10));
-			
-			((NumberAxis) this.clusterComparisonScatterChart.getXAxis()).setMinorTickVisible(false);
-			((NumberAxis) this.clusterComparisonScatterChart.getYAxis()).setMinorTickVisible(false);
-		} else
-		{
-			
-			((NumberAxis) this.clusterComparisonScatterChart.getXAxis()).setTickUnit((int)(upper_bound/100));
-			((NumberAxis) this.clusterComparisonScatterChart.getYAxis()).setTickUnit((int)(upper_bound/100));
-			
-			((NumberAxis) this.clusterComparisonScatterChart.getXAxis()).setMinorTickVisible(true);
-			((NumberAxis) this.clusterComparisonScatterChart.getYAxis()).setMinorTickVisible(true);
-			
-		}
-		
-		Platform.runLater(() -> {
-		
-			this.clusterComparisonScatterChart.getData().setAll(series); 
-			this.clusterComparisonScatterChart.getXAxis().setLabel(reference.getName() + " (CMP)");
-			this.clusterComparisonScatterChart.getYAxis().setLabel(compare_to.getName() + " (CMP)");
-						
-		});
+		pp.setLogic(logic);
+		pp.setShowProgressBar(true);
+		pp.setProgressLabel("Completed 0%");
+		pp.setProgress(0);
+		pp.setShowLogs(false);
+		pp.run();
 		
 	}
 	
@@ -1786,6 +2030,9 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 			
 			// We need to close all possible channels to the cluster database
 			experiment.getClusterContainer().close();
+			
+			// We also need to close any lazy cache hanldes
+			this.closeLazyCaches();
 		}
 		
 		
@@ -1979,6 +2226,21 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 	 */
 	public RadioButton getCmpRadioButton() {
 		return cmpRadioButton;
+	}
+	
+	/**
+	 * Closes all file handles to the storage 
+	 */
+	private void closeLazyCaches() {
+		
+		lazyCacheClusterIDs.close();
+		lazyCacheClusterCardinalities.close();
+		lazyCacheAptamerIDs.close();
+		lazyCachePoolClusterMembership.close();
+		lazyCacheClusterMembership.close();
+		lazyCacheLogoData.close();
+		lazyCacheMutationData.close();
+		
 	}
 	
 }

@@ -80,6 +80,11 @@ public class ProgressPaneController {
 	private ProgressPaneController[] auxiliaryProgressPaneControllers;
 	
 	/**
+	 * The thread in which the task will run in 
+	 */
+	private Thread work = null;
+	
+	/**
 	 * Factory which instantiates a new progressPane and returns the corresponding 
 	 * controller which allows to interact with it
 	 * @return
@@ -161,7 +166,7 @@ public class ProgressPaneController {
 		});
 		
 		// Do the work
-		Thread work = new Thread(task);
+		work = new Thread(task);
 		work.start();
 		
 	}
@@ -362,6 +367,16 @@ public class ProgressPaneController {
 			});
 			
 		}
+	}
+	
+	/**
+	 * Returns the Thread in which the task is running in. 
+	 * @return Thread or null if run() has not been started yet
+	 */
+	public Thread getTaskThread() {
+		
+		return this.work;
+		
 	}
 	
 }
