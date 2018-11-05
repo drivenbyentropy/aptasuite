@@ -37,11 +37,13 @@ public class AptaLogger {
   		// Make sure the log folder exists and create it if not
       	String projectPath = Configuration.getParameters().getString("Experiment.projectPath");
       	
-    	if ( projectPath == null ) {
+    	if ( projectPath == null || !Paths.get(projectPath).toAbsolutePath().toFile().exists()) {
     		
     		throw new IOException("The Experiment.projectPath variable is not set yet.");
     		
     	}
+    	
+    	
 
   		Path logPath = Paths.get(projectPath, "logs");
   		

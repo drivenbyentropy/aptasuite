@@ -322,6 +322,24 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 	private Thread logo_thread = null;
 	
 	/**
+	 * Used to prematurely terminate computations if the user changes clusters
+	 */
+	private boolean logoThreadInterrupted = false;
+	
+	/**
+	 * Global access to the thread computing the cycle cardinality chart data
+	 * Access is required because the thread need to be stopped if the user selects
+	 * a different cluster before these computations are completed.
+	 */
+	private Thread cardinality_thread = null;
+	
+	/**
+	 * Used to prematurely terminate computations if the user changes clusters
+	 */
+	private boolean cardinalityThreadInterrupted = false;
+	
+	
+	/**
 	 * Lazy loading caches for various data in this view 
 	 */
 	//Key: [CycleID]$["Size"|"Diversity"]
@@ -337,7 +355,8 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 	private GenericStorage<Integer, double[]> lazyCacheLogoData = null;
 	private GenericStorage<Integer, double[]> lazyCacheMutationData = null;
 	
-	
+	//Key: ClusterID
+	private GenericStorage<Integer, long[]> lazyCacheClusterCardinalityData = null;
 	
 	public Boolean isInitialized() {
 		
@@ -546,6 +565,8 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 						this.lazyCacheLogoData = new MapDBGenericStorage<Integer, double[]>(clusterDataPath, "lazycachelogodata.mapdb", Serializer.INTEGER, Serializer.DOUBLE_ARRAY);
 						this.lazyCacheMutationData = new MapDBGenericStorage<Integer, double[]>(clusterDataPath, "lazycachemutationdata.mapdb", Serializer.INTEGER, Serializer.DOUBLE_ARRAY);						
 						
+						// Cluster Cardiniality Chart
+						this.lazyCacheClusterCardinalityData = new MapDBGenericStorage<Integer, long[]>(clusterDataPath, "lazycacheclustercardinalitydata.mapdb", Serializer.INTEGER, Serializer.LONG_ARRAY);
 					}
 					catch (Exception e) {
 						
@@ -905,11 +926,18 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 
 				// Then the remaining elements, in a separate thread. Make sure we have 
 				// properly stopped any previously running thread.
+//				if (logo_thread != null && logo_thread.isAlive()) {
+//					
+//					logo_thread.interrupt();
+//					
+//				}
 				if (logo_thread != null && logo_thread.isAlive()) {
 					
-					logo_thread.interrupt();
+					logoThreadInterrupted = true;
 					
-				}
+				}				
+				
+				
 				
 				Thread thread = new Thread(new Runnable() {
 
@@ -927,6 +955,7 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 							
 							@Override
 							public void run() {
+								
 								createLogoAndMutationPanels(ppl);
 							}
 						
@@ -941,10 +970,18 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 						
 						// we need to be able to interrupt
 						logo_thread = ppl.getTaskThread();
-						
+
 					}
+					
 				});
+				
 				thread.start();
+				
+				if ( cardinality_thread != null && cardinality_thread.isAlive()) {
+					
+					cardinalityThreadInterrupted = true;
+					
+				}	
 				
 				// Compute the cluster cardinality bar charts
 				Thread thread2 = new Thread(new Runnable() {
@@ -953,18 +990,25 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 					public void run() {
 						
 						
-						ProgressPaneController ppl = ProgressPaneController.getProgressPane(new Runnable() {
+						ProgressPaneController ppl = ProgressPaneController.getProgressPane(null, clusterCardinalityBarChartStackPane);
+						
+						Runnable logic = new Runnable() {
 							
 							@Override
 							public void run() {
-								createClusterCardinalityPanel();
+								createClusterCardinalityPanel(ppl);
 							}
 						
-						}, clusterCardinalityBarChartStackPane);
+						};
 						
+						ppl.setLogic(logic);
 						ppl.setShowLogs(false);
+						ppl.setShowProgressBar(true);
 						ppl.run();
 						
+						// we need to be able to interrupt
+						cardinality_thread = ppl.getTaskThread();
+
 					}
 				});
 				thread2.start();
@@ -1307,7 +1351,10 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 	/**
 	 * Creates the plots for the cluster cardinality panel
 	 */
-	private void createClusterCardinalityPanel() {
+	private void createClusterCardinalityPanel(ProgressPaneController ppl) {
+		
+		ppl.setProgress(0);
+		ppl.setProgressLabel("Initializing...");
 		
 		List<SelectionCycle> cycles = experiment.getAllSelectionCycles();
 		
@@ -1316,26 +1363,103 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 		
 		Series<String, Number> cluster_diversities = new XYChart.Series();
 		cluster_diversities.setName("Cluster Diversities (CPM)");
+		
+		// Cluster ID
+		int cluster_id = this.clusterTableView.getSelectionModel().getSelectedItem().getId().getValue();
+		
+		long[] cluster_data = null;
+		
+		if ( lazyCacheClusterCardinalityData.containsKey( cluster_id) ) { //lazy loading
+		
+			AptaLogger.log(Level.INFO, this.getClass(), "Loading Cycle Cardinality Information from Lazy Cache");
+			
+			ppl.setProgressLabel("Loading data from Cache.");
+			cluster_data = lazyCacheClusterCardinalityData.get( cluster_id );
+		
+		}
+		else { // we need to compute
+			
+			AptaLogger.log(Level.INFO, this.getClass(), "Calculatig Cycle Cardinality Information");
+			
+			// Determine the number of non-null cycles
+			int num_cycles = 0;
+			for (SelectionCycle cycle : cycles) {
 				
+				// Skip non-existing cycles
+				if (cycle == null) continue;
+				
+				num_cycles++;
+				
+			}
+			
+			ppl.setProgressLabel("Computing cluster size and diversities. Completed 0%");
+			
+			// Compute the values
+			int idx = 0;
+			cluster_data = new long[2*num_cycles];
+			
+			for (SelectionCycle cycle : cycles) {
+				
+				// Skip non-existing cycles
+				if (cycle == null) continue;
+				
+				Iterable<Entry<Integer, Integer>> cycle_it = cycle.iterator();
+				Integer raw_size = 0;
+				Integer raw_diversity = 0;
+				
+				for (Entry<Integer,Integer> item : cycle_it) {
+					
+					// stop computation if required
+					if(cardinalityThreadInterrupted) {
+						
+						cardinalityThreadInterrupted = false;
+						return;
+						
+					}
+					
+					if (this.pool_cluster_membership.get(item.getKey())) {
+						
+						raw_size += item.getValue();
+						raw_diversity++;
+						
+					}
+					
+				}
+				
+				cluster_data[idx++] = raw_size;
+				cluster_data[idx++] = raw_diversity;
+				
+				ppl.setProgress(idx / ((double) cluster_data.length+1));
+				ppl.setProgressLabel("Computing cluster size and diversities. Completed " + ((int) (idx / ((double) cluster_data.length+1)*100) )  + "%");
+				
+			}
+			
+			// Store in lazy cache
+			ppl.setProgressLabel("Storing data in LazyCache");
+			lazyCacheClusterCardinalityData.put(cluster_id, cluster_data);
+			
+		}
+		
+		// now visualize
+		ppl.setProgress(0.99);
+		ppl.setProgressLabel("Visualizing.");
+		int idx = 0;
 		for (SelectionCycle cycle : cycles) {
+			
+			// stop computation if required
+			if(cardinalityThreadInterrupted) {
+				
+				cardinalityThreadInterrupted = false;
+				return;
+				
+			}
+			
 			
 			// Skip non-existing cycles
 			if (cycle == null) continue;
 			
-			Iterable<Entry<Integer, Integer>> cycle_it = cycle.iterator();
-			Integer raw_size = 0;
-			Integer raw_diversity = 0;
-			
-			for (Entry<Integer,Integer> item : cycle_it) {
-				
-				if (this.pool_cluster_membership.get(item.getKey())) {
-					
-					raw_size += item.getValue();
-					raw_diversity++;
-					
-				}
-				
-			}
+			Long raw_size = cluster_data[idx++];
+			Long raw_diversity = cluster_data[idx++];
 			
 			String cycle_label = String.format("Round %s (%s)", cycle.getRound(), cycle.getName()); 
 
@@ -1365,11 +1489,10 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 			}
 			
 			
-			
-		
 		});
 		
-		
+		ppl.setProgress(1);
+		ppl.setProgressLabel("Completed 100%");
 	}
 	
 	/**
@@ -1436,21 +1559,23 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 			Entry<Integer, Integer> cardinality_entry = cardinality_it.next();
 			
 			int counter = 0;
-			double max = 2*reference_cycle.getUniqueSize();
+			double max = reference_cycle.getUniqueSize();
 			while ( pool_it.hasNext() && cardinality_it.hasNext() ) { // Ids are sorted in both cases
 	
 				// update UI
 				if (counter % 1000 == 0) {
 					
 					ppl.setProgress(counter / max);
-					ppl.setProgressLabel("Completed " + (int)( (counter / max) * 100) + "%");
-					
+					int p = (int)( (counter / max) * 100);
+					ppl.setProgressLabel("Extracting data from cluster.\nCompleted " + p + "%");//+ (int)( (counter / max) * 100) + "%");
+				
 				}
 				
 				
 				// check if we should cancel this action
-				if (this.logo_thread.isInterrupted()) {
+				if (logoThreadInterrupted) { //(this.logo_thread.isInterrupted()) {
 					
+					logoThreadInterrupted = false;
 					return;
 					
 				}
@@ -1515,7 +1640,7 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 			lazyCacheMutationData.put(cluster_id, mutation_data_serialized);
 			
 			ppl.setProgress(0.55);
-			ppl.setProgressLabel("Completed 55%");
+			ppl.setProgressLabel("Finalizing process. Completed 55%");
 			
 		}
 		
@@ -1552,7 +1677,7 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 		});
 		
 		ppl.setProgress(0.75);
-		ppl.setProgressLabel("Completed 75%");
+		ppl.setProgressLabel("Finalizing process. Completed 75%");
 		
 		// Prepare data for stacked mutation plot
 		XYChart.Series<String, Number> A = new XYChart.Series<String, Number>();
@@ -1584,7 +1709,7 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 		});
 		
 		ppl.setProgress(1.0);
-		ppl.setProgressLabel("Completed 100%");
+		ppl.setProgressLabel("Finalizing process. Completed 100%");
 		
 	}
 	
@@ -2194,16 +2319,18 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 			@Override
 			public void run() {
 				
+				ProgressPaneController ppl = ProgressPaneController.getProgressPane(null, clusterCardinalityBarChartStackPane);
 				
-				ProgressPaneController ppl = ProgressPaneController.getProgressPane(new Runnable() {
+				Runnable logic = new Runnable() {
 					
 					@Override
 					public void run() {
-						createClusterCardinalityPanel();
+						createClusterCardinalityPanel(ppl);
 					}
 				
-				}, clusterCardinalityBarChartStackPane);
+				};
 				
+				ppl.setLogic(logic);				
 				ppl.setShowLogs(false);
 				ppl.run();
 				
@@ -2240,6 +2367,7 @@ public class AptamerFamilyAnalysisRootController implements Initializable{
 		lazyCacheClusterMembership.close();
 		lazyCacheLogoData.close();
 		lazyCacheMutationData.close();
+		lazyCacheClusterCardinalityData.close();
 		
 	}
 	

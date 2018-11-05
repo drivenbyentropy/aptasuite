@@ -8,26 +8,28 @@
 	<description>A full-featured software collection for the comprehensive analysis of HT-SELEX experiments with both graphical and command line based user interfaces.</description>
 	
 	<profiles>
+	
 		<!-- Temporary profile to compile on NCBI windows machine -->
-    	<profile>
-        	<id>windows</id>
-        	<build>
-            	<directory>c:/Users/hoinkaj/temp/aptasuite</directory>
-        	</build>
-    	</profile>
-    	<!-- Temporary profile to compile on NCBI lmem machine -->
-    	<profile>
-        	<id>lmem</id>
-        	<dependencies>
-            	<dependency>
-				  <groupId>javafx</groupId>
-				  <artifactId>jfxrt</artifactId>
-				  <version>${java.version}</version>
-				  <scope>system</scope>
-				  <systemPath>/usr/local/openjfx/8u182/jre/lib/ext/jfxrt.jar</systemPath>
+	    	<profile>
+        		<id>windows</id>
+        		<build>
+	            		<directory>c:/Users/hoinkaj/temp/aptasuite</directory>
+	        	</build>
+	    	</profile>
+    		
+		<!-- Temporary profile to compile on NCBI lmem machine -->
+	    	<profile>
+        		<id>lmem</id>
+	        	<dependencies>
+	            		<dependency>
+					  <groupId>javafx</groupId>
+					  <artifactId>jfxrt</artifactId>
+					  <version>${java.version}</version>
+					  <scope>system</scope>
+					  <systemPath>/usr/local/openjfx/8u182/jre/lib/ext/jfxrt.jar</systemPath>
 				</dependency>
-        	</dependencies>
-    	</profile>
+        		</dependencies>
+	    	</profile>
     	
 	</profiles>
 	

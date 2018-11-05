@@ -56,6 +56,7 @@ public class MapDBGenericStorage<T, U> implements GenericStorage<T, U> {
 					.executorEnable()
 					.transactionEnable()
 					.make();
+			
 		}
 		//If this fails, we need to make sure that all file handles have been closed
 		catch(Exception e) {

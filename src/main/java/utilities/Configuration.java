@@ -224,13 +224,15 @@ public class Configuration {
 			// path of the configuration file
 			Path projectPath;
 			if (Configuration.getParameters().containsKey("Experiment.projectPath")) {
-				projectPath = Paths.get(Configuration.getParameters().getString("Experiment.projectPath"));
+				projectPath = Paths.get(Configuration.getParameters().getString("Experiment.projectPath")).toAbsolutePath();
+				
 				// If the directory does not exist, we assume parent of the config file location to be the path
 				if (!Files.exists(projectPath)) {
 					projectPath = configurationPath.getParent();
 					AptaLogger.log(Level.WARNING, Configuration.class, "Could not find Experiment.projectPath on disk. Assuming parent of config file " + projectPath.toString());
 					
 				}
+				
 			}
 			else {
 				projectPath = configurationPath.getParent();

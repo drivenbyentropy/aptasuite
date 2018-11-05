@@ -42,8 +42,10 @@ public class Aptasuite {
 		sysinfo.append(String.format("OS Name: %s%s", System.getProperties().get("os.name"), sep));
 		sysinfo.append(String.format("OS Version: %s%s", System.getProperties().get("os.version"), sep));
 		sysinfo.append(String.format("OS Architecture: %s%s", System.getProperties().get("os.arch"), sep));
+		sysinfo.append(String.format("OS Architecture Model: %s%s", System.getProperty("sun.arch.data.model"), sep));
 		sysinfo.append(String.format("CPU cores: %s%s", Runtime.getRuntime().availableProcessors(), sep));
 		sysinfo.append(String.format("System Memory: %s Mb%s", Runtime.getRuntime().totalMemory(), sep));
+		
 		
 		AptaLogger.log(Level.CONFIG, Aptasuite.class, sysinfo.toString());
 		
