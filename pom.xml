@@ -320,7 +320,7 @@
 			</snapshots>
 			<id>central</id>
 			<name>bintray</name>
-			<url>http://jcenter.bintray.com</url>
+			<url>https://jcenter.bintray.com</url>
 		</repository>
 		
 		<!-- Add local repository for libraries not available in maven central -->
