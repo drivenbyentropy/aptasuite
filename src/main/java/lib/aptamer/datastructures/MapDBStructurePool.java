@@ -214,7 +214,6 @@ public class MapDBStructurePool implements StructurePool {
     				//If this fails, we need to make sure that all file handles have been closed
     				catch(Exception e) {
     					
-    						    					
     					close();
     					if (db_structure != null) {  
     						db_structure.close(); 
@@ -588,6 +587,22 @@ public class MapDBStructurePool implements StructurePool {
 	@Override
 	public Iterable<Entry<byte[], double[]>> sequence_iterator() {
 		return new AptamerStructureIterator();
+	}
+
+
+	@Override
+	public void commitStructures() {
+
+		
+		
+	}
+
+
+	@Override
+	public int size() {
+		
+		return this.structureDataSize;
+		
 	}
 
 

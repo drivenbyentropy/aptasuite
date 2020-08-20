@@ -14,7 +14,6 @@ import java.util.Map.Entry;
  * 
  */
 public interface StructurePool {
-
 	
 	/**
 	 * Adds the structure corresponding to aptamer with id <code>id</code> to the
@@ -22,7 +21,8 @@ public interface StructurePool {
 	 * @param id the unique identifier corresponding to the aptamer in question
 	 * @param structure the structural information for that aptamer
 	 */
-	void registerStructure(int id, double[] structure);
+	public void registerStructure(int id, double[] structure);
+	
 	
 	/**
 	 * Returns the structural information belonging to aptamer with id <code>id</code>
@@ -30,7 +30,7 @@ public interface StructurePool {
 	 * @return the structural information for that aptamer, null if aptamer id does
 	 * not exist in the pool
 	 */
-	double[] getStructure(int id);
+	public double[] getStructure(int id);
 	
 	
 	/**
@@ -47,7 +47,13 @@ public interface StructurePool {
 	 * Optional. Sets the implementing class to read/write mode in case
 	 * persistent storage is used.
 	 */
-	public void setReadWrite();	
+	public void setReadWrite();
+	
+	/**
+	 * Optional. Depending on the storage backend, this commits the registered structures to 
+	 * disk. If not required, calling this function will perform no action.
+	 */
+	public void commitStructures();
 	
 	/**
 	 * Provides an iterator over every aptamer id in the pool  
@@ -63,5 +69,11 @@ public interface StructurePool {
 	 * Note that the order of iteration is implementation dependent
 	 */
 	public Iterable<Entry<byte[],double[]>> sequence_iterator();
+	
+	/**
+	 * Returns the total number of predicted structures in the database
+	 * @return number of predicted structures
+	 */
+	public int size();
 	
 }
