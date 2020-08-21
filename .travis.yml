@@ -27,7 +27,7 @@ before_install:
 - rm -rf target/*
 
 
-install: mvn install -DskipTests=true -Dmaven.javadoc.skip=true --batch-mode --show-version --settings .travis.settings.xml
+install: mvn -e install -DskipTests=true -Dmaven.javadoc.skip=true --batch-mode --show-version --settings .travis.settings.xml
 
 
 before_deploy:
@@ -44,4 +44,4 @@ deploy:
   on:
     repo: drivenbyentropy/aptasuite
     tags: true
-    jdk: oraclejdk9
+    jdk: oraclejdk11
