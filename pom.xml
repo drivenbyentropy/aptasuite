@@ -58,13 +58,45 @@
 		<plugins>
 		
 			<plugin>
+			    <groupId>org.codehaus.mojo</groupId>
+			    <artifactId>versions-maven-plugin</artifactId>
+			    <version>2.5</version>
+			    <configuration>
+			        <generateBackupPoms>false</generateBackupPoms>
+			    </configuration>
+			</plugin>		
+		
+			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.7.0</version>
+				<version>3.8.0</version>
 				<configuration>
- 				 	<source>1.8</source>
-					<target>1.8</target>
+ 				 	<!-- <source>1.8</source>
+					<target>1.8</target> -->
+					<release>11</release>
                  </configuration>				
+			</plugin>
+			
+			
+			<plugin>
+			    <groupId>org.apache.maven.plugins</groupId>
+			    <artifactId>maven-surefire-plugin</artifactId>
+			    <version>2.22.0</version>
+			    <configuration>
+			        <argLine>
+			            --illegal-access=permit
+			        </argLine>
+			    </configuration>
+			</plugin>
+			<plugin>
+			    <groupId>org.apache.maven.plugins</groupId>
+			    <artifactId>maven-failsafe-plugin</artifactId>
+			    <version>2.22.0</version>
+			    <configuration>
+			        <argLine>
+			            --illegal-access=permit
+			        </argLine>
+			    </configuration>
 			</plugin>
 		
 			<!-- The build scheme was adopted from https://ath3nd.wordpress.com/2013/12/25/packaging-a-multimodule-maven-spring-app-in-a-standalone-jar/ -->
