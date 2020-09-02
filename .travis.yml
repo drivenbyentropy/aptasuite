@@ -5,7 +5,7 @@ sudo: false
 jdk: 
 # - oraclejdk9
 # - oraclejdk8
-  - openjdk14
+  - oraclejdk14
 
 
 cache:
