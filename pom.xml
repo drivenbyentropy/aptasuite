@@ -77,7 +77,12 @@
 					<forceJavacCompilerUse>true</forceJavacCompilerUse>
                  </configuration>				
 			</plugin>
-			
+					
+		    <plugin>
+		        <groupId>org.openjfx</groupId>
+		        <artifactId>javafx-maven-plugin</artifactId>
+		        <version>0.0.4</version>
+		    </plugin>
 			
 			<plugin>
 			    <groupId>org.apache.maven.plugins</groupId>
@@ -342,6 +347,11 @@
 			<groupId>org.json</groupId>
 			<artifactId>json</artifactId>
 			<version>20180130</version>
+		</dependency>
+		<dependency>
+			<groupId>org.openjfx</groupId>
+			<artifactId>javafx-fxml</artifactId>
+			<version>16-ea+1</version>
 		</dependency>
 	</dependencies>
 	
