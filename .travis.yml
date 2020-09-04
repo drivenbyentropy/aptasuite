@@ -44,4 +44,4 @@ deploy:
   on:
     repo: drivenbyentropy/aptasuite
     tags: true
-    jdk: oraclejdk11
+    jdk: openjdk14
