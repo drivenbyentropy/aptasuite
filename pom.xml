@@ -104,6 +104,12 @@
 			        </argLine>
 			    </configuration>
 			</plugin>
+			
+			<plugin>
+			  <groupId>org.apache.maven.plugins</groupId>
+			  <artifactId>maven-site-plugin</artifactId>
+			  <version>3.7.1</version>
+			</plugin>
 		
 			<!-- The build scheme was adopted from https://ath3nd.wordpress.com/2013/12/25/packaging-a-multimodule-maven-spring-app-in-a-standalone-jar/ -->
 			<plugin>
@@ -210,7 +216,7 @@
 		<dependency>
 			<groupId>com.baqend</groupId>
 			<artifactId>bloom-filter</artifactId>
-			<version>2.2.1</version>
+			<version>2.2.2</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.commons</groupId>
