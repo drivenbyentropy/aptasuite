@@ -73,7 +73,7 @@
 				<configuration>
  				 	<!-- <source>1.8</source>
 					<target>1.8</target> -->
-					<release>11</release>
+					<release>8</release>
 					<forceJavacCompilerUse>true</forceJavacCompilerUse>
                  </configuration>				
 			</plugin>
