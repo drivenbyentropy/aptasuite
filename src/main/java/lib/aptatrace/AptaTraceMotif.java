@@ -173,12 +173,20 @@ public class AptaTraceMotif {
 				firstPos = i;
 				break;
 			}
+		
 
 		for (int i = 0; i < alignment.length(); i++)
 			if (alignment.charAt(i) != '-')
 				a = a + alignment.charAt(i);
 			else {
-				a = a + aptamer.charAt(pos - (firstPos - i));
+				
+				// In case we have no primers, we need to take care of the boundary cases.
+				if (pos - (firstPos - i) < 0 || pos - (firstPos - i) >= aptamer.length()) {
+					a = a + "-";
+				}
+				else {
+					a = a + aptamer.charAt(pos - (firstPos - i));
+				}
 			}
 
 		return a;
@@ -1039,12 +1047,17 @@ public class AptaTraceMotif {
 						if (occRArr[numOR - 1] == roundArr.size() - 1) {
 							if (occCArr[numOR - 1] > singletonThres) {
 
-								outputMotifs.get(mid).addToPWM(fillBlanks(outputMotifs.get(mid).getKmerAlignment(kmer),
-										aptamer, k - klength + 1), occCArr[numOR - 1]);
+								outputMotifs.get(mid)
+											.addToPWM(fillBlanks(outputMotifs.get(mid).getKmerAlignment(kmer),
+																 aptamer, 
+																 k - klength + 1), 
+													  occCArr[numOR - 1]);
 							} else {
 								outputMotifs.get(mid)
-										.addToSingletonPWM(fillBlanks(outputMotifs.get(mid).getKmerAlignment(kmer),
-												aptamer, k - klength + 1), occCArr[numOR - 1]);
+											.addToSingletonPWM(fillBlanks(outputMotifs.get(mid).getKmerAlignment(kmer),
+																		  aptamer, 
+																		  k - klength + 1), 
+													 		   occCArr[numOR - 1]);
 							}
 							id2Count.put(aptamerId, occCArr[numOR - 1]);
 						}
@@ -1291,83 +1304,5 @@ public class AptaTraceMotif {
 			}
 		}		
 		
-		
-		// prints out the aptamers in the last selection round that have
-		// frequency more than singleton threshold and contain the motifs
-		if (false) {
-
-			System.out.println();
-			AptaLogger.log(Level.INFO, this.getClass(),
-					"Outputing aptamers in the last cycle where the motifs occur...");
-			int aptamerCount;
-			numDone = 0;
-			startTime = System.nanoTime();
-			for (int i = lastRoundPool.size() - 1; i >= 0; i--) {
-				if (i < lastRoundPool.size() - 1) {
-					int currentid = lastRoundPool.get(i).getFirst();
-					int lastid = lastRoundPool.get(i + 1).getFirst();
-					String thisS = new String(experiment.getAptamerPool().getAptamer(lastRoundPool.get(i).getFirst()));
-					if (thisS.equals(aptamer)) {
-						System.out.println("Something wrong " + thisS + " " + aptamer + " " + currentid + " " + lastid);
-						System.exit(0);
-					}
-				}
-
-				aptamer = new String(experiment.getAptamerPool().getAptamer(lastRoundPool.get(i).getFirst()));
-				AptamerBounds aptamerBounds = experiment.getAptamerPool()
-						.getAptamerBounds(lastRoundPool.get(i).getFirst());
-				aptamerCount = lastRoundPool.get(i).getSecond();
-
-				startPos = aptamerBounds.startIndex + klength - 1;
-				endPos = aptamerBounds.endIndex;
-
-				IntOpenHashSet seencid = new IntOpenHashSet();
-
-				// iterate through each kmer of the aptamer and decide whether
-				// the aptamer contains a motif
-				for (int k = startPos; k < endPos; k++) {
-					kmer = aptamer.substring(k - klength + 1, k + 1);
-					if (k == startPos)
-						id = calculateId(kmer);
-					else
-						id = calulateNewId(id, aptamer.charAt(k - klength), aptamer.charAt(k), klength);
-
-					if (kmer2Clus.containsKey(id)) {
-						mid = kmer2Clus.get(id);
-						if ((!filtered[mid]) && (!seencid.contains(mid))) {
-							clusterWriter.get(c2fc.get(mid)).format("%s\t%d\t%d\t%.2f%%\n", aptamer, aptamerCount,
-									(int) (aptamerCount * 1000000.0 / (rc[rc.length - 1] * 1.0)),
-									aptamerCount / (rc[rc.length - 1] * 1.0), lastRoundPool.get(i).getFirst());
-							seencid.add(mid);
-						}
-					}
-				}
-
-				numDone++;
-				if ((numDone == poolSize) || (numDone % 10000 == 0)) {
-					endTime = System.nanoTime();
-					rms = (long) (((endTime - startTime) / (numDone * 1000000000.0))
-							* (lastRoundPool.size() - numDone));
-					rmh = (int) (rms / 3600.0);
-					rmm = (int) ((rms % 3600) / 60);
-					System.out.print("Finished reading " + numDone + "/" + lastRoundPool.size() + " structures, ETA "
-							+ String.format("%02d:%02d:%02d", rmh, rmm, rms % 60) + "\r");
-				}
-			}
-
-			// Final Update
-			endTime = System.nanoTime();
-			rms = (long) (((endTime - startTime) / (numDone * 1000000000.0)) * (lastRoundPool.size() - numDone));
-			rmh = (int) (rms / 3600.0);
-			rmm = (int) ((rms % 3600) / 60);
-			System.out.print("Finished reading " + numDone + "/" + lastRoundPool.size() + " structures, ETA "
-					+ String.format("%02d:%02d:%02d", 0, 0, 0) + "\n");
-
-			if (outputClusters) {
-				for (int i = 0; i < clusterWriter.size(); i++)
-					clusterWriter.get(i).close();
-			}
-		}
-		System.out.println();
 	}
 }
