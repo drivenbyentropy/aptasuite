@@ -92,7 +92,7 @@ public class StructureProfilePredictionWizardController {
 				
 				// now that we have the data, set any file backed implementations 
 				// of StructurePool to read only. Do this only if the prediction has not 
-				// been cancled by the user.
+				// been canceled by the user.
 				experiment.getStructurePool().setReadOnly();
 			
 				closeButton.setDisable(false);

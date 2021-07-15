@@ -145,7 +145,7 @@ public class AptaPlexProducer implements Runnable{
 					
 					reverse_export_path = Paths.get(exportPath.toString(), "undetermined_"+current_reverse_file_path.getFileName().toString() + (Configuration.getParameters().getBoolean("Export.compress") ? ".gz" : "" )); 
 					ExportWriter reverse_export_writer = Configuration.getParameters().getBoolean("Export.compress") ? new CompressedExportWriter() : new UncompressedExportWriter();
-					reverse_export_writer.open(reverse_export_path); 
+					reverse_export_writer.open(reverse_export_path);
 					
 				}
 				

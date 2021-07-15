@@ -109,6 +109,9 @@ public class Configuration {
 																			// In addition, it is assumed that the data has already been demultiplexed.		
 		defaults.put("AptaplexParser.UndeterminedToFile", false); 	// If set to true, AptaPlex will dump all read which failed processing for any reason to a fastq file located
 																	// in the export folder of the project and named undetermined.fastq.gz
+		defaults.put("AptaplexParser.BatchMode", false);            //If true, AptaPlex will parse all files without looking for primers and blindly 
+																	//accept every read that fits the specified size
+		
 		
 		// AptaSIM Options
 		defaults.put("Aptasim.HmmDegree", 2); // Degree of the Markov model

@@ -98,6 +98,9 @@ public class Wizard1Controller{
 	@FXML
 	private CheckBox rangeLengthCheckBox;	
 	
+	@FXML
+	private CheckBox noPrimersCheckbox;
+	
 	
     private List<SelectionCycleDetailsController> selectionCycleDetailsControllers = new ArrayList<SelectionCycleDetailsController>();
     
@@ -141,6 +144,28 @@ public class Wizard1Controller{
     	randomizedRegionSizeLowerSpinner.getValueFactory().valueProperty().bindBidirectional(getDataModel().getRandomizedRegionSizeLower());
     	randomizedRegionSizeUpperSpinner.getValueFactory().valueProperty().bindBidirectional(getDataModel().getRandomizedRegionSizeUpper());
 
+    	noPrimersCheckbox.selectedProperty().bindBidirectional(getDataModel().getNoPrimers());
+    	
+    	// Prevent access to "No primer" checkbox if data is not demultiplexed or paired end.
+    	noPrimersCheckbox.disableProperty().bind(Bindings.or(getDataModel().getIsDemultiplexed().not(), getDataModel().getIsPairedEnd()));
+    	
+    	// Disable primer input if user has selected the noPrimerCheckbox
+    	primer5TextField.disableProperty().bind(noPrimersCheckbox.selectedProperty());
+    	primer3TextField.disableProperty().bind(noPrimersCheckbox.selectedProperty());
+    	
+    	// Clear the primer text fields if the user checks the "No Primer" checkbox
+    	noPrimersCheckbox.selectedProperty().addListener((obs, wasSelected, isNowSelected) -> {
+    	    if (isNowSelected) {
+    	    	primer5TextField.clear();
+    	    	primer3TextField.clear();
+    	    }
+    	});
+    	
+    	// If the checkbox is disabled, we need to unselect it
+    	if (noPrimersCheckbox.isDisabled()) {
+    		getDataModel().getNoPrimers().set(false);
+    	}
+    	
     	// Make sure that either only the exact size or the range or non of them is selected
     	exactLengthCheckBox.selectedProperty().addListener((obs, wasSelected, isNowSelected) -> {
     	    if (isNowSelected) {
@@ -210,8 +235,8 @@ public class Wizard1Controller{
 
     	// First the trivial things:
     	
-    	// Make sure the 5' primer is present
-    	if (primer5TextField.textProperty().isEmpty().get()) {
+    	// Make sure the 5' primer is present, but only if we are not in batch mode
+    	if (primer5TextField.textProperty().isEmpty().get() && noPrimersCheckbox.selectedProperty().not().get()) {
     		
     		ControlFXValidatorFactory.setTemporaryValidation(
     				primer5TextField, 
@@ -225,8 +250,9 @@ public class Wizard1Controller{
     		
     	}
     	
-    	// Make sure that either the 3' primer is present or the  randomized region size is not 0 
-    	if (primer3TextField.textProperty().isEmpty().get() && randomizedRegionSizeSpinner.getValueFactory().getValue().equals(0)) {
+    	
+    	// Make sure that either the 3' primer is present or the  randomized region size is not 0 and we are not in batch mode 
+    	if (primer3TextField.textProperty().isEmpty().get() && randomizedRegionSizeSpinner.getValueFactory().getValue().equals(0) && noPrimersCheckbox.selectedProperty().not().get()) {
     		
     		ControlFXValidatorFactory.setTemporaryValidation(
         			primer3TextField, 
@@ -246,6 +272,36 @@ public class Wizard1Controller{
 
     		is_valid = false;
     		
+    	}
+    	
+    	// Make sure that if we are in batch mode we have either a fixed randomized region size or a range 
+    	if (noPrimersCheckbox.selectedProperty().get() &&  exactLengthCheckBox.selectedProperty().not().get() && this.rangeLengthCheckBox.selectedProperty().not().get()) {
+    		
+    		ControlFXValidatorFactory.setTemporaryValidation(
+    				exactLengthCheckBox, 
+        			ControlFXValidatorFactory.AllwaysWrongValidator("Either an exact randomized region or a range must be specified."), 
+        			this.validationSupport, 
+        			ControlFXValidatorFactory.AllwaysCorrectValidator,
+        			false
+        			);
+
+    		is_valid = false;
+    		
+    	}    	
+    	
+    	// Make sure that if an exact length is specified it must be greater than 0
+    	if (this.exactLengthCheckBox.isSelected() && randomizedRegionSizeSpinner.getValueFactory().getValue() <= 0) {
+		
+			ControlFXValidatorFactory.setTemporaryValidation(
+    				randomizedRegionSizeSpinner, 
+        			ControlFXValidatorFactory.AllwaysWrongValidator("Randomized region size must be greater than zero."), 
+        			this.validationSupport, 
+        			ControlFXValidatorFactory.AllwaysCorrectValidator,
+        			false
+        			);
+			
+			is_valid = false;
+    			
     	}
     	
     	// Make sure that if a range for the randomized region size is specified, it is a valid one
@@ -755,6 +811,12 @@ public class Wizard1Controller{
     			
     			utilities.Configuration.getParameters().setProperty("AptaplexParser.CheckReverseComplement", getDataModel().getCheckReverseComplement().get());
 
+    		}
+    		
+    		if (getDataModel().getNoPrimers().get()) {
+    			
+    			utilities.Configuration.getParameters().setProperty("AptaplexParser.BatchMode", true);
+    			
     		}
     		
     		// Save to file 

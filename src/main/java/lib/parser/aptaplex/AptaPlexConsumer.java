@@ -49,6 +49,13 @@ import utilities.Pair;
  *         from the queue, processes them and adds them to the aptamer pool.
  */
 public class AptaPlexConsumer implements Runnable {
+	
+	/**
+	 * True AptaPlex should run in batch mode. No primer or barcode checks will be performed
+	 * and AptaPlex assumes the reads are preprocessed randomized regions only. In contrast to
+	 * onlyRandomizedRegtionInData, batchMode will not add any primers back to these sequences.
+	 */	
+	private boolean batchMode = Configuration.getParameters().getBoolean("AptaplexParser.BatchMode");	
 
 	/**
 	 * The queue to consume from
@@ -101,9 +108,9 @@ public class AptaPlexConsumer implements Runnable {
 	private byte[] primer5reverse = Configuration.getParameters().getString("Experiment.primer5").getBytes();
 	
 	/**
-	 * Access to the 5 prime primer
+	 * Access to the 3 prime primer
 	 */
-	private byte[] primer3 = Configuration.getParameters().getString("Experiment.primer3").getBytes();
+	private byte[] primer3 = batchMode ? "".getBytes() : Configuration.getParameters().getString("Experiment.primer3").getBytes();
 
 	/**
 	 * True if the sequences have previously been demultiplexed
@@ -112,6 +119,7 @@ public class AptaPlexConsumer implements Runnable {
 	
 	/**
 	 * True if the sequences have previously been stripped of their primers and barcodes
+	 * Note that primers will be added again by AptaPlex
 	 */
 	private boolean onlyRandomizedRegionInData = Configuration.getParameters().getBoolean("AptaplexParser.OnlyRandomizedRegionInData");
 	
@@ -275,15 +283,20 @@ public class AptaPlexConsumer implements Runnable {
 				contig = getContig(queueElement);
 				
 				// ...check for undetermined nucleotides and fail if present...
-				if (!isValidSequence(contig)) {
+				// getContig returns null if invalid nucleotides are present.
+				if (contig == null) {
 					progress.totalInvalidContigs.incrementAndGet();
 					continue;
 				}
 				
 				
+				// Batch mode
+				if (this.batchMode) {
+					this.processBatchMode(contig);
+				}
 				// we need to differentiate between randomized region only mode, 
 				// and fully parsable data
-				if (this.onlyRandomizedRegionInData) {
+				else if (this.onlyRandomizedRegionInData) {
 					
 					this.processReadRandomizedRegionOnly(contig);
 					
@@ -365,9 +378,6 @@ public class AptaPlexConsumer implements Runnable {
 		// keep taking elements from the queue
 		byte[] contig = null;
 		
-		// Update the progress in a thread-safe manner
-		// progress.totalProcessedReads.incrementAndGet(); TODO: Move this to the end of run();
-
 		// process queueElement
 		read = (Read) queueElement;
 		
@@ -393,6 +403,103 @@ public class AptaPlexConsumer implements Runnable {
 		return contig;
 		
 	}
+	
+	/**
+	 * Processes the current queueElement in batch mode. Assumes that the read consists only of the randomized region 
+	 * @param queueElement the element to be processed 
+	 * @return the error progress counter that was incremented in the last call of this function. null if success.  
+	 */
+	private AtomicInteger processBatchMode(byte[] contig) {
+		
+		 // check if the contig conforms to the size restrictions 
+		if (this.randomizedRegionSizeExactBound != null) {
+			
+			if (contig.length != this.randomizedRegionSizeExactBound) {
+				
+				progress.totalContigAssemblyFails.getAndIncrement();
+				return progress.totalContigAssemblyFails;
+				
+			}
+			
+		}
+		
+		// otherwise we must have a bound
+		else {
+			
+			if (this.randomizedRegionSizeLowerBound <= contig.length &&  this.randomizedRegionSizeUpperBound >= contig.length){
+				
+				progress.totalContigAssemblyFails.getAndIncrement();
+				return progress.totalContigAssemblyFails;
+				
+			}
+			
+		}
+		
+		 // and add it to the selection cycle	 
+		 if (!storeReverseComplement) { // Do we have to compute the reverse complement?
+		 
+			read.selection_cycle.addToSelectionCycle(
+				 contig,
+				 0,
+				 contig.length
+				 );
+			 
+		 	// Add metadata information
+			addAcceptedNucleotideDistributions(read.selection_cycle, contig, 0, contig.length);
+
+		 } else { // We do!
+			 
+			// compute the complement...
+			for (int x = 0; x < contig.length; x++) {
+
+				switch (contig[x]) {
+				case 65:
+					contig[x] = 84;
+					break;
+
+				case 67:
+					contig[x] = 71;
+					break;
+
+				case 71:
+					contig[x] = 67;
+					break;
+
+				case 84:
+					contig[x] = 65;
+					break;
+				}
+			}
+			
+			// ...and reverse it
+			for(int i = 0; i < contig.length / 2; i++)
+			{
+			    byte temp = contig[i];
+			    contig[i] = contig[contig.length - i - 1];
+			    contig[contig.length - i - 1] = temp;
+			}
+			
+			read.selection_cycle.addToSelectionCycle(
+					 contig,
+					 0,
+					 contig.length
+					 );
+			 
+			 // Add metadata information
+			 addAcceptedNucleotideDistributions(read.selection_cycle, contig, 0, contig.length);
+			 
+		 }
+		 
+	 	 // Store nucleotide distribution and quality score
+	 	 addNuceotideDistributions();
+		 addQualityScores();
+		 
+		 progress.totalAcceptedReads.incrementAndGet();
+		 
+		 // if we are here, all went well and we can go home.
+		 return null;
+		
+	}	
 	
 	/**
 	 * Processes the current queueElement. Assumes that the read consists only of the randomized region 

@@ -14,7 +14,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane fx:id="rootBorderPane" prefHeight="620.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.wizards.newexperiment.Wizard1Controller">
+<BorderPane fx:id="rootBorderPane" prefHeight="620.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.wizards.newexperiment.Wizard1Controller">
     <bottom>
         <fx:include fx:id="actionBar" source="actionBar.fxml" />
     </bottom>
@@ -70,6 +70,11 @@
                         <Insets />
                      </HBox.margin>
                   </TextField>
+               </children>
+            </HBox>
+            <HBox>
+               <children>
+                  <CheckBox fx:id="noPrimersCheckbox" mnemonicParsing="false" text="Batch Mode (reads are assumed to contain only the randomized region)" />
                </children>
             </HBox>
             <Label text="Randomized Region Size">

@@ -79,6 +79,8 @@ public class DataModel {
 	private SimpleIntegerProperty aptaplexParserPrimerTolerance = new SimpleIntegerProperty( Configuration.getDefaults().containsKey("AptaplexParser.PrimerTolerance") ? Configuration.getDefaults().getInt("AptaplexParser.PrimerTolerance") : Configuration.getParameters().getInt("AptaplexParser.PrimerTolerance") );
 	
 	private File lastSelectedDirectory = null;
+	
+	private BooleanProperty noPrimers = new SimpleBooleanProperty(false); 
 
 
 	/**
@@ -438,6 +440,19 @@ public class DataModel {
 	public void setAptaplexParserPrimerTolerance(SimpleIntegerProperty aptaplexParserPrimerTolerance) {
 		this.aptaplexParserPrimerTolerance = aptaplexParserPrimerTolerance;
 	}
-	
+
+	/**
+	 * @return the noPrimers
+	 */
+	public BooleanProperty getNoPrimers() {
+		return noPrimers;
+	}
+
+	/**
+	 * @param aptaplexParserPrimerTolerance the aptaplexParserPrimerTolerance to set
+	 */
+	public void setNoPrimers(BooleanProperty noPrimers) {
+		this.noPrimers = noPrimers;
+	}
 	
 }

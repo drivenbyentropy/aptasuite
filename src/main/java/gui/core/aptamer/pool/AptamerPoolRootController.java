@@ -987,8 +987,6 @@ public class AptamerPoolRootController implements Initializable{
 			// Temporarily store the counts in an array as random access to mapdb is slow but sequential access is fast
 			int[] counts = new int[aptamer_ids.length];
 			
-			System.out.println("here");
-			
 			// Provide a progress bar for this operation
 			pp.setShowProgressBar(true);
 			
@@ -1018,9 +1016,6 @@ public class AptamerPoolRootController implements Initializable{
 				try {
 					pp.setProgress(items_to_sort.doubleValue()/cycle_to_sort_by.getUniqueSize() );
 					pp.setProgressLabel(String.format("Retrieved %s/%s items (%.2f%%)", items_to_sort.get(), cycle_to_sort_by.getUniqueSize(), (items_to_sort.doubleValue()/cycle_to_sort_by.getUniqueSize())*100.0) );
-					
-					System.out.println(items_to_sort.get() + "  " + cycle_to_sort_by.getUniqueSize());
-					System.out.flush();
 					
 					// Once every half a second should suffice
 					Thread.sleep(500);

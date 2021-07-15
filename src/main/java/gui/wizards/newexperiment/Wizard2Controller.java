@@ -122,7 +122,7 @@ public class Wizard2Controller{
 
     
     /**
-     * Instaniates a new Experiment and starts AptaPLEX
+     * Instantiates a new Experiment and starts AptaPLEX
      * @param event
      */
     @FXML
