@@ -423,10 +423,11 @@ public class AptaPlexConsumer implements Runnable {
 			
 		}
 		
+		
 		// otherwise we must have a bound
 		else {
 			
-			if (this.randomizedRegionSizeLowerBound <= contig.length &&  this.randomizedRegionSizeUpperBound >= contig.length){
+			if ( this.randomizedRegionSizeLowerBound >= contig.length ||  this.randomizedRegionSizeUpperBound <= contig.length ){
 				
 				progress.totalContigAssemblyFails.getAndIncrement();
 				return progress.totalContigAssemblyFails;

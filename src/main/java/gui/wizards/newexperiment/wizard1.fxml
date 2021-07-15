@@ -74,7 +74,7 @@
             </HBox>
             <HBox>
                <children>
-                  <CheckBox fx:id="noPrimersCheckbox" mnemonicParsing="false" text="Batch Mode (reads are assumed to contain only the randomized region)" />
+                  <CheckBox fx:id="batchModeCheckbox" mnemonicParsing="false" text="Batch Mode (reads are assumed to contain only the randomized region)" />
                </children>
             </HBox>
             <Label text="Randomized Region Size">

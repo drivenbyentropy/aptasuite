@@ -99,7 +99,7 @@ public class Wizard1Controller{
 	private CheckBox rangeLengthCheckBox;	
 	
 	@FXML
-	private CheckBox noPrimersCheckbox;
+	private CheckBox batchModeCheckbox;
 	
 	
     private List<SelectionCycleDetailsController> selectionCycleDetailsControllers = new ArrayList<SelectionCycleDetailsController>();
@@ -144,17 +144,17 @@ public class Wizard1Controller{
     	randomizedRegionSizeLowerSpinner.getValueFactory().valueProperty().bindBidirectional(getDataModel().getRandomizedRegionSizeLower());
     	randomizedRegionSizeUpperSpinner.getValueFactory().valueProperty().bindBidirectional(getDataModel().getRandomizedRegionSizeUpper());
 
-    	noPrimersCheckbox.selectedProperty().bindBidirectional(getDataModel().getNoPrimers());
+    	batchModeCheckbox.selectedProperty().bindBidirectional(getDataModel().getNoPrimers());
     	
     	// Prevent access to "No primer" checkbox if data is not demultiplexed or paired end.
-    	noPrimersCheckbox.disableProperty().bind(Bindings.or(getDataModel().getIsDemultiplexed().not(), getDataModel().getIsPairedEnd()));
+    	batchModeCheckbox.disableProperty().bind(Bindings.or(getDataModel().getIsDemultiplexed().not(), getDataModel().getIsPairedEnd()));
     	
     	// Disable primer input if user has selected the noPrimerCheckbox
-    	primer5TextField.disableProperty().bind(noPrimersCheckbox.selectedProperty());
-    	primer3TextField.disableProperty().bind(noPrimersCheckbox.selectedProperty());
+    	primer5TextField.disableProperty().bind(batchModeCheckbox.selectedProperty());
+    	primer3TextField.disableProperty().bind(batchModeCheckbox.selectedProperty());
     	
     	// Clear the primer text fields if the user checks the "No Primer" checkbox
-    	noPrimersCheckbox.selectedProperty().addListener((obs, wasSelected, isNowSelected) -> {
+    	batchModeCheckbox.selectedProperty().addListener((obs, wasSelected, isNowSelected) -> {
     	    if (isNowSelected) {
     	    	primer5TextField.clear();
     	    	primer3TextField.clear();
@@ -162,7 +162,7 @@ public class Wizard1Controller{
     	});
     	
     	// If the checkbox is disabled, we need to unselect it
-    	if (noPrimersCheckbox.isDisabled()) {
+    	if (batchModeCheckbox.isDisabled()) {
     		getDataModel().getNoPrimers().set(false);
     	}
     	
@@ -236,7 +236,7 @@ public class Wizard1Controller{
     	// First the trivial things:
     	
     	// Make sure the 5' primer is present, but only if we are not in batch mode
-    	if (primer5TextField.textProperty().isEmpty().get() && noPrimersCheckbox.selectedProperty().not().get()) {
+    	if (primer5TextField.textProperty().isEmpty().get() && batchModeCheckbox.selectedProperty().not().get()) {
     		
     		ControlFXValidatorFactory.setTemporaryValidation(
     				primer5TextField, 
@@ -252,7 +252,7 @@ public class Wizard1Controller{
     	
     	
     	// Make sure that either the 3' primer is present or the  randomized region size is not 0 and we are not in batch mode 
-    	if (primer3TextField.textProperty().isEmpty().get() && randomizedRegionSizeSpinner.getValueFactory().getValue().equals(0) && noPrimersCheckbox.selectedProperty().not().get()) {
+    	if (primer3TextField.textProperty().isEmpty().get() && randomizedRegionSizeSpinner.getValueFactory().getValue().equals(0) && batchModeCheckbox.selectedProperty().not().get()) {
     		
     		ControlFXValidatorFactory.setTemporaryValidation(
         			primer3TextField, 
@@ -275,7 +275,7 @@ public class Wizard1Controller{
     	}
     	
     	// Make sure that if we are in batch mode we have either a fixed randomized region size or a range 
-    	if (noPrimersCheckbox.selectedProperty().get() &&  exactLengthCheckBox.selectedProperty().not().get() && this.rangeLengthCheckBox.selectedProperty().not().get()) {
+    	if (batchModeCheckbox.selectedProperty().get() &&  exactLengthCheckBox.selectedProperty().not().get() && this.rangeLengthCheckBox.selectedProperty().not().get()) {
     		
     		ControlFXValidatorFactory.setTemporaryValidation(
     				exactLengthCheckBox, 
