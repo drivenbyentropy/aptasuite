@@ -15,12 +15,16 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Objects;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.logging.Level;
 
@@ -30,6 +34,11 @@ import org.eclipse.collections.impl.factory.primitive.IntLists;
 
 import exceptions.InvalidConfigurationException;
 import gnu.trove.map.hash.TIntIntHashMap;
+import javafx.geometry.Insets;
+import javafx.scene.chart.XYChart;
+import javafx.scene.control.Control;
+import javafx.scene.control.Label;
+import javafx.scene.text.Font;
 import lib.aptacluster.Buckets;
 import lib.aptamer.datastructures.AptamerBounds;
 import lib.aptamer.datastructures.AptamerPool;
@@ -51,6 +60,153 @@ import utilities.Quicksort;
  */
 public class Export {
 
+	private Experiment experiment = Configuration.getExperiment();
+	
+	/**
+	 * Writes the telemetry data to persistent storage
+	 * @param p the location at which the file should be created
+	 */
+	public void Telemetry(Path p, Integer singletonCount){
+		
+		// Load a writer instance depending on the configuration
+		ExportWriter writer = new UncompressedExportWriter();
+		writer.open(p);
+		
+		// Header
+		writer.write(String.format("%s\t%s\t%s\t%s\n", "Section", "Subsection", "Telemetry Name", "Telemetry Value"));
+		
+		// Experiment Overview Data
+		writer.write(String.format("%s\t%s\t%s\t%s\n", "Experiment Details", "General Information", "Experiment Name", experiment.getName()));
+		writer.write(String.format("%s\t%s\t%s\t%s\n", "", "", "Experiment Description", experiment.getDescription()));
+		try {
+			writer.write(String.format("%s\t%s\t%s\t%s\n", "", "", "Randomized Region Size", Configuration.getParameters().getString("Experiment.randomizedRegionSize")));
+		} catch (NoSuchElementException e) {}
+		writer.write(String.format("%s\t%s\t%s\t%s\n", "", "", "Five Prime Primer", Configuration.getParameters().getString("Experiment.primer5")));
+		writer.write(String.format("%s\t%s\t%s\t%s\n", "", "", "Three Prime Primer", Configuration.getParameters().getString("Experiment.primer3")));
+
+		// Sequence Import Statistics
+		writer.write(String.format("%s\t%s\t%s\t%s\n", "", "Sequence Import Statistics", "Total Processed Reads", experiment.getMetadata().parserStatistics.get("processed_reads").toString()));
+		writer.write(String.format("%s\t%s\t%s\t%s\n", "", "", "Total Accepted Reads", experiment.getMetadata().parserStatistics.get("accepted_reads").toString()));
+		writer.write(String.format("%s\t%s\t%s\t%s\n", "", "", "Contig Assembly Failure", experiment.getMetadata().parserStatistics.get("contig_assembly_fails").toString()));
+		writer.write(String.format("%s\t%s\t%s\t%s\n", "", "", "Invalid Alphabet", experiment.getMetadata().parserStatistics.get("invalid_alphabet").toString()));
+		writer.write(String.format("%s\t%s\t%s\t%s\n", "", "", "5' Primer Error", experiment.getMetadata().parserStatistics.get("5_prime_error").toString()));
+		writer.write(String.format("%s\t%s\t%s\t%s\n", "", "", "3' Primer Error", experiment.getMetadata().parserStatistics.get("3_prime_error").toString()));
+		writer.write(String.format("%s\t%s\t%s\t%s\n", "", "", "Invalid Cycle", experiment.getMetadata().parserStatistics.get("invalid_cycle").toString()));
+		writer.write(String.format("%s\t%s\t%s\t%s\n", "", "", "Total Primer Overlaps", experiment.getMetadata().parserStatistics.get("total_primer_overlaps").toString()));
+		
+		// Selection Cycle Percentages
+		Boolean first = true;
+		for ( SelectionCycle cycle : experiment.getAllSelectionCycles()) {
+			
+			writer.write(String.format("%s\t%s\t%s\t%s\n", "", first ? "Selection Cycle Percentages" : "", cycle.getName(), String.format("%.5f%%", ((double)cycle.getSize() / experiment.getMetadata().parserStatistics.get("accepted_reads").doubleValue())*100.0 )));
+			first = false;
+
+		}
+		
+		// Randomized Region Size Distribution
+		TreeMap<Integer, Integer> totals = new TreeMap<Integer, Integer>();
+		
+		for ( Entry<String, ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, ConcurrentHashMap<Byte, Integer>>>>cycle : experiment.getMetadata().nucleotideDistributionAccepted.entrySet()) {
+
+//			Extract the required information from the metadata
+			HashMap<Integer, Integer> cache = new HashMap<Integer, Integer>();
+			
+			for ( Entry<Integer, ConcurrentHashMap<Integer, ConcurrentHashMap<Byte, Integer>>> rand_size : experiment.getMetadata().nucleotideDistributionAccepted.get(cycle.getKey()).entrySet() ) {
+				
+				// Take position 0 and sum up the counts of the nucleotides
+				int sum = 0;
+				
+				for ( Entry<Byte, Integer> nucleotide : rand_size.getValue().get(0).entrySet() ) {
+					
+					sum += nucleotide.getValue();
+					
+				}
+				
+				// Add it to the cache
+				cache.put(rand_size.getKey(), sum);
+				
+			}
+			
+			for (Entry<Integer, Integer> cache_data : cache.entrySet()) {
+				
+				if (totals.containsKey(cache_data.getKey())) {
+					
+					totals.put(cache_data.getKey(), totals.get(cache_data.getKey()) + cache_data.getValue());
+					
+				}
+				else {
+					
+					totals.put(cache_data.getKey(), cache_data.getValue());
+					
+				}
+				
+			}
+			
+		}
+		
+		writer.write(String.format("%s\t%s\t%d\t%d\n", "Randomized Region Size Distribution", "(All Pools Combined)", totals.firstEntry().getKey(), totals.firstEntry().getValue()));
+		totals.entrySet().stream().skip(1).forEach( entry ->  writer.write(String.format("%s\t%s\t%d\t%d\n", "", "", entry.getKey(), entry.getValue())));
+		
+		// Selection Cycle Percentages
+		ArrayList<SelectionCycle> counter_selections = new ArrayList<SelectionCycle>();
+		for ( ArrayList<SelectionCycle> cycles : experiment.getCounterSelectionCycles()) {
+
+			if (cycles != null) counter_selections.addAll(cycles);
+		
+		}
+
+		ArrayList<SelectionCycle> control_selections = new ArrayList<SelectionCycle>();
+		for ( ArrayList<SelectionCycle> cycles : experiment.getControlSelectionCycles()) {
+
+			if (cycles != null) control_selections.addAll(cycles);
+		
+		}		
+				
+		ExportSelectionCyclesHelper(experiment.getSelectionCycles(), "Positive Selection Cycles", singletonCount, writer);
+		if (!counter_selections.isEmpty()) {ExportSelectionCyclesHelper(experiment.getSelectionCycles(), "Counter Selection Cycles", singletonCount, writer);}
+		if (!control_selections.isEmpty()) {ExportSelectionCyclesHelper(experiment.getSelectionCycles(), "Control Selection Cycles", singletonCount, writer);}
+		
+		//Sequencing Data Tab
+		ExportSequencingDataHelper(experiment.getSelectionCycles(), "Positive Selection", writer);
+		if (!counter_selections.isEmpty()) {ExportSequencingDataHelper(experiment.getSelectionCycles(), "Counter Selection", writer);}
+		if (!control_selections.isEmpty()) {ExportSequencingDataHelper(experiment.getSelectionCycles(), "Control Selection", writer);}
+				
+		// Finalize
+		writer.close();
+		
+		AptaLogger.log(Level.INFO, this.getClass(), String.format("Exporting Experiment Telemetry Completed"));
+	}		
+		
+		
+	/**
+	 * Helper function to generate the output for the Selection Cycle Telemetry
+	 * @param cycles
+	 * @param cycleType
+	 * @param singletonCount
+	 * @param writer
+	 */
+	private void ExportSelectionCyclesHelper(ArrayList<SelectionCycle> cycles, String cycleType, Integer singletonCount, ExportWriter writer) {
+		
+		// Selection Cycle Percentages
+		boolean first = true;
+		for (SelectionCycle cycle : cycles) {
+			
+			// Skip non-existing cycles
+			if (cycle == null) continue;
+			
+			writer.write(String.format("%s\t%s\t%s\t%d\n", first ? "Sequencing Data ("+cycleType+")" : "", cycle.getName(), "Round Number", cycle.getRound()));
+			writer.write(String.format("%s\t%s\t%s\t%s\n", "", "", "5' Barcode", cycle.getBarcodeFivePrime() == null ? "n/a" : new String(cycle.getBarcodeFivePrime())));
+			writer.write(String.format("%s\t%s\t%s\t%s\n", "", "", "3' Barcode", cycle.getBarcodeThreePrime() == null ? "n/a" : new String(cycle.getBarcodeThreePrime())));
+			writer.write(String.format("%s\t%s\t%s\t%d\n", "", "", "Pool Size Label", cycle.getSize()));
+			writer.write(String.format("%s\t%s\t%s\t%s\n", "", "", "Unique Fraction", String.format("%s (%.2f%%)", cycle.getUniqueSize(), (cycle.getUniqueSize()/(double)cycle.getSize())*100 )));
+			first = false;
+		}
+		
+	}
+	
+	private void ExportSequencingDataHelper(ArrayList<SelectionCycle> cycles, String cycleType, ExportWriter writer) {
+		
+	}
 	
 	/**
 	 * Writes the specified pool <code>p</code> to 

@@ -21,6 +21,8 @@ import javax.annotation.PostConstruct;
 import exceptions.InformationNotFoundException;
 import gui.activity.ProgressPaneController;
 import javafx.application.Platform;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
@@ -30,6 +32,7 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ProgressIndicator;
+import javafx.scene.control.Spinner;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -48,6 +51,12 @@ import utilities.Quicksort;
  */
 public class ExportWizardController {
 
+	@FXML
+	private CheckBox exportTelemetryCheckBox;
+	
+	@FXML
+	private Spinner<Integer> singletonCountSpinner;
+	
 	@FXML
 	private CheckBox exportSequencesCheckBox;
 	
@@ -104,10 +113,17 @@ public class ExportWizardController {
 	
 	Experiment experiment = Configuration.getExperiment();
 	
+	private ObjectProperty<Integer> singletonCount = new SimpleObjectProperty<Integer>(1);
+	
 	@PostConstruct
 	public void initialize() {
+		
+		singletonCountSpinner.getValueFactory().valueProperty();
 
-		// Set values for the Cardinaliy Format ComboBox
+		// Bind the spinner to a property object
+		singletonCount.bindBidirectional(singletonCountSpinner.getValueFactory().valueProperty());
+		
+		// Set values for the Cardinality Format ComboBox
 		this.poolCardinalityFormatComboBox.getItems().add("Counts");
 		this.poolCardinalityFormatComboBox.getItems().add("Frequencies");
 		String pcfcbDefault = Configuration.getParameters().getString("Export.PoolCardinalityFormat", "Frequencies");
@@ -275,6 +291,11 @@ public class ExportWizardController {
 				Configuration.getParameters().setProperty("Export.ClusterFilterCriteria", clusterFilterCriteriaComboBox.getValue());
 				Configuration.getParameters().setProperty("Export.IncludePrimerRegions", withPrimersCheckBox.isSelected());
 				Configuration.getParameters().setProperty("Export.compress", compress);				
+				
+				// Export Telemetry
+				Path telemetryexportpath = Paths.get(exportPath.toString(), "telemetry.tsv");
+				AptaLogger.log(Level.INFO, this.getClass(), "Exporting telemetry data to file " + telemetryexportpath.toString());
+				export.Telemetry(telemetryexportpath, singletonCount.getValue());
 				
 				// Export Pool	
 				if (exportSequencesCheckBox.isSelected()) {
